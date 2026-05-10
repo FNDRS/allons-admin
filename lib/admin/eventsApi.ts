@@ -43,6 +43,13 @@ export interface AdminEventListFilters {
   limit?: number;
 }
 
+export interface AdminOverviewMetricsResponse {
+  activeEvents: number;
+  tickets30d: number;
+  scans30d: number;
+  gmv30d: number | null;
+}
+
 const ALLOWED_STATUSES = [
   "draft",
   "published",
@@ -125,6 +132,12 @@ export function updateAdminEventStatus(id: string, status: AdminEventStatus) {
       body: JSON.stringify({ status }),
     },
   );
+}
+
+export function getAdminOverviewMetrics() {
+  return adminFetch<AdminOverviewMetricsResponse>("/admin/overview-metrics", {
+    method: "GET",
+  });
 }
 
 export function isValidAdminEventStatus(value: string): value is AdminEventStatus {

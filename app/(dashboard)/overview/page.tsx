@@ -1,6 +1,7 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { getAdminOverviewMetrics } from "@/lib/admin/eventsApi";
 import { listAllUsers } from "@/lib/admin/users";
 import {
   Activity,
@@ -21,6 +22,14 @@ interface Counts {
   signupsLast24h: number;
   pendingProviders: number;
   suspended: number;
+}
+
+interface OverviewMetrics {
+  activeEvents: number;
+  tickets30d: number;
+  scans30d: number;
+  gmv30d: number | null;
+  connected: boolean;
 }
 
 async function loadCounts(): Promise<Counts> {
@@ -73,15 +82,34 @@ function formatCurrency(value: number) {
   return `L. ${value.toLocaleString("es-HN", { maximumFractionDigits: 0 })}`;
 }
 
+async function loadOverviewMetrics(): Promise<OverviewMetrics> {
+  try {
+    const metrics = await getAdminOverviewMetrics();
+    return { ...metrics, connected: true };
+  } catch (error) {
+    console.error("[overview] failed to load admin overview metrics", error);
+    return {
+      activeEvents: 0,
+      tickets30d: 0,
+      scans30d: 0,
+      gmv30d: null,
+      connected: false,
+    };
+  }
+}
+
 export default async function OverviewPage() {
-  const counts = await loadCounts();
+  const [counts, metrics] = await Promise.all([
+    loadCounts(),
+    loadOverviewMetrics(),
+  ]);
 
   return (
     <div>
       <PageHeader
         eyebrow="Panel root"
         title="Overview"
-        description="Salud de la plataforma. Las métricas de eventos, tickets y GMV se conectarán cuando esas tablas estén expuestas en el backend."
+        description="Salud de la plataforma con métricas agregadas en tiempo real desde admin API."
       />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -114,26 +142,28 @@ export default async function OverviewPage() {
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Eventos activos"
-          value="—"
-          hint="Tabla pendiente"
+          value={metrics.activeEvents.toLocaleString()}
+          hint={
+            metrics.connected ? "Publicados y vigentes" : "Sin conexión a Admin API"
+          }
           icon={Calendar}
         />
         <KpiCard
           label="Tickets 30 d"
-          value="—"
-          hint="Tabla pendiente"
+          value={metrics.tickets30d.toLocaleString()}
+          hint={metrics.connected ? "Emitidos últimos 30 días" : "Sin conexión"}
           icon={Ticket}
         />
         <KpiCard
           label="GMV 30 d"
-          value={formatCurrency(0)}
-          hint="Pasarela pendiente"
+          value={formatCurrency(metrics.gmv30d ?? 0)}
+          hint={metrics.gmv30d === null ? "Pasarela pendiente" : "Venta bruta 30 días"}
           icon={CircleDollarSign}
         />
         <KpiCard
           label="Escaneos 30 d"
-          value="—"
-          hint="Tabla pendiente"
+          value={metrics.scans30d.toLocaleString()}
+          hint={metrics.connected ? "Check-ins válidos" : "Sin conexión"}
           icon={ScanLine}
         />
       </section>
@@ -151,8 +181,13 @@ export default async function OverviewPage() {
               value={<StatusPill label="Operativo" variant="success" />}
             />
             <Row
-              label="Tabla de eventos"
-              value={<StatusPill label="Pendiente" variant="warning" />}
+              label="Métricas de eventos"
+              value={
+                <StatusPill
+                  label={metrics.connected ? "Operativo" : "Pendiente"}
+                  variant={metrics.connected ? "success" : "warning"}
+                />
+              }
             />
             <Row
               label="Pasarela de pagos"
