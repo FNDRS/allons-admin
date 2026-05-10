@@ -9,13 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Allons palette (mirrors constants/colors.ts in allons-mobile)
-        background: "#131516",
-        surface: "#1A1C1E",
-        surfaceMuted: "#222226",
+        background: "#0A0A0A",
+        surface: "#111111",
+        surfaceMuted: "#1A1A1A",
         primary: {
-          DEFAULT: "#F67010", // Liquid Lava
-          soft: "rgba(246,112,16,0.16)",
+          DEFAULT: "#FFFFFF",
+          soft: "rgba(255,255,255,0.16)",
         },
         success: "#34B013",
         warning: "#FFBE0B",
@@ -29,7 +28,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-urbanist)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
         card: "0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.25)",

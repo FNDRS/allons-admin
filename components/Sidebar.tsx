@@ -5,6 +5,7 @@ import {
   Calendar,
   Gauge,
   LogOut,
+  QrCode,
   Store,
   Users,
   Wallet,
@@ -18,32 +19,37 @@ const NAV_ITEMS = [
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/events", label: "Eventos", icon: Calendar },
   { href: "/finance", label: "Finanzas", icon: Wallet },
+  { href: "/waitlist-qr", label: "Waitlist QR", icon: QrCode },
 ] as const;
 
 export function Sidebar({ adminEmail }: { adminEmail: string }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { replace, refresh } = useRouter();
 
   const signOut = async () => {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    replace("/login");
+    refresh();
   };
 
   return (
-    <aside className="hidden md:flex md:w-64 shrink-0 flex-col border-r border-white/5 bg-surface">
-      <div className="flex items-center gap-3 px-5 py-6">
-        <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center font-bold">
+    <aside className="futuristic-panel relative z-10 hidden shrink-0 flex-col border-r md:flex md:w-72">
+      <div className="flex items-center gap-3 px-5 py-6 border-b border-white/15">
+        <div className="size-8 border border-white/35 flex items-center justify-center text-xs font-semibold">
           A
         </div>
         <div>
-          <div className="text-sm font-bold leading-tight">Allons Admin</div>
-          <div className="text-[11px] text-muted">Panel root</div>
+          <div className="text-sm font-semibold leading-tight uppercase tracking-[0.08em]">
+            Allons Admin
+          </div>
+          <div className="eyebrow">
+            Panel root
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-1">
+      <nav className="flex-1 px-0 py-0">
         {NAV_ITEMS.map((item) => {
           const active =
             pathname === item.href ||
@@ -52,23 +58,25 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
           return (
             <Link
               key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+              href={item.href as never}
+              className={`flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3 text-sm transition ${
                 active
-                  ? "bg-primary text-white font-semibold"
+                  ? "bg-white text-black font-medium"
                   : "text-muted hover:bg-white/5 hover:text-white"
               }`}
             >
-              <Icon size={16} />
-              {item.label}
+              <span className="flex items-center gap-3">
+                <Icon size={16} />
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-white/5 p-3 space-y-2">
-        <div className="rounded-lg bg-white/5 px-3 py-2.5">
-          <div className="text-[10px] uppercase tracking-wide text-muted-weak">
+      <div className="border-t border-white/10 p-4 space-y-2">
+        <div className="bg-surfaceMuted/40 px-3 py-2.5 border border-white/10">
+          <div className="eyebrow">
             Sesión
           </div>
           <div className="text-xs font-semibold truncate">{adminEmail}</div>

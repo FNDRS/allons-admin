@@ -39,20 +39,20 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/5 bg-surface p-8 shadow-card">
+      <div className="futuristic-panel w-full max-w-md p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center font-bold">
+          <div className="h-9 w-9 border border-white/35 flex items-center justify-center text-xs font-semibold">
             A
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">Allons Admin</h1>
-            <p className="text-xs text-muted">Acceso solo para el equipo root</p>
+            <p className="eyebrow mt-1">Acceso solo para el equipo root</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5">
+            <label className="eyebrow block mb-1.5">
               Email
             </label>
             <input
@@ -61,13 +61,13 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-white/5 border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
+              className="w-full bg-surfaceMuted border border-white/20 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
               placeholder="tucorreo@allons.app"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5">
+            <label className="eyebrow block mb-1.5">
               Contraseña
             </label>
             <input
@@ -76,7 +76,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-white/5 border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
+              className="w-full bg-surfaceMuted border border-white/20 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
             />
           </div>
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-primary py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+            className="w-full border border-white bg-white py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
           >
             {submitting ? "Entrando..." : "Iniciar sesión"}
           </button>

@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isRootEmail } from "@/lib/role";
 
+type CookieToSet = { name: string; value: string; options?: CookieOptions };
+
 /**
  * Refreshes the Supabase session cookies and gates non-public routes
  * to root admins. Call from middleware.ts.
@@ -19,7 +21,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );

@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
+type CookieToSet = { name: string; value: string; options?: CookieOptions };
+
 /**
  * Server-side Supabase client bound to the user's session via cookies.
  * Use this in Server Components, Route Handlers, and Server Actions.
@@ -17,7 +19,7 @@ export async function createSupabaseServerClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options as CookieOptions);
