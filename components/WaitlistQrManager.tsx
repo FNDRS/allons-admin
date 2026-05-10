@@ -1,6 +1,7 @@
 "use client";
 
 import { WAITLIST_SOURCE_RE, normalizeSourceSlug } from "@/lib/waitlist-qr";
+import Link from "next/link";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useState } from "react";
 
@@ -65,10 +66,14 @@ function SourceQrCard({
   source,
   stats,
   waitlistBaseUrl,
+  deleting,
+  onDelete,
 }: {
   source: SourceRow;
   stats?: SourceStatRow;
   waitlistBaseUrl: string;
+  deleting: boolean;
+  onDelete: (slug: string) => Promise<void>;
 }) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -161,11 +166,17 @@ function SourceQrCard({
       <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
-          onClick={copyUrl}
+          onClick={() => void copyUrl()}
           className="border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
         >
           {copied ? "Copiado" : "Copiar URL"}
         </button>
+        <Link
+          href={`/waitlist-qr/${source.slug}` as never}
+          className="border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
+        >
+          Ver detalle
+        </Link>
         <a
           href={qrDataUrl ?? "#"}
           download={`${source.slug}.png`}
@@ -178,6 +189,14 @@ function SourceQrCard({
         >
           Descargar QR
         </a>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={() => void onDelete(source.slug)}
+          className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20 disabled:opacity-60"
+        >
+          {deleting ? "Eliminando..." : "Eliminar QR"}
+        </button>
       </div>
 
       <div className="mt-3 flex justify-center border border-white/20 bg-white p-3">
@@ -201,6 +220,7 @@ function SourceQrCard({
 export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [setupHints, setSetupHints] = useState<ApiPayload["setupHints"] | null>(
     null,
@@ -313,6 +333,40 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
     stats.forEach((entry) => map.set(entry.source, entry));
     return map;
   }, [stats]);
+
+  const deleteSource = async (slugToDelete: string) => {
+    const confirmed = window.confirm(
+      `Eliminar el QR "${slugToDelete}"? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingSlug(slugToDelete);
+    setError(null);
+    try {
+      const res = await fetch(`/api/waitlist-qr-sources/${slugToDelete}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(data.error ?? "No se pudo eliminar la fuente QR.");
+      }
+
+      setSources((current) =>
+        current.filter((entry) => entry.slug !== slugToDelete),
+      );
+      setStats((current) =>
+        current.filter((entry) => entry.source !== slugToDelete),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo eliminar la fuente QR.",
+      );
+    } finally {
+      setDeletingSlug(null);
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -435,6 +489,8 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
               source={source}
               stats={statsMap.get(source.slug)}
               waitlistBaseUrl={waitlistBaseUrl}
+              deleting={deletingSlug === source.slug}
+              onDelete={deleteSource}
             />
           ))}
         </div>
