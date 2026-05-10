@@ -8,7 +8,7 @@ html,
 body {
   background-color: #050505;
   color: #ffffff;
-  font-family: var(--font-silkscreen), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0;
@@ -27,12 +27,8 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1 {
+  font-family: var(--font-silkscreen), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
 
@@ -67,6 +63,7 @@ a {
 }
 
 .eyebrow {
+  font-family: var(--font-silkscreen), ui-sans-serif, system-ui, sans-serif;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;

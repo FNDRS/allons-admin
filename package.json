@@ -12,6 +12,7 @@
     "ci": "pnpm run lint && pnpm run typecheck && pnpm run build"
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "lucide-react": "^1.14.0",

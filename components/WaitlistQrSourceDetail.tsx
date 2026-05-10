@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SourceRow {
   slug: string;
@@ -34,6 +44,7 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<SourceRow | null>(null);
   const [people, setPeople] = useState<WaitlistPersonRow[]>([]);
@@ -99,41 +110,62 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
         <button
           type="button"
           disabled={deleting}
-          onClick={async () => {
-            const confirmed = window.confirm(
-              `Eliminar el QR "${slug}"? Esta acción no se puede deshacer.`,
-            );
-            if (!confirmed) return;
-            setDeleting(true);
-            try {
-              const res = await fetch(`/api/waitlist-qr-sources/${slug}`, {
-                method: "DELETE",
-              });
-              const data = (await res.json().catch(() => ({}))) as {
-                error?: string;
-              };
-              if (!res.ok) {
-                throw new Error(
-                  data.error ?? "No se pudo eliminar la fuente QR.",
-                );
-              }
-              router.push("/waitlist-qr");
-              router.refresh();
-            } catch (err) {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "No se pudo eliminar la fuente QR.",
-              );
-            } finally {
-              setDeleting(false);
-            }
-          }}
+          onClick={() => setConfirmOpen(true)}
           className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20 disabled:opacity-60"
         >
           {deleting ? "Eliminando..." : "Eliminar QR"}
         </button>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar QR</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar la fuente <span className="text-white">{slug}</span>.
+              Los registros históricos de personas no se eliminarán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border border-white/20 px-3 py-2 text-xs text-muted hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20"
+              onClick={async (event) => {
+                event.preventDefault();
+                setDeleting(true);
+                try {
+                  const res = await fetch(`/api/waitlist-qr-sources/${slug}`, {
+                    method: "DELETE",
+                  });
+                  const data = (await res.json().catch(() => ({}))) as {
+                    error?: string;
+                  };
+                  if (!res.ok) {
+                    throw new Error(
+                      data.error ?? "No se pudo eliminar la fuente QR.",
+                    );
+                  }
+                  setConfirmOpen(false);
+                  router.push("/waitlist-qr");
+                  router.refresh();
+                } catch (err) {
+                  setError(
+                    err instanceof Error
+                      ? err.message
+                      : "No se pudo eliminar la fuente QR.",
+                  );
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <section className="futuristic-panel p-5">
         <h2 className="text-base font-semibold">Personas registradas</h2>

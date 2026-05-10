@@ -4,6 +4,16 @@ import { WAITLIST_SOURCE_RE, normalizeSourceSlug } from "@/lib/waitlist-qr";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SourceRow {
   slug: string;
@@ -77,6 +87,7 @@ function SourceQrCard({
 }) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const trackingUrl = useMemo(
     () => buildTrackingUrl(waitlistBaseUrl, source.slug),
     [source.slug, waitlistBaseUrl],
@@ -192,7 +203,7 @@ function SourceQrCard({
         <button
           type="button"
           disabled={deleting}
-          onClick={() => void onDelete(source.slug)}
+          onClick={() => setConfirmOpen(true)}
           className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20 disabled:opacity-60"
         >
           {deleting ? "Eliminando..." : "Eliminar QR"}
@@ -213,6 +224,33 @@ function SourceQrCard({
           </div>
         )}
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar QR</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar la fuente <span className="text-white">{source.slug}</span>.
+              Los registros históricos de personas no se eliminarán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border border-white/20 px-3 py-2 text-xs text-muted hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20"
+              onClick={async (event) => {
+                event.preventDefault();
+                await onDelete(source.slug);
+                setConfirmOpen(false);
+              }}
+            >
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 }
@@ -335,11 +373,6 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
   }, [stats]);
 
   const deleteSource = async (slugToDelete: string) => {
-    const confirmed = window.confirm(
-      `Eliminar el QR "${slugToDelete}"? Esta acción no se puede deshacer.`,
-    );
-    if (!confirmed) return;
-
     setDeletingSlug(slugToDelete);
     setError(null);
     try {
