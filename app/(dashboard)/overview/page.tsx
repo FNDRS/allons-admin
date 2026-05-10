@@ -156,7 +156,7 @@ export default async function OverviewPage() {
             />
             <Row
               label="Pasarela de pagos"
-              value={<StatusPill label="No conectado" variant="muted" />}
+              value={<StatusPill label="No conectado" variant="danger" />}
             />
             <Row
               label="Cuentas suspendidas"
