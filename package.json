@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "qr": "tsx scripts/generate-qr.ts",
     "ci": "pnpm run lint && pnpm run typecheck && pnpm run build"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.3.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }

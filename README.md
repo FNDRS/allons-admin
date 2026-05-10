@@ -52,3 +52,13 @@ pnpm dev
 Run the SQL in `db/waitlist_qr_sources.sql` on the same Supabase project used
 by the waitlist app. This creates the metadata table the admin panel uses to
 store slugs like `diunsa`, `la20`, etc.
+
+### QR script (admin)
+
+You can also generate printable assets from this repo:
+
+```sh
+pnpm run qr
+# or override destination URL
+BASE_URL=https://allonsapp.com pnpm run qr
+```
