@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Silkscreen } from "next/font/google";
 
-const inter = Inter({
+const silkscreen = Silkscreen({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-silkscreen",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={silkscreen.variable}>
       <body className="min-h-screen bg-background text-white antialiased font-sans">
         {children}
       </body>
