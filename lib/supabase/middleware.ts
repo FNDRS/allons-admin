@@ -6,7 +6,7 @@ type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
 /**
  * Refreshes the Supabase session cookies and gates non-public routes
- * to root admins. Call from middleware.ts.
+ * to root admins. Call from proxy.ts.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -43,8 +43,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isPublicRoute =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/.well-known") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth");
+    pathname.startsWith("/api/auth") ||
+    /\.[a-z0-9]+$/i.test(pathname);
 
   if (isPublicRoute) return response;
 
