@@ -2,9 +2,25 @@
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center px-4">
+          <div className="futuristic-panel w-full max-w-md p-8 text-sm text-muted">
+            Cargando login...
+          </div>
+        </main>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
@@ -52,9 +68,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="eyebrow block mb-1.5">
-              Email
-            </label>
+            <label className="eyebrow block mb-1.5">Email</label>
             <input
               type="email"
               required
@@ -67,9 +81,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="eyebrow block mb-1.5">
-              Contraseña
-            </label>
+            <label className="eyebrow block mb-1.5">Contraseña</label>
             <input
               type="password"
               required
