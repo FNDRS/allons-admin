@@ -10,6 +10,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -36,9 +37,14 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
   return (
     <aside className="futuristic-panel relative z-10 hidden shrink-0 flex-col border-r md:flex md:w-72">
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/15">
-        <div className="size-8 border border-white/35 flex items-center justify-center text-xs font-semibold">
-          A
-        </div>
+        <Image
+          src="/apple-touch-icon.png"
+          alt="Allons icon"
+          width={32}
+          height={32}
+          className="size-8 object-contain"
+          priority
+        />
         <div>
           <div className="text-sm font-semibold leading-tight uppercase tracking-[0.08em]">
             Allons Admin

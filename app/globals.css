@@ -8,6 +8,7 @@ html,
 body {
   background-color: #050505;
   color: #ffffff;
+  font-family: var(--font-silkscreen), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0;

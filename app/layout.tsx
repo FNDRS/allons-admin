@@ -12,6 +12,11 @@ const silkscreen = Silkscreen({
 export const metadata: Metadata = {
   title: "Allons Admin",
   description: "Internal control panel for the Allons platform.",
+  icons: {
+    icon: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.png",
+    shortcut: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

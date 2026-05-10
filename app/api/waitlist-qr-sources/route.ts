@@ -9,6 +9,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type DbErrorLike = {
+  code?: string;
+  message?: string;
+  hint?: string;
+};
+
 interface SourceRow {
   slug: string;
   label: string;
@@ -25,6 +31,19 @@ interface SourceStatRow {
   total: number;
   first_seen_at: string | null;
   last_seen_at: string | null;
+}
+
+function describeDbError(error: DbErrorLike) {
+  if (error.code === "42P01" || error.code === "PGRST205") {
+    return "Falta la tabla o vista de waitlist QR. Ejecuta el SQL de setup.";
+  }
+  if (error.code === "42703") {
+    return "El esquema de waitlist_qr_sources está desactualizado (faltan columnas). Corre db/waitlist_qr_sources.sql.";
+  }
+  if (error.code === "42501") {
+    return "Sin permisos para escribir en waitlist_qr_sources. Revisa service role key y RLS.";
+  }
+  return "Error de base de datos al procesar waitlist QR.";
 }
 
 async function requireRootSession() {
@@ -51,11 +70,19 @@ export async function GET() {
     )
     .order("created_at", { ascending: false });
 
-  const isMissingSourcesTable = sourcesError?.code === "42P01";
+  const isMissingSourcesTable =
+    sourcesError?.code === "42P01" || sourcesError?.code === "PGRST205";
   if (sourcesError && !isMissingSourcesTable) {
     console.error("[waitlist-qr] list sources error", sourcesError);
     return NextResponse.json(
-      { error: "No se pudieron cargar las fuentes QR." },
+      {
+        error: describeDbError(sourcesError),
+        db: {
+          code: sourcesError.code ?? null,
+          message: sourcesError.message ?? null,
+          hint: sourcesError.hint ?? null,
+        },
+      },
       { status: 500 },
     );
   }
@@ -65,11 +92,19 @@ export async function GET() {
     .select("source,total,first_seen_at,last_seen_at")
     .order("total", { ascending: false });
 
-  const isMissingStatsView = statsError?.code === "42P01";
+  const isMissingStatsView =
+    statsError?.code === "42P01" || statsError?.code === "PGRST205";
   if (statsError && !isMissingStatsView) {
     console.error("[waitlist-qr] list source stats error", statsError);
     return NextResponse.json(
-      { error: "No se pudieron cargar las métricas de la waitlist." },
+      {
+        error: describeDbError(statsError),
+        db: {
+          code: statsError.code ?? null,
+          message: statsError.message ?? null,
+          hint: statsError.hint ?? null,
+        },
+      },
       { status: 500 },
     );
   }
@@ -156,7 +191,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    if (error.code === "42P01") {
+    if (error.code === "42P01" || error.code === "PGRST205") {
       return NextResponse.json(
         {
           error:
@@ -168,7 +203,14 @@ export async function POST(req: NextRequest) {
     }
     console.error("[waitlist-qr] upsert source error", error);
     return NextResponse.json(
-      { error: "No se pudo guardar la fuente QR." },
+      {
+        error: describeDbError(error),
+        db: {
+          code: error.code ?? null,
+          message: error.message ?? null,
+          hint: error.hint ?? null,
+        },
+      },
       { status: 500 },
     );
   }

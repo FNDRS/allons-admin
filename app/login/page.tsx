@@ -1,6 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -57,9 +58,14 @@ function LoginPageContent() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="futuristic-panel w-full max-w-md p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="h-9 w-9 border border-white/35 flex items-center justify-center text-xs font-semibold">
-            A
-          </div>
+          <Image
+            src="/apple-touch-icon.png"
+            alt="Allons icon"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain"
+            priority
+          />
           <div>
             <h1 className="text-lg font-bold leading-tight">Allons Admin</h1>
             <p className="eyebrow mt-1">Acceso solo para el equipo root</p>

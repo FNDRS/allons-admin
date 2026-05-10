@@ -34,6 +34,15 @@ interface ApiPayload {
   discoveredSources: string[];
 }
 
+interface ApiErrorPayload {
+  error?: string;
+  setupRequired?: boolean;
+  setupHints?: {
+    sourcesTableMissing?: boolean;
+    statsViewMissing?: boolean;
+  };
+}
+
 interface Props {
   waitlistBaseUrl: string;
 }
@@ -211,15 +220,29 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
     setError(null);
     try {
       const res = await fetch("/api/waitlist-qr-sources", { cache: "no-store" });
-      const data = (await res.json()) as ApiPayload;
+      const data = (await res.json()) as ApiPayload | ApiErrorPayload;
       if (!res.ok) {
-        throw new Error("No se pudo cargar el módulo de Waitlist QR.");
+        const message =
+          (data as ApiErrorPayload).error ||
+          (res.status === 401
+            ? "No autorizado. Verifica que tu correo esté en ROOT_ADMIN_EMAILS."
+            : "No se pudo cargar el módulo de Waitlist QR.");
+        if ((data as ApiErrorPayload).setupRequired) {
+          setSetupHints({
+            sourcesTableMissing:
+              Boolean((data as ApiErrorPayload).setupHints?.sourcesTableMissing),
+            statsViewMissing:
+              Boolean((data as ApiErrorPayload).setupHints?.statsViewMissing),
+          });
+        }
+        throw new Error(message);
       }
-      setSources(data.sources);
-      setStats(data.stats);
-      setDirectCount(data.directCount);
-      setDiscovered(data.discoveredSources);
-      setSetupHints(data.setupRequired ? data.setupHints : null);
+      const okData = data as ApiPayload;
+      setSources(okData.sources);
+      setStats(okData.stats);
+      setDirectCount(okData.directCount);
+      setDiscovered(okData.discoveredSources);
+      setSetupHints(okData.setupRequired ? okData.setupHints : null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Ocurrió un error inesperado.",
