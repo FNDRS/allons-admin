@@ -21,6 +21,12 @@ function formatDate(iso: string | null) {
   });
 }
 
+function roleLabel(role: AdminUserRecord["role"]) {
+  if (role === "provider") return "Proveedor";
+  if (role === "staff") return "Staff";
+  return "Cliente";
+}
+
 async function loadUsers(): Promise<AdminUserRecord[]> {
   try {
     const all = await listAllUsers();
@@ -70,12 +76,12 @@ export default async function UsersPage({
           type="search"
           defaultValue={params.q ?? ""}
           placeholder="Buscar email o nombre"
-          className="w-72 max-w-full border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-72 max-w-full border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
         />
         <select
           name="status"
           defaultValue={statusFilter}
-          className="border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
         >
           <option value="all">Todos</option>
           <option value="suspended">Suspendidos</option>
@@ -90,13 +96,12 @@ export default async function UsersPage({
 
       <div className="futuristic-panel overflow-hidden">
         <div
-          className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "1.6fr 1fr 0.8fr 0.9fr 0.9fr" }}
+          className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+          style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
         >
           <div>Cliente</div>
           <div>Estado</div>
           <div>Alta</div>
-          <div>Último inicio</div>
           <div className="text-right">Acciones</div>
         </div>
 
@@ -110,14 +115,17 @@ export default async function UsersPage({
           filtered.map((u) => (
             <div
               key={u.id}
-              className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
-              style={{ gridTemplateColumns: "1.6fr 1fr 0.8fr 0.9fr 0.9fr" }}
+              className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
+              style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
             >
               <div className="min-w-0">
                 <div className="truncate font-semibold">
                   {u.fullName ?? u.email.split("@")[0]}
                 </div>
                 <div className="truncate text-xs text-muted">{u.email}</div>
+                <div className="mt-1 inline-flex border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
+                  {roleLabel(u.role)}
+                </div>
               </div>
               <div>
                 {u.status === "suspended" ? (
@@ -127,9 +135,6 @@ export default async function UsersPage({
                 )}
               </div>
               <div className="text-xs text-muted">{formatDate(u.createdAt)}</div>
-              <div className="text-xs text-muted">
-                {formatDate(u.lastSignInAt)}
-              </div>
               <div className="flex justify-end">
                 <form action={setUserSuspended}>
                   <input type="hidden" name="userId" value={u.id} />
