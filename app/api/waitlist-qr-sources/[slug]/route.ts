@@ -1,8 +1,9 @@
-import { checkRoot } from "@/lib/role";
 import {
-  createSupabaseServerClient,
-  createSupabaseServiceRoleClient,
-} from "@/lib/supabase/server";
+  logAdminAudit,
+  peekClientProbeFromHeaders,
+} from "@/lib/admin/auditLog";
+import { getRootActor } from "@/lib/admin/getRootActor";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { normalizeSourceSlug } from "@/lib/waitlist-qr";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -27,21 +28,11 @@ interface SourceRow {
   updated_at: string;
 }
 
-async function requireRootSession() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const rootCheck = checkRoot(user?.email);
-  return rootCheck.ok ? { ok: true as const } : { ok: false as const };
-}
-
 export async function GET(
   _req: NextRequest,
   context: { params: Promise<{ slug: string }> },
 ) {
-  const root = await requireRootSession();
-  if (!root.ok) {
+  if (!(await getRootActor())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -91,19 +82,23 @@ export async function GET(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   context: { params: Promise<{ slug: string }> },
 ) {
-  const root = await requireRootSession();
-  if (!root.ok) {
+  const actor = await getRootActor();
+  if (!actor) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const probes = peekClientProbeFromHeaders(req.headers);
 
   const params = await context.params;
   const slug = normalizeSourceSlug(params.slug);
   if (!slug) {
     return NextResponse.json({ error: "Slug inválido" }, { status: 400 });
   }
+
+  const httpPath = `/api/waitlist-qr-sources/${encodeURIComponent(slug)}`;
 
   const serviceRole = createSupabaseServiceRoleClient();
   const { error } = await serviceRole
@@ -113,11 +108,44 @@ export async function DELETE(
 
   if (error) {
     console.error("[waitlist-qr] delete source error", error);
+    await logAdminAudit({
+      actor_user_id: actor.userId,
+      actor_email: actor.email,
+      source: "route_handler",
+      action: "waitlist_qr.source_delete",
+      resource_type: "waitlist_qr_source",
+      resource_id: slug,
+      outcome: "failure",
+      http_method: req.method,
+      http_path: httpPath,
+      ip_address: probes.ip_address ?? null,
+      user_agent: probes.user_agent ?? null,
+      client_request_id: probes.client_request_id ?? null,
+      error_code: error.code ?? null,
+      error_message: error.message ?? null,
+      state_before: { slug },
+    });
     return NextResponse.json(
       { error: "No se pudo eliminar la fuente QR." },
       { status: 500 },
     );
   }
+
+  await logAdminAudit({
+    actor_user_id: actor.userId,
+    actor_email: actor.email,
+    source: "route_handler",
+    action: "waitlist_qr.source_delete",
+    resource_type: "waitlist_qr_source",
+    resource_id: slug,
+    outcome: "success",
+    http_method: req.method,
+    http_path: httpPath,
+    ip_address: probes.ip_address ?? null,
+    user_agent: probes.user_agent ?? null,
+    client_request_id: probes.client_request_id ?? null,
+    state_before: { slug },
+  });
 
   return NextResponse.json({ ok: true });
 }

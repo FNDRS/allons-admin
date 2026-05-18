@@ -1,25 +1,12 @@
 "use server";
 
-import { isRootEmail } from "@/lib/role";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { logAdminAudit } from "@/lib/admin/auditLog";
+import { requireRootActor } from "@/lib/admin/getRootActor";
+import { isValidAdminEventStatus, updateAdminEventStatus } from "./eventsApi";
 import { revalidatePath } from "next/cache";
-import {
-  isValidAdminEventStatus,
-  updateAdminEventStatus,
-} from "./eventsApi";
-
-async function requireRoot() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email || !isRootEmail(user.email)) {
-    throw new Error("No autorizado");
-  }
-}
 
 export async function setEventStatus(formData: FormData) {
-  await requireRoot();
+  const caller = await requireRootActor();
   const id = String(formData.get("eventId") ?? "");
   const status = String(formData.get("status") ?? "");
 
@@ -28,6 +15,33 @@ export async function setEventStatus(formData: FormData) {
     throw new Error(`status inválido: ${status}`);
   }
 
-  await updateAdminEventStatus(id, status);
-  revalidatePath("/events");
+  try {
+    await updateAdminEventStatus(id, status);
+    await logAdminAudit({
+      actor_user_id: caller.userId,
+      actor_email: caller.email,
+      source: "server_action",
+      action: "event.status_patch",
+      resource_type: "event",
+      resource_id: id,
+      outcome: "success",
+      state_after: { status },
+    });
+    revalidatePath("/events");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Error cambiando estado del evento";
+    await logAdminAudit({
+      actor_user_id: caller.userId,
+      actor_email: caller.email,
+      source: "server_action",
+      action: "event.status_patch",
+      resource_type: "event",
+      resource_id: id,
+      outcome: "failure",
+      state_after: { status_attempted: status },
+      error_message: message,
+    });
+    throw err;
+  }
 }

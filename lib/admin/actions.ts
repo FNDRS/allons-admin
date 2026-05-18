@@ -1,28 +1,15 @@
 "use server";
 
-import { isRootEmail } from "@/lib/role";
-import {
-  createSupabaseServerClient,
-  createSupabaseServiceRoleClient,
-} from "@/lib/supabase/server";
+import { logAdminAudit } from "@/lib/admin/auditLog";
+import { requireRootActor } from "@/lib/admin/getRootActor";
+import type { ProviderStatus } from "@/lib/admin/users";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { ProviderStatus } from "./users";
-
-async function requireRoot() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email || !isRootEmail(user.email)) {
-    throw new Error("No autorizado");
-  }
-  return user;
-}
 
 const BAN_FOREVER = "876600h"; // 100 years — Supabase requires a finite duration.
 
 export async function setUserSuspended(formData: FormData) {
-  await requireRoot();
+  const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
   const suspend = String(formData.get("suspend") ?? "true") === "true";
   const revalidate = String(formData.get("revalidate") ?? "/users");
@@ -30,16 +17,40 @@ export async function setUserSuspended(formData: FormData) {
   if (!userId) throw new Error("userId requerido");
 
   const admin = createSupabaseServiceRoleClient();
+
+  let beforeSuspended: boolean | null = null;
+  const { data: beforeUser, error: beforeErr } =
+    await admin.auth.admin.getUserById(userId);
+  if (!beforeErr && beforeUser?.user?.banned_until) {
+    beforeSuspended =
+      Date.parse(String(beforeUser.user.banned_until)) > Date.now();
+  }
+
   const { error } = await admin.auth.admin.updateUserById(userId, {
     ban_duration: suspend ? BAN_FOREVER : "none",
   });
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: suspend ? "auth.user_suspend" : "auth.user_unsuspend",
+    resource_type: "auth_user",
+    resource_id: userId,
+    outcome: error ? "failure" : "success",
+    state_before:
+      beforeSuspended === null ? {} : { banned: Boolean(beforeSuspended) },
+    state_after: suspend ? { banned: true } : { banned: false },
+    error_message: error?.message ?? null,
+  });
+
   if (error) throw new Error(error.message);
 
   revalidatePath(revalidate);
 }
 
 export async function setProviderStatusAction(formData: FormData) {
-  const caller = await requireRoot();
+  const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
   const status = String(formData.get("status") ?? "") as ProviderStatus;
   const revalidate = String(formData.get("revalidate") ?? "/providers");
@@ -60,16 +71,34 @@ export async function setProviderStatusAction(formData: FormData) {
   if (lookupError) throw new Error(lookupError.message);
   if (!existing.user) throw new Error("Usuario no encontrado");
 
+  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
+  const previousStatus =
+    typeof meta.providerStatus === "string" ? meta.providerStatus : null;
+
   const merged = {
-    ...(existing.user.user_metadata ?? {}),
+    ...meta,
     providerStatus: status,
-    providerStatusUpdatedBy: caller.id,
+    providerStatusUpdatedBy: caller.userId,
     providerStatusUpdatedAt: new Date().toISOString(),
   };
   const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
     user_metadata: merged,
     ban_duration: status === "suspended" ? BAN_FOREVER : "none",
   });
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "provider.status_change",
+    resource_type: "provider_user",
+    resource_id: userId,
+    outcome: updateError ? "failure" : "success",
+    state_before: previousStatus ? { providerStatus: previousStatus } : {},
+    state_after: { providerStatus: status },
+    error_message: updateError?.message ?? null,
+  });
+
   if (updateError) throw new Error(updateError.message);
 
   revalidatePath(revalidate);

@@ -1,8 +1,9 @@
-import { checkRoot } from "@/lib/role";
 import {
-  createSupabaseServerClient,
-  createSupabaseServiceRoleClient,
-} from "@/lib/supabase/server";
+  logAdminAudit,
+  peekClientProbeFromHeaders,
+} from "@/lib/admin/auditLog";
+import { getRootActor } from "@/lib/admin/getRootActor";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { normalizeOptionalText, normalizeSourceSlug } from "@/lib/waitlist-qr";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,18 +47,8 @@ function describeDbError(error: DbErrorLike) {
   return "Error de base de datos al procesar waitlist QR.";
 }
 
-async function requireRootSession() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const rootCheck = checkRoot(user?.email);
-  return rootCheck.ok ? { ok: true as const, email: rootCheck.email } : { ok: false as const };
-}
-
 export async function GET() {
-  const root = await requireRootSession();
-  if (!root.ok) {
+  if (!(await getRootActor())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -131,10 +122,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const root = await requireRootSession();
-  if (!root.ok) {
+  const actor = await getRootActor();
+  if (!actor) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const probes = peekClientProbeFromHeaders(req.headers);
 
   let body: {
     slug?: unknown;
@@ -179,7 +172,7 @@ export async function POST(req: NextRequest) {
     location,
     notes,
     is_active: isActive,
-    created_by: root.email,
+    created_by: actor.email,
   };
 
   const { data, error } = await serviceRole
@@ -192,6 +185,23 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (error.code === "42P01" || error.code === "PGRST205") {
+      await logAdminAudit({
+        actor_user_id: actor.userId,
+        actor_email: actor.email,
+        source: "route_handler",
+        action: "waitlist_qr.source_upsert",
+        resource_type: "waitlist_qr_source",
+        resource_id: slug,
+        outcome: "failure",
+        http_method: req.method,
+        http_path: "/api/waitlist-qr-sources",
+        ip_address: probes.ip_address ?? null,
+        user_agent: probes.user_agent ?? null,
+        client_request_id: probes.client_request_id ?? null,
+        error_code: error.code ?? null,
+        error_message: "Tabla ausente.",
+        state_after: { slug, label, location, notes, is_active: isActive },
+      });
       return NextResponse.json(
         {
           error:
@@ -202,6 +212,23 @@ export async function POST(req: NextRequest) {
       );
     }
     console.error("[waitlist-qr] upsert source error", error);
+    await logAdminAudit({
+      actor_user_id: actor.userId,
+      actor_email: actor.email,
+      source: "route_handler",
+      action: "waitlist_qr.source_upsert",
+      resource_type: "waitlist_qr_source",
+      resource_id: slug,
+      outcome: "failure",
+      http_method: req.method,
+      http_path: "/api/waitlist-qr-sources",
+      ip_address: probes.ip_address ?? null,
+      user_agent: probes.user_agent ?? null,
+      client_request_id: probes.client_request_id ?? null,
+      error_code: error.code ?? null,
+      error_message: error.message ?? describeDbError(error),
+      state_after: { slug, label, location, notes, is_active: isActive },
+    });
     return NextResponse.json(
       {
         error: describeDbError(error),
@@ -215,5 +242,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ source: data });
+  const saved = data as SourceRow;
+
+  await logAdminAudit({
+    actor_user_id: actor.userId,
+    actor_email: actor.email,
+    source: "route_handler",
+    action: "waitlist_qr.source_upsert",
+    resource_type: "waitlist_qr_source",
+    resource_id: slug,
+    outcome: "success",
+    http_method: req.method,
+    http_path: "/api/waitlist-qr-sources",
+    ip_address: probes.ip_address ?? null,
+    user_agent: probes.user_agent ?? null,
+    client_request_id: probes.client_request_id ?? null,
+    state_after: {
+      slug: saved.slug,
+      label: saved.label,
+      location: saved.location,
+      notes: saved.notes,
+      is_active: saved.is_active,
+    },
+  });
+
+  return NextResponse.json({ source: saved });
 }
