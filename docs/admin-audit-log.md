@@ -4,11 +4,22 @@
 
 Permite responder, ante Finanzas o cumplimiento, **quién** hizo **qué cambio sensible**, sobre **qué recurso**, **cuándo** y con **éxito o error**, de forma **inmutable** (sin edición posterior de líneas históricas desde la aplicación).
 
-## Alta en Supabase
+## Migración contra la base de datos
 
-1. Abrí **SQL Editor** en el proyecto usado por allons-admin / waitlist.  
-2. Pegá el contenido completo de `db/admin_audit_log.sql` y ejecutalo **una vez**.  
-3. Verificá que la tabla `admin_audit_logs` exista (`Table Editor` o `\dt`).
+La tabla se define en **`allons-api`** como parte del esquema Prisma oficial (fuente única para el Postgres de Supabase que comparte mobile/API/admin):
+
+1. En el repo **`allons-api`**, aplicá pendientes igual que cualquier cambio del producto:
+
+   ```bash
+   cd allons-api
+   pnpm exec prisma migrate deploy
+   ```
+
+   *(En desarrollo local: `pnpm exec prisma migrate dev`.)*
+
+2. Verificá en Supabase **Table Editor** que exista **`admin_audit_logs`**.
+
+Ya **no** hace falta pegar scripts SQL desde `allons-admin`.
 
 ### Por qué RLS sin políticas
 

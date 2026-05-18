@@ -91,11 +91,11 @@ export async function logAdminAudit(insert: AdminAuditInsert): Promise<void> {
     const supabase = createSupabaseServiceRoleClient();
     const { error } = await supabase.from("admin_audit_logs").insert(row);
 
-    // PGRST205 / 42P01: tabla pendiente en Supabase hasta correr migration SQL.
+    // PGRST205 / 42P01: tabla pendiente hasta aplicar migraciones Prisma en allons-api.
     if (error) {
       if (error.code === "PGRST205" || error.code === "42P01") {
         console.warn(
-          "[audit] admin_audit_logs no existe aún — ejecutar db/admin_audit_log.sql.",
+          "[audit] admin_audit_logs no existe — en allons-api ejecutar prisma migrate deploy.",
         );
         return;
       }
