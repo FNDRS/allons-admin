@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   listPaymentOrders,
   overridePaymentOrder,
@@ -51,7 +51,9 @@ export function OrdersSection() {
     }
   }, []);
 
-  useState(() => { fetchOrders(); });
+  useEffect(() => {
+    void fetchOrders();
+  }, [fetchOrders]);
 
   const handleRefresh = () => {
     setRefreshing((r) => r + 1);
@@ -161,7 +163,9 @@ export function OrdersSection() {
                   minute: "2-digit",
                 })}
               </div>
-              <div className="font-mono text-[11px] text-muted">{order.id.slice(0, 8)}…</div>
+              <div className="break-all font-mono text-[11px] leading-snug text-muted">
+                {order.id}
+              </div>
               <div>
                 <OverrideButton orderId={order.id} currentStatus={order.status} onDone={handleRefresh} />
               </div>
