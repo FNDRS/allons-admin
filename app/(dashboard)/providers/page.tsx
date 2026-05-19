@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 interface SearchParams {
   q?: string;
   status?: string;
+  created?: string;
 }
 
 const STATUS_LABEL: Record<ProviderStatus, string> = {
@@ -91,7 +92,22 @@ export default async function ProvidersPage({
         eyebrow="Comercios"
         title="Proveedores"
         description={`${counts.total} cuentas · ${counts.pending} esperando aprobación · ${counts.approved} activas · ${counts.suspended} suspendidas`}
+        action={
+          <a
+            href="/providers/create"
+            className="inline-flex items-center gap-1.5 bg-[#F67010] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#e06510]"
+          >
+            + Nuevo Comercio
+          </a>
+        }
       />
+
+      {params.created ? (
+        <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+          ✓ Comercio <strong>{params.created}</strong> creado correctamente. Apruébalo
+          cuando el equipo haya verificado los datos.
+        </div>
+      ) : null}
 
       <form className="mb-4 flex flex-wrap items-center gap-2">
         <input
