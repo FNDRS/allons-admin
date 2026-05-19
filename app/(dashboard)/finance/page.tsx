@@ -1,6 +1,5 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
-import { StatusPill } from "@/components/StatusPill";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -137,97 +136,6 @@ export default function FinancePage() {
         <div className="flex items-center gap-2 text-xs">
           <Plug size={14} />
           <span className="text-muted">Sin conexión</span>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-export default function FinancePage() {
-  return (
-    <div>
-      <PageHeader
-        eyebrow="Tesorería"
-        title="Finanzas"
-        description="Volumen, fees y payouts. Pendiente de conectar la pasarela de pagos para mostrar datos reales."
-      />
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="GMV (30 d)"
-          value={formatCurrency(0)}
-          hint="Volumen bruto"
-          icon={CircleDollarSign}
-        />
-        <KpiCard
-          label="Fee plataforma"
-          value={formatCurrency(0)}
-          hint="6% del GMV"
-          icon={CreditCard}
-        />
-        <KpiCard
-          label="Pagado a proveedores"
-          value={formatCurrency(0)}
-          hint="Payouts completados"
-          icon={ArrowUpRight}
-        />
-        <KpiCard
-          label="Saldo pendiente"
-          value={formatCurrency(0)}
-          hint="Por liquidar"
-          icon={Wallet}
-        />
-      </section>
-
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Últimos payouts</div>
-          <div className="px-0 py-8 text-center text-sm text-muted">
-            Sin movimientos. Conecta una pasarela de pagos para empezar a
-            ver retiros aquí.
-          </div>
-        </div>
-
-        <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Riesgos / disputas</div>
-          <ul className="space-y-3 text-sm">
-            <Row
-              icon={<ArrowDownLeft size={14} />}
-              label="Chargebacks 30 d"
-              value="0"
-            />
-            <Row
-              icon={<ArrowUpRight size={14} />}
-              label="Reembolsos 30 d"
-              value="0"
-            />
-            <Row
-              icon={<Wallet size={14} />}
-              label="Cuentas con saldo retenido"
-              value="0"
-            />
-          </ul>
-        </div>
-      </section>
-
-      <section className="futuristic-panel mt-8 flex flex-col items-center gap-4 p-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center border border-white/15">
-          <Plug size={20} />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold uppercase tracking-tight">
-            Pasarela pendiente
-          </h2>
-          <p className="mt-2 max-w-md text-sm text-muted">
-            Cuando integremos la pasarela (Stripe / BAC / Tigo Money), esta
-            página mostrará GMV, fees, payouts y disputas en tiempo real, con
-            la posibilidad de iniciar liquidaciones manuales por proveedor.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <StatusPill label="Pasarela" variant="muted" />
-          <span className="text-muted">·</span>
-          <StatusPill label="No conectada" variant="warning" />
         </div>
       </section>
     </div>
