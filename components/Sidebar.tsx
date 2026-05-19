@@ -5,6 +5,7 @@ import {
   Calendar,
   Gauge,
   LogOut,
+  Bell,
   QrCode,
   Store,
   Users,
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/providers", label: "Proveedores", icon: Store },
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/events", label: "Eventos", icon: Calendar },
+  { href: "/notifications", label: "Notificaciones", icon: Bell },
   { href: "/finance", label: "Finanzas", icon: Wallet },
   { href: "/waitlist-qr", label: "Waitlist QR", icon: QrCode },
 ] as const;
