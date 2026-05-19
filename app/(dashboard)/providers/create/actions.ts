@@ -105,6 +105,7 @@ export async function createComercioAction(
       free_trial_end: freeTrialEnd,
       allons_fee_pct: ALLONS_FEE_PCT,
       providerStatus: "pending",
+      comercio_role: "admin",
       created_by_admin: actor.email,
       created_at: now.toISOString(),
       must_change_password: true,
