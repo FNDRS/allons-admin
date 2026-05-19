@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import {
-  listPaymentOrders,
-  overridePaymentOrder,
-  type AdminPaymentOrder,
-} from "@/lib/admin/paymentsApi";
+import { listPaymentOrders, type AdminPaymentOrder } from "@/lib/admin/paymentsApi";
 import { StatusPill } from "@/components/StatusPill";
 import { OverrideButton } from "@/components/OverrideButton";
 
@@ -36,7 +32,6 @@ export function OrdersSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [refreshing, setRefreshing] = useState(0);
 
   const fetchOrders = useCallback(async (status?: string) => {
     setLoading(true);
@@ -56,13 +51,13 @@ export function OrdersSection() {
   }, [fetchOrders]);
 
   const handleRefresh = () => {
-    setRefreshing((r) => r + 1);
     fetchOrders(statusFilter || undefined);
   };
 
   const handleStatusFilter = (status: string) => {
-    setStatusFilter(status === statusFilter ? "" : status);
-    fetchOrders(status || undefined);
+    const next = status === statusFilter ? "" : status;
+    setStatusFilter(next);
+    void fetchOrders(next || undefined);
   };
 
   const exportCsv = () => {

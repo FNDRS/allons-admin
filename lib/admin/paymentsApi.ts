@@ -71,7 +71,9 @@ export async function listPaymentOrders(params?: {
   if (params?.eventId) qs.set("eventId", params.eventId);
   if (params?.startDate) qs.set("startDate", params.startDate);
   if (params?.endDate) qs.set("endDate", params.endDate);
-  if (params?.staleMinutes) qs.set("staleMinutes", String(params.staleMinutes));
+  if (params?.staleMinutes !== undefined) {
+    qs.set("staleMinutes", String(params.staleMinutes));
+  }
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.offset) qs.set("offset", String(params.offset));
   const res = await fetch(paymentsUrl("orders", qs), {
