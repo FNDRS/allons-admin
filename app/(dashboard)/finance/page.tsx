@@ -1,5 +1,7 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { DataTable, type Column } from "@/components/DataTable";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -15,8 +17,30 @@ function formatCurrency(value: number) {
   return `L. ${value.toLocaleString("es-HN", { maximumFractionDigits: 0 })}`;
 }
 
-import { getPaymentsSummary } from "@/lib/admin/paymentsApi";
+import {
+  getPaymentsSummary,
+  listPaymentOrders,
+  type AdminPaymentOrder,
+} from "@/lib/admin/paymentsApi";
 import { Suspense } from "react";
+
+const ORDER_STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "info" | "muted"> = {
+  paid: "success",
+  pending_payment: "warning",
+  pending: "warning",
+  failed: "danger",
+  cancelled: "muted",
+  refunded: "info",
+};
+
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  paid: "Pagado",
+  pending_payment: "Pendiente",
+  pending: "Pendiente",
+  failed: "Fallido",
+  cancelled: "Cancelado",
+  refunded: "Reembolsado",
+};
 
 async function PaymentsSummaryCards() {
   let summary;
@@ -66,6 +90,74 @@ async function PaymentsSummaryCards() {
   );
 }
 
+async function RecentOrdersTable() {
+  let result;
+  try {
+    result = await listPaymentOrders({ limit: 20 });
+  } catch {
+    return (
+      <div className="futuristic-panel p-6 text-center text-sm text-muted">
+        Error al cargar órdenes recientes.
+      </div>
+    );
+  }
+
+  const columns: Column<AdminPaymentOrder>[] = [
+    {
+      key: "status",
+      header: "Estado",
+      width: "100px",
+      render: (row) => (
+        <StatusPill
+          label={ORDER_STATUS_LABEL[row.status] ?? row.status}
+          variant={ORDER_STATUS_VARIANT[row.status] ?? "muted"}
+        />
+      ),
+    },
+    {
+      key: "amount",
+      header: "Monto",
+      width: "120px",
+      align: "right",
+      render: (row) => (
+        <span className="font-bold">{formatCurrency(row.amountCents / 100)}</span>
+      ),
+    },
+    {
+      key: "qty",
+      header: "Cant.",
+      width: "60px",
+      align: "center",
+      render: (row) => `${row.quantity}`,
+    },
+    {
+      key: "createdAt",
+      header: "Fecha",
+      width: "140px",
+      render: (row) =>
+        new Date(row.createdAt).toLocaleDateString("es-HN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+    {
+      key: "id",
+      header: "ID",
+      width: "1fr",
+      render: (row) => (
+        <span className="font-mono text-[11px] text-muted">{row.id.slice(0, 8)}…</span>
+      ),
+    },
+  ];
+
+  return (
+    <DataTable columns={columns} rows={result.items} rowKey={(r) => r.id} />
+  );
+}
+
 export default function FinancePage() {
   return (
     <div>
@@ -87,6 +179,19 @@ export default function FinancePage() {
       >
         <PaymentsSummaryCards />
       </Suspense>
+
+      <section className="mt-8">
+        <div className="eyebrow mb-4">Órdenes recientes</div>
+        <Suspense
+          fallback={
+            <div className="futuristic-panel p-6 text-center text-sm text-muted">
+              Cargando órdenes…
+            </div>
+          }
+        >
+          <RecentOrdersTable />
+        </Suspense>
+      </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="futuristic-panel p-6">
@@ -116,26 +221,6 @@ export default function FinancePage() {
               value="0"
             />
           </ul>
-        </div>
-      </section>
-
-      <section className="futuristic-panel mt-8 flex flex-col items-center gap-4 p-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center border border-white/15">
-          <Plug size={20} />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold uppercase tracking-tight">
-            Pasarela pendiente
-          </h2>
-          <p className="mt-2 max-w-md text-sm text-muted">
-            Cuando integremos la pasarela (Stripe / BAC / Tigo Money), esta
-            página mostrará GMV, fees, payouts y disputas en tiempo real, con
-            la posibilidad de iniciar liquidaciones manuales por proveedor.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Plug size={14} />
-          <span className="text-muted">Sin conexión</span>
         </div>
       </section>
     </div>
