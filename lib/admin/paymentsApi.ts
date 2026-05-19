@@ -4,6 +4,7 @@ export interface AdminPaymentsSummary {
   pendingOrdersCount: number;
   failedOrdersCount: number;
   stalePendingCount: number;
+  daily: Array<{ date: string; totalCents: number; count: number }>;
   lastUpdated: string;
 }
 

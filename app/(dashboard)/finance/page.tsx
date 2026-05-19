@@ -1,9 +1,8 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
-import { StatusPill } from "@/components/StatusPill";
-import { DataTable, type Column } from "@/components/DataTable";
+import { OrdersSection } from "@/components/OrdersSection";
+import { PaymentsChart } from "@/components/PaymentsChart";
 import {
-  ArrowDownLeft,
   ArrowUpRight,
   CircleDollarSign,
   CreditCard,
@@ -17,30 +16,8 @@ function formatCurrency(value: number) {
   return `L. ${value.toLocaleString("es-HN", { maximumFractionDigits: 0 })}`;
 }
 
-import {
-  getPaymentsSummary,
-  listPaymentOrders,
-  type AdminPaymentOrder,
-} from "@/lib/admin/paymentsApi";
+import { getPaymentsSummary } from "@/lib/admin/paymentsApi";
 import { Suspense } from "react";
-
-const ORDER_STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "info" | "muted"> = {
-  paid: "success",
-  pending_payment: "warning",
-  pending: "warning",
-  failed: "danger",
-  cancelled: "muted",
-  refunded: "info",
-};
-
-const ORDER_STATUS_LABEL: Record<string, string> = {
-  paid: "Pagado",
-  pending_payment: "Pendiente",
-  pending: "Pendiente",
-  failed: "Fallido",
-  cancelled: "Cancelado",
-  refunded: "Reembolsado",
-};
 
 async function PaymentsSummaryCards() {
   let summary;
@@ -61,108 +38,43 @@ async function PaymentsSummaryCards() {
   const paidCents = summary.gmvCents - feeCents;
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <KpiCard
-        label="GMV (30 d)"
-        value={formatCurrency(summary.gmvCents / 100)}
-        hint="Volumen bruto"
-        icon={CircleDollarSign}
-      />
-      <KpiCard
-        label="Fee plataforma"
-        value={formatCurrency(feeCents / 100)}
-        hint="6% del GMV"
-        icon={CreditCard}
-      />
-      <KpiCard
-        label="Pagado a proveedores"
-        value={formatCurrency(paidCents / 100)}
-        hint="Payouts completados"
-        icon={ArrowUpRight}
-      />
-      <KpiCard
-        label="Órdenes pagadas"
-        value={String(summary.paidOrdersCount)}
-        hint={`${summary.pendingOrdersCount} pendientes · ${summary.failedOrdersCount} fallidas`}
-        icon={Wallet}
-      />
-      {summary.stalePendingCount > 0 && (
+    <>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          label="Pendientes estancadas"
-          value={String(summary.stalePendingCount)}
-          hint="Más de 1h sin actualizar"
-          icon={Plug}
+          label="GMV (30 d)"
+          value={formatCurrency(summary.gmvCents / 100)}
+          hint="Volumen bruto"
+          icon={CircleDollarSign}
         />
-      )}
-    </section>
-  );
-}
-
-async function RecentOrdersTable() {
-  let result;
-  try {
-    result = await listPaymentOrders({ limit: 20 });
-  } catch {
-    return (
-      <div className="futuristic-panel p-6 text-center text-sm text-muted">
-        Error al cargar órdenes recientes.
-      </div>
-    );
-  }
-
-  const columns: Column<AdminPaymentOrder>[] = [
-    {
-      key: "status",
-      header: "Estado",
-      width: "100px",
-      render: (row) => (
-        <StatusPill
-          label={ORDER_STATUS_LABEL[row.status] ?? row.status}
-          variant={ORDER_STATUS_VARIANT[row.status] ?? "muted"}
+        <KpiCard
+          label="Fee plataforma"
+          value={formatCurrency(feeCents / 100)}
+          hint="6% del GMV"
+          icon={CreditCard}
         />
-      ),
-    },
-    {
-      key: "amount",
-      header: "Monto",
-      width: "120px",
-      align: "right",
-      render: (row) => (
-        <span className="font-bold">{formatCurrency(row.amountCents / 100)}</span>
-      ),
-    },
-    {
-      key: "qty",
-      header: "Cant.",
-      width: "60px",
-      align: "center",
-      render: (row) => `${row.quantity}`,
-    },
-    {
-      key: "createdAt",
-      header: "Fecha",
-      width: "140px",
-      render: (row) =>
-        new Date(row.createdAt).toLocaleDateString("es-HN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-    },
-    {
-      key: "id",
-      header: "ID",
-      width: "1fr",
-      render: (row) => (
-        <span className="font-mono text-[11px] text-muted">{row.id.slice(0, 8)}…</span>
-      ),
-    },
-  ];
-
-  return (
-    <DataTable columns={columns} rows={result.items} rowKey={(r) => r.id} />
+        <KpiCard
+          label="Pagado a proveedores"
+          value={formatCurrency(paidCents / 100)}
+          hint="Payouts completados"
+          icon={ArrowUpRight}
+        />
+        <KpiCard
+          label="Órdenes pagadas"
+          value={String(summary.paidOrdersCount)}
+          hint={`${summary.pendingOrdersCount} pendientes · ${summary.failedOrdersCount} fallidas`}
+          icon={Wallet}
+        />
+        {summary.stalePendingCount > 0 && (
+          <KpiCard
+            label="Pendientes estancadas"
+            value={String(summary.stalePendingCount)}
+            hint="Más de 1h sin actualizar"
+            icon={Plug}
+          />
+        )}
+      </section>
+      <PaymentsChart data={summary.daily} />
+    </>
   );
 }
 
@@ -189,16 +101,8 @@ export default function FinancePage() {
       </Suspense>
 
       <section className="mt-8">
-        <div className="eyebrow mb-4">Órdenes recientes</div>
-        <Suspense
-          fallback={
-            <div className="futuristic-panel p-6 text-center text-sm text-muted">
-              Cargando órdenes…
-            </div>
-          }
-        >
-          <RecentOrdersTable />
-        </Suspense>
+        <div className="eyebrow mb-4">Órdenes</div>
+        <OrdersSection />
       </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -209,15 +113,9 @@ export default function FinancePage() {
             ver retiros aquí.
           </div>
         </div>
-
         <div className="futuristic-panel p-6">
           <div className="eyebrow mb-4">Riesgos / disputas</div>
           <ul className="space-y-3 text-sm">
-            <Row
-              icon={<ArrowDownLeft size={14} />}
-              label="Chargebacks 30 d"
-              value="0"
-            />
             <Row
               icon={<ArrowUpRight size={14} />}
               label="Reembolsos 30 d"
