@@ -1,5 +1,5 @@
 export type AdminNotificationAudience = "clients" | "providers";
-export type AdminNotificationTab = "amigos" | "eventos" | "menciones";
+export type AdminNotificationTab = "eventos";
 
 export interface BroadcastNotificationInput {
   audience: AdminNotificationAudience;

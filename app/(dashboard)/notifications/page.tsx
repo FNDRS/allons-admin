@@ -8,27 +8,14 @@ import {
 } from "@/lib/admin/notificationsApi";
 import { useState } from "react";
 
-const TAB_OPTIONS: Array<{ key: AdminNotificationTab; label: string }> = [
-  { key: "eventos", label: "Eventos" },
-  { key: "amigos", label: "Amigos" },
-  { key: "menciones", label: "Menciones" },
-];
-
 export default function NotificationsPage() {
   const [audience, setAudience] = useState<AdminNotificationAudience>("clients");
   const [categoryLabel, setCategoryLabel] = useState<string>("Novedades");
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [dedupeKey, setDedupeKey] = useState<string>("");
-  const [tabs, setTabs] = useState<AdminNotificationTab[]>(["eventos"]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-
-  const toggleTab = (t: AdminNotificationTab) => {
-    setTabs((current) =>
-      current.includes(t) ? current.filter((x) => x !== t) : [...current, t],
-    );
-  };
 
   const onSubmit = async () => {
     setResult(null);
@@ -39,7 +26,7 @@ export default function NotificationsPage() {
         categoryLabel: categoryLabel.trim() || null,
         title: title.trim(),
         description: description.trim() || null,
-        tabs: tabs.length > 0 ? tabs : (["eventos"] as AdminNotificationTab[]),
+        tabs: ["eventos"] as AdminNotificationTab[],
         dedupeKey: dedupeKey.trim() || null,
       };
       if (!payload.title) throw new Error("title es requerido");
@@ -118,26 +105,6 @@ export default function NotificationsPage() {
             Si la misma audiencia recibe de nuevo la misma dedupe key, no se duplica.
           </div>
         </label>
-
-        <div className="space-y-2">
-          <div className="eyebrow">Tabs</div>
-          <div className="flex flex-wrap gap-2">
-            {TAB_OPTIONS.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => toggleTab(t.key)}
-                className={`rounded-full border px-3 py-1 text-xs transition ${
-                  tabs.includes(t.key)
-                    ? "border-white bg-white text-black"
-                    : "border-white/15 text-muted hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="flex items-center gap-3">
           <button
