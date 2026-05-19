@@ -190,7 +190,7 @@ export default function FinancePage() {
         <OrdersSection />
       </section>
 
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+      <section className="mt-8">
         <div className="futuristic-panel p-6">
           <div className="eyebrow mb-4">Últimos payouts</div>
           <Suspense
@@ -201,44 +201,7 @@ export default function FinancePage() {
             <RecentPayoutsPanel />
           </Suspense>
         </div>
-        <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Riesgos / disputas</div>
-          <ul className="space-y-3 text-sm">
-            <Row
-              icon={<ArrowUpRight size={14} />}
-              label="Reembolsos 30 d"
-              value="0"
-            />
-            <Row
-              icon={<Wallet size={14} />}
-              label="Cuentas con saldo retenido"
-              value="0"
-            />
-          </ul>
-        </div>
       </section>
     </div>
-  );
-}
-
-function Row({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <li className="flex items-center justify-between border-b border-white/8 pb-3 last:border-b-0 last:pb-0">
-      <span className="flex items-center gap-2 text-muted">
-        <span className="flex h-6 w-6 items-center justify-center border border-white/15">
-          {icon}
-        </span>
-        {label}
-      </span>
-      <span className="font-bold">{value}</span>
-    </li>
   );
 }
