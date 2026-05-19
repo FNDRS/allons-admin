@@ -39,6 +39,11 @@ export async function getRecentPayouts(limit = 20): Promise<AdminPayoutsRecentRe
     headers: adminHeaders(),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error("Failed to fetch payouts");
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `Failed to fetch payouts (${res.status})${detail ? `: ${detail.slice(0, 120)}` : ""}`,
+    );
+  }
   return res.json();
 }
