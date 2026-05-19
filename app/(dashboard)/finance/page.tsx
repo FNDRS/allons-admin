@@ -86,6 +86,14 @@ async function PaymentsSummaryCards() {
         hint={`${summary.pendingOrdersCount} pendientes · ${summary.failedOrdersCount} fallidas`}
         icon={Wallet}
       />
+      {summary.stalePendingCount > 0 && (
+        <KpiCard
+          label="Pendientes estancadas"
+          value={String(summary.stalePendingCount)}
+          hint="Más de 1h sin actualizar"
+          icon={Plug}
+        />
+      )}
     </section>
   );
 }
