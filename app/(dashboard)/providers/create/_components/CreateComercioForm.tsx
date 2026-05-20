@@ -63,22 +63,8 @@ function toHandle(name: string) {
     .slice(0, 20);
 }
 
-function generatePassword() {
-  const upper = "ABCDEFGHJKMNPQRSTUVWXYZ";
-  const lower = "abcdefghjkmnpqrstuvwxyz";
-  const digits = "23456789";
-  const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
-  let p = pick(upper) + pick(upper);
-  for (let i = 0; i < 5; i++) p += pick(lower + digits);
-  return p + "!";
-}
-
 export function CreateComercioForm() {
   const [state, action, isPending] = useActionState(createComercioAction, null);
-
-  // ── Personal ──
-  const [showPassword, setShowPassword] = useState(false);
-  const [tempPassword, setTempPassword] = useState("");
 
   // ── Business ──
   const [brandName, setBrandName] = useState("");
@@ -203,42 +189,10 @@ export function CreateComercioForm() {
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
-              Contraseña temporal <span className="text-orange-400">*</span>
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  name="tempPassword"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={8}
-                  value={tempPassword}
-                  onChange={(e) => setTempPassword(e.target.value)}
-                  placeholder="Mín. 8 caracteres"
-                  className={inputCls}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
-                  tabIndex={-1}
-                >
-                  {showPassword ? "🙈" : "👁"}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTempPassword(generatePassword())}
-                className="shrink-0 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-bold text-orange-400 hover:bg-orange-500/20"
-              >
-                Generar
-              </button>
-            </div>
-            <p className="mt-1.5 text-xs text-white/35">
-              Comparte esta contraseña con el comercio. Deberá cambiarla al primer acceso.
-            </p>
+          <div className="rounded-lg border border-white/8 bg-white/[0.02] p-3 text-xs leading-relaxed text-white/55">
+            Al crear el comercio, Supabase envía al correo un enlace de
+            invitación. El comercio fija su propia contraseña al ingresar — no
+            se comparten credenciales por separado.
           </div>
         </div>
       </section>

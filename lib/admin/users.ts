@@ -14,6 +14,8 @@ export interface AdminUserRecord {
   status: UserStatus;
   createdAt: string;
   lastSignInAt: string | null;
+  /** null until the user accepts the magic-link invite. */
+  emailConfirmedAt: string | null;
   // Provider-specific:
   providerStatus?: ProviderStatus;
   brandName?: string | null;
@@ -54,6 +56,7 @@ function toRecord(user: {
   banned_until?: string | null;
   created_at?: string | null;
   last_sign_in_at?: string | null;
+  email_confirmed_at?: string | null;
 }): AdminUserRecord {
   const metadata = user.user_metadata ?? null;
   const role = deriveRole(metadata);
@@ -72,6 +75,7 @@ function toRecord(user: {
     status: banned ? "suspended" : "active",
     createdAt: user.created_at ?? new Date(0).toISOString(),
     lastSignInAt: user.last_sign_in_at ?? null,
+    emailConfirmedAt: user.email_confirmed_at ?? null,
     providerStatus: role === "provider" ? deriveProviderStatus(metadata) : undefined,
     brandName: (metadata?.brand_name as string | undefined) ?? null,
     brandHandle: (metadata?.brand_handle as string | undefined) ?? null,

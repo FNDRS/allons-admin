@@ -16,6 +16,7 @@ export async function createComercioAction(
 ): Promise<CreateComercioState> {
   let createdUserId: string | undefined;
   let finalBrandName: string | undefined;
+  let inviteStatus: "invited" | "existing" = "invited";
 
   try {
     const actor = await requireRootActor();
@@ -27,8 +28,6 @@ export async function createComercioAction(
       .toLowerCase() ?? "";
     const phone =
       (formData.get("phone") as string | null)?.trim() || null;
-    const tempPassword =
-      (formData.get("tempPassword") as string | null)?.trim() ?? "";
     const brandName =
       (formData.get("brandName") as string | null)?.trim() ?? "";
     const brandHandle = (formData.get("brandHandle") as string | null)
@@ -50,11 +49,8 @@ export async function createComercioAction(
       (formData.get("subscriptionPlan") as string | null) ?? "pendiente";
     const contractFile = formData.get("contractFile") as File | null;
 
-    if (!fullName || !email || !tempPassword || !brandName || !brandHandle) {
-      return { error: "Nombre, email, contraseña, nombre y handle son obligatorios." };
-    }
-    if (tempPassword.length < 8) {
-      return { error: "La contraseña temporal debe tener mínimo 8 caracteres." };
+    if (!fullName || !email || !brandName || !brandHandle) {
+      return { error: "Nombre, email, nombre del negocio y handle son obligatorios." };
     }
 
     finalBrandName = brandName;
@@ -108,10 +104,8 @@ export async function createComercioAction(
       comercio_role: "admin",
       created_by_admin: actor.email,
       created_at: now.toISOString(),
-      must_change_password: true,
     };
 
-    // ── Idempotent create / update ──
     const admin = createSupabaseServiceRoleClient();
     const { data: existingList, error: listError } =
       await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
@@ -122,23 +116,27 @@ export async function createComercioAction(
     );
 
     if (existing) {
+      // Existing user: keep idempotent. Only merge metadata — don't re-send an
+      // invite, since they already have an account / set a password.
       const { data: updated, error: updateError } =
         await admin.auth.admin.updateUserById(existing.id, {
-          password: tempPassword,
           user_metadata: { ...(existing.user_metadata ?? {}), ...userMetadata },
         });
       if (updateError) return { error: updateError.message };
       createdUserId = updated.user.id;
+      inviteStatus = "existing";
     } else {
-      const { data: created, error: createError } =
-        await admin.auth.admin.createUser({
-          email,
-          password: tempPassword,
-          email_confirm: true,
-          user_metadata: userMetadata,
-        });
-      if (createError) return { error: createError.message };
-      createdUserId = created.user.id;
+      const inviteOptions: { data: Record<string, unknown>; redirectTo?: string } = {
+        data: userMetadata,
+      };
+      const redirectTo = process.env.APP_INVITE_REDIRECT_URL;
+      if (redirectTo) inviteOptions.redirectTo = redirectTo;
+
+      const { data: invited, error: inviteError } =
+        await admin.auth.admin.inviteUserByEmail(email, inviteOptions);
+      if (inviteError) return { error: inviteError.message };
+      createdUserId = invited.user.id;
+      inviteStatus = "invited";
     }
 
     await logAdminAudit({
@@ -157,6 +155,7 @@ export async function createComercioAction(
         paygateFeePct,
         subscriptionPlan,
         hasContract: Boolean(contractUrl),
+        invite: inviteStatus,
       },
     });
   } catch (err) {
@@ -165,5 +164,7 @@ export async function createComercioAction(
     };
   }
 
-  redirect(`/providers?created=${encodeURIComponent(finalBrandName ?? "")}`);
+  redirect(
+    `/providers?created=${encodeURIComponent(finalBrandName ?? "")}&invite=${inviteStatus}`,
+  );
 }

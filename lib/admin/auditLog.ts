@@ -13,6 +13,7 @@ export type AdminAuditAction =
   | "auth.user_unsuspend"
   | "provider.status_change"
   | "provider.comercio_create"
+  | "provider.invite_resend"
   | "event.status_patch"
   | "waitlist_qr.source_upsert"
   | "waitlist_qr.source_delete";
