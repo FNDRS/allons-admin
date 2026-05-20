@@ -5,6 +5,7 @@ import { requireRootActor } from "@/lib/admin/getRootActor";
 import type { ProviderStatus } from "@/lib/admin/users";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 const BAN_FOREVER = "876600h"; // 100 years — Supabase requires a finite duration.
 
@@ -102,4 +103,65 @@ export async function setProviderStatusAction(formData: FormData) {
   if (updateError) throw new Error(updateError.message);
 
   revalidatePath(revalidate);
+}
+
+export async function resendInviteAction(formData: FormData) {
+  const caller = await requireRootActor();
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) throw new Error("userId requerido");
+
+  const admin = createSupabaseServiceRoleClient();
+  const { data: existing, error: lookupError } =
+    await admin.auth.admin.getUserById(userId);
+  if (lookupError) throw new Error(lookupError.message);
+  const target = existing.user;
+  if (!target?.email) {
+    redirect("/providers?resent=missing_email");
+  }
+
+  if (target.email_confirmed_at) {
+    await logAdminAudit({
+      actor_user_id: caller.userId,
+      actor_email: caller.email,
+      source: "server_action",
+      action: "provider.invite_resend",
+      resource_type: "provider_user",
+      resource_id: userId,
+      outcome: "success",
+      state_after: { skipped: true, reason: "already_confirmed" },
+    });
+    redirect("/providers?resent=already_confirmed");
+  }
+
+  const redirectTo = process.env.APP_INVITE_REDIRECT_URL;
+  const options: { data: Record<string, unknown>; redirectTo?: string } = {
+    data: (target.user_metadata ?? {}) as Record<string, unknown>,
+  };
+  if (redirectTo) options.redirectTo = redirectTo;
+
+  const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
+    target.email,
+    options,
+  );
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "provider.invite_resend",
+    resource_type: "provider_user",
+    resource_id: userId,
+    outcome: inviteError ? "failure" : "success",
+    state_after: { email: target.email },
+    error_message: inviteError?.message ?? null,
+  });
+
+  if (inviteError) {
+    redirect(
+      `/providers?resent=failed&reason=${encodeURIComponent(inviteError.message.slice(0, 120))}`,
+    );
+  }
+
+  revalidatePath("/providers");
+  redirect(`/providers?resent=ok&email=${encodeURIComponent(target.email)}`);
 }

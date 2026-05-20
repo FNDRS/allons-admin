@@ -1,6 +1,9 @@
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
-import { setProviderStatusAction } from "@/lib/admin/actions";
+import {
+  resendInviteAction,
+  setProviderStatusAction,
+} from "@/lib/admin/actions";
 import {
   listAllUsers,
   type AdminUserRecord,
@@ -13,6 +16,10 @@ interface SearchParams {
   q?: string;
   status?: string;
   created?: string;
+  invite?: "invited" | "existing";
+  resent?: "ok" | "failed" | "already_confirmed" | "missing_email";
+  email?: string;
+  reason?: string;
 }
 
 const STATUS_LABEL: Record<ProviderStatus, string> = {
@@ -106,6 +113,33 @@ export default async function ProvidersPage({
         <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
           ✓ Comercio <strong>{params.created}</strong> creado correctamente. Apruébalo
           cuando el equipo haya verificado los datos.
+          {params.invite === "invited" ? (
+            <div className="mt-1 text-xs text-green-300/80">
+              Supabase envió un enlace de invitación al correo del comercio.
+            </div>
+          ) : params.invite === "existing" ? (
+            <div className="mt-1 text-xs text-yellow-300/80">
+              ⚠ Ya existía una cuenta con ese correo — se actualizaron los metadatos pero no se envió invitación.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {params.resent === "ok" ? (
+        <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+          ✓ Invitación reenviada a <strong>{params.email}</strong>.
+        </div>
+      ) : params.resent === "already_confirmed" ? (
+        <div className="mb-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
+          El usuario ya aceptó la invitación previa — no se reenvió. Si perdió el acceso, usa el flujo de recuperación de contraseña.
+        </div>
+      ) : params.resent === "failed" ? (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          ⚠ No se pudo reenviar la invitación{params.reason ? `: ${params.reason}` : "."}
+        </div>
+      ) : params.resent === "missing_email" ? (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          ⚠ El usuario no tiene correo registrado.
         </div>
       ) : null}
 
@@ -180,6 +214,9 @@ export default async function ProvidersPage({
                   {formatDate(p.createdAt)}
                 </div>
                 <div className="flex flex-wrap justify-end gap-1.5">
+                  {p.emailConfirmedAt === null ? (
+                    <ResendInviteButton userId={p.id} />
+                  ) : null}
                   {status !== "approved" ? (
                     <ActionButton
                       userId={p.id}
@@ -248,6 +285,21 @@ function ActionButton({
         className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
       >
         {label}
+      </button>
+    </form>
+  );
+}
+
+function ResendInviteButton({ userId }: { userId: string }) {
+  return (
+    <form action={resendInviteAction}>
+      <input type="hidden" name="userId" value={userId} />
+      <button
+        type="submit"
+        title="Reenviar enlace de invitación por correo"
+        className="border border-[#3A86FF]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3A86FF] transition hover:bg-[#3A86FF]/10"
+      >
+        ↻ Reenviar invitación
       </button>
     </form>
   );
