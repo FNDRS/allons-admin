@@ -1,6 +1,6 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/ui/password-input";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -27,8 +27,6 @@ function LoginPageContent() {
   const errorParam = searchParams.get("error");
   const from = searchParams.get("from") ?? "/overview";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === "not-root"
@@ -40,18 +38,34 @@ function LoginPageContent() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    const supabase = createSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    if (signInError) {
-      setError(signInError.message);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error ?? "No se pudo iniciar sesión");
+        return;
+      }
+
+      router.replace(from as never);
+      router.refresh();
+    } catch {
+      setError("Error de red. Revisa tu conexión e intenta de nuevo.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-    router.replace(from as never);
-    router.refresh();
   };
 
   return (
@@ -76,26 +90,18 @@ function LoginPageContent() {
           <div>
             <label className="eyebrow block mb-1.5">Email</label>
             <input
+              name="email"
               type="email"
               required
               autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-surfaceMuted border border-white/20 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
+              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-base text-white placeholder:text-white/30 transition-colors focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/10"
               placeholder="tucorreo@allons.app"
             />
           </div>
 
           <div>
             <label className="eyebrow block mb-1.5">Contraseña</label>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-surfaceMuted border border-white/20 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary"
-            />
+            <PasswordInput />
           </div>
 
           {error ? (

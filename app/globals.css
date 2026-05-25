@@ -39,6 +39,14 @@ a {
   letter-spacing: 0;
 }
 
+input.password-input-mask {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.1em;
+}
+
 .futuristic-shell {
   position: relative;
 }
