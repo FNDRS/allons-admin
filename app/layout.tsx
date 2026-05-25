@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppToaster } from "@/components/AppToaster";
 import "./globals.css";
 import { Silkscreen, Urbanist } from "next/font/google";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="es" className={`${silkscreen.variable} ${urbanist.variable}`}>
       <body className="min-h-screen bg-background text-white antialiased font-sans">
         {children}
+        <AppToaster />
       </body>
     </html>
   );
