@@ -3,7 +3,16 @@
 import { PasswordInput } from "@/components/ui/password-input";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+
+async function showLoginError(message: string) {
+  try {
+    const { toast } = await import("sonner");
+    toast.error(message);
+  } catch {
+    console.error(message);
+  }
+}
 
 export default function LoginPage() {
   return (
@@ -27,27 +36,52 @@ function LoginPageContent() {
   const errorParam = searchParams.get("error");
   const from = searchParams.get("from") ?? "/overview";
 
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(
-    errorParam === "not-root"
-      ? "Tu cuenta no tiene acceso a este panel."
-      : null,
-  );
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hadPasswordInUrl = params.has("password");
+
+    if (params.has("email") || hadPasswordInUrl) {
+      const safeParams = new URLSearchParams();
+      if (errorParam) safeParams.set("error", errorParam);
+      if (from !== "/overview") safeParams.set("from", from);
+      const query = safeParams.toString();
+      window.history.replaceState({}, "", query ? `/login?${query}` : "/login");
+    }
+
+    if (hadPasswordInUrl) {
+      void showLoginError(
+        "Tu contraseña quedó expuesta en la URL. Cámbiala cuanto antes.",
+      );
+      return;
+    }
+
+    if (errorParam === "not-root") {
+      void showLoginError("Tu cuenta no tiene acceso a este panel.");
+    }
+  }, [errorParam, from]);
+
+  const handleLogin = async () => {
+    if (submitting) return;
+
+    const trimmedEmail = emailRef.current?.value.trim() ?? "";
+    const password = passwordRef.current?.value ?? "";
+
+    if (!trimmedEmail || !password) {
+      void showLoginError("Email y contraseña son requeridos");
+      return;
+    }
+
     setSubmitting(true);
-    setError(null);
-
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
-    const password = String(formData.get("password") ?? "");
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: trimmedEmail, password }),
       });
 
       const payload = (await response.json().catch(() => ({}))) as {
@@ -55,14 +89,13 @@ function LoginPageContent() {
       };
 
       if (!response.ok) {
-        setError(payload.error ?? "No se pudo iniciar sesión");
+        void showLoginError(payload.error ?? "No se pudo iniciar sesión");
         return;
       }
 
       router.replace(from as never);
-      router.refresh();
     } catch {
-      setError("Error de red. Revisa tu conexión e intenta de nuevo.");
+      void showLoginError("Error de red. Revisa tu conexión e intenta de nuevo.");
     } finally {
       setSubmitting(false);
     }
@@ -86,13 +119,25 @@ function LoginPageContent() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Sin `name` ni type="submit": evita GET nativo que expone credenciales en la URL. */}
+        <div
+          className="space-y-4"
+          role="form"
+          aria-label="Iniciar sesión"
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            void handleLogin();
+          }}
+        >
           <div>
-            <label className="eyebrow block mb-1.5">Email</label>
+            <label className="eyebrow block mb-1.5" htmlFor="login-email">
+              Email
+            </label>
             <input
-              name="email"
+              ref={emailRef}
+              id="login-email"
               type="email"
-              required
               autoComplete="email"
               className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-base text-white placeholder:text-white/30 transition-colors focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/10"
               placeholder="tucorreo@allons.app"
@@ -100,24 +145,21 @@ function LoginPageContent() {
           </div>
 
           <div>
-            <label className="eyebrow block mb-1.5">Contraseña</label>
-            <PasswordInput />
+            <label className="eyebrow block mb-1.5" htmlFor="login-password">
+              Contraseña
+            </label>
+            <PasswordInput ref={passwordRef} id="login-password" />
           </div>
 
-          {error ? (
-            <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </div>
-          ) : null}
-
           <button
-            type="submit"
+            type="button"
             disabled={submitting}
+            onClick={() => void handleLogin()}
             className="w-full border border-white bg-white py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
           >
             {submitting ? "Entrando..." : "Iniciar sesión"}
           </button>
-        </form>
+        </div>
       </div>
     </main>
   );
