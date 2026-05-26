@@ -5,10 +5,50 @@ import { requireRootActor } from "@/lib/admin/getRootActor";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export type CreateComercioState = { error: string } | null;
+export type CreateComercioFormValues = {
+  fullName: string;
+  email: string;
+  phone: string;
+  brandName: string;
+  brandHandle: string;
+  businessType: string;
+  brandColor: string;
+  paygateFeePct: string;
+  subscriptionPlan: string;
+};
+
+export type CreateComercioState = {
+  error: string;
+  values: CreateComercioFormValues;
+} | null;
 
 const ALLONS_FEE_PCT = 12;
 const FREE_TRIAL_MONTHS = 6;
+
+function readFormValues(formData: FormData): CreateComercioFormValues {
+  return {
+    fullName: (formData.get("fullName") as string | null)?.trim() ?? "",
+    email: (formData.get("email") as string | null)?.trim() ?? "",
+    phone: (formData.get("phone") as string | null)?.trim() ?? "",
+    brandName: (formData.get("brandName") as string | null)?.trim() ?? "",
+    brandHandle:
+      (formData.get("brandHandle") as string | null)
+        ?.trim()
+        .replace(/^@/, "") ?? "",
+    businessType:
+      (formData.get("businessType") as string | null) ?? "empresa",
+    brandColor:
+      (formData.get("brandColor") as string | null)?.trim() || "#F67010",
+    paygateFeePct:
+      (formData.get("paygateFeePct") as string | null)?.trim() || "5",
+    subscriptionPlan:
+      (formData.get("subscriptionPlan") as string | null) ?? "pendiente",
+  };
+}
+
+function fail(formData: FormData, error: string): CreateComercioState {
+  return { error, values: readFormValues(formData) };
+}
 
 export async function createComercioAction(
   _prevState: CreateComercioState,
@@ -20,37 +60,28 @@ export async function createComercioAction(
 
   try {
     const actor = await requireRootActor();
+    const values = readFormValues(formData);
 
     // ── Extract & validate fields ──
-    const fullName = (formData.get("fullName") as string | null)?.trim() ?? "";
-    const email = (formData.get("email") as string | null)
-      ?.trim()
-      .toLowerCase() ?? "";
-    const phone =
-      (formData.get("phone") as string | null)?.trim() || null;
-    const brandName =
-      (formData.get("brandName") as string | null)?.trim() ?? "";
-    const brandHandle = (formData.get("brandHandle") as string | null)
-      ?.trim()
-      .replace(/^@/, "") ?? "";
-    const businessType =
-      (formData.get("businessType") as string | null) ?? "empresa";
-    const brandColor =
-      (formData.get("brandColor") as string | null)?.trim() || "#F67010";
+    const fullName = values.fullName;
+    const email = values.email.toLowerCase();
+    const phone = values.phone || null;
+    const brandName = values.brandName;
+    const brandHandle = values.brandHandle;
+    const businessType = values.businessType;
+    const brandColor = values.brandColor;
     const paygateFeePct = Math.max(
       0,
-      Math.min(
-        100,
-        parseFloat((formData.get("paygateFeePct") as string | null) ?? "0") ||
-          0,
-      ),
+      Math.min(100, parseFloat(values.paygateFeePct) || 0),
     );
-    const subscriptionPlan =
-      (formData.get("subscriptionPlan") as string | null) ?? "pendiente";
+    const subscriptionPlan = values.subscriptionPlan;
     const contractFile = formData.get("contractFile") as File | null;
 
     if (!fullName || !email || !brandName || !brandHandle) {
-      return { error: "Nombre, email, nombre del negocio y handle son obligatorios." };
+      return fail(
+        formData,
+        "Nombre, email, nombre del negocio y handle son obligatorios.",
+      );
     }
 
     finalBrandName = brandName;
@@ -69,7 +100,10 @@ export async function createComercioAction(
           upsert: true,
         });
       if (uploadError) {
-        return { error: `Error subiendo contrato: ${uploadError.message}` };
+        return fail(
+          formData,
+          `Error subiendo contrato: ${uploadError.message}`,
+        );
       }
       const { data: urlData } = supabase.storage
         .from("comercio-contracts")
@@ -101,6 +135,11 @@ export async function createComercioAction(
       free_trial_end: freeTrialEnd,
       allons_fee_pct: ALLONS_FEE_PCT,
       providerStatus: "pending",
+      // Read by allons-mobile `lib/role.ts` to force `/(auth)/set-password`
+      // on first sign-in (since the invite link logs the user in without a
+      // password). Cleared by the set-password screen after the comercio
+      // sets one.
+      mustSetPassword: true,
       comercio_role: "admin",
       created_by_admin: actor.email,
       created_at: now.toISOString(),
@@ -109,7 +148,7 @@ export async function createComercioAction(
     const admin = createSupabaseServiceRoleClient();
     const { data: existingList, error: listError } =
       await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listError) return { error: listError.message };
+    if (listError) return fail(formData, listError.message);
 
     const existing = existingList?.users?.find(
       (u) => u.email?.toLowerCase() === email,
@@ -122,19 +161,29 @@ export async function createComercioAction(
         await admin.auth.admin.updateUserById(existing.id, {
           user_metadata: { ...(existing.user_metadata ?? {}), ...userMetadata },
         });
-      if (updateError) return { error: updateError.message };
+      if (updateError) return fail(formData, updateError.message);
       createdUserId = updated.user.id;
       inviteStatus = "existing";
     } else {
-      const inviteOptions: { data: Record<string, unknown>; redirectTo?: string } = {
-        data: userMetadata,
-      };
-      const redirectTo = process.env.APP_INVITE_REDIRECT_URL;
-      if (redirectTo) inviteOptions.redirectTo = redirectTo;
+      // `redirectTo` must point at the mobile app's deep link so the invite
+      // email opens Allons and the `code=` param can be exchanged for a
+      // session. Without it, Supabase falls back to the project Site URL
+      // (`https://allonsapp.com`) and the comercio lands on the marketing
+      // site, where there is no set-password UI.
+      //
+      //   Production / dev client builds : `allons://`
+      //   Expo Go on a phone (dev)       : `exp://<LAN_IP>:8081/--/`
+      //   Web (`expo start --web`)       : `http://localhost:8081`
+      //
+      // Override per environment via `APP_INVITE_REDIRECT_URL` env var.
+      const redirectTo = process.env.APP_INVITE_REDIRECT_URL ?? "allons://";
 
       const { data: invited, error: inviteError } =
-        await admin.auth.admin.inviteUserByEmail(email, inviteOptions);
-      if (inviteError) return { error: inviteError.message };
+        await admin.auth.admin.inviteUserByEmail(email, {
+          data: userMetadata,
+          redirectTo,
+        });
+      if (inviteError) return fail(formData, inviteError.message);
       createdUserId = invited.user.id;
       inviteStatus = "invited";
     }
@@ -159,9 +208,10 @@ export async function createComercioAction(
       },
     });
   } catch (err) {
-    return {
-      error: (err as Error).message ?? "Error inesperado. Intenta de nuevo.",
-    };
+    return fail(
+      formData,
+      (err as Error).message ?? "Error inesperado. Intenta de nuevo.",
+    );
   }
 
   redirect(

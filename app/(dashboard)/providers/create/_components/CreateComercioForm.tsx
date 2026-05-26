@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useState, useCallback, useMemo, useRef } from "react";
-import { createComercioAction } from "../actions";
+import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { createComercioAction, type CreateComercioFormValues } from "../actions";
 
 const ALLONS_FEE_PCT = 12;
 const ISV_RATE = 0.15;
@@ -58,13 +58,45 @@ function toHandle(name: string) {
   return name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "")
     .slice(0, 20);
 }
 
+function applyFormValues(
+  values: CreateComercioFormValues,
+  setters: {
+    setFullName: (v: string) => void;
+    setEmail: (v: string) => void;
+    setPhone: (v: string) => void;
+    setBrandName: (v: string) => void;
+    setBrandHandle: (v: string) => void;
+    setHandleEdited: (v: boolean) => void;
+    setBusinessType: (v: BusinessType) => void;
+    setBrandColor: (v: string) => void;
+    setPaygateFeePct: (v: string) => void;
+    setPlan: (v: string) => void;
+  },
+) {
+  setters.setFullName(values.fullName);
+  setters.setEmail(values.email);
+  setters.setPhone(values.phone);
+  setters.setBrandName(values.brandName);
+  setters.setBrandHandle(values.brandHandle);
+  setters.setHandleEdited(Boolean(values.brandHandle));
+  setters.setBusinessType(values.businessType as BusinessType);
+  setters.setBrandColor(values.brandColor);
+  setters.setPaygateFeePct(values.paygateFeePct);
+  setters.setPlan(values.subscriptionPlan);
+}
+
 export function CreateComercioForm() {
   const [state, action, isPending] = useActionState(createComercioAction, null);
+
+  // ── Responsable ──
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
   // ── Business ──
   const [brandName, setBrandName] = useState("");
@@ -81,6 +113,22 @@ export function CreateComercioForm() {
 
   // ── Subscription ──
   const [plan, setPlan] = useState<string>("pendiente");
+
+  useEffect(() => {
+    if (!state?.values) return;
+    applyFormValues(state.values, {
+      setFullName,
+      setEmail,
+      setPhone,
+      setBrandName,
+      setBrandHandle,
+      setHandleEdited,
+      setBusinessType,
+      setBrandColor,
+      setPaygateFeePct,
+      setPlan,
+    });
+  }, [state]);
 
   const handleBrandNameChange = useCallback(
     (v: string) => {
@@ -157,6 +205,8 @@ export function CreateComercioForm() {
             <input
               name="fullName"
               required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               placeholder="Ej. María García"
               autoComplete="off"
               className={inputCls}
@@ -171,6 +221,8 @@ export function CreateComercioForm() {
               name="email"
               type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="correo@ejemplo.com"
               autoComplete="off"
               className={inputCls}
@@ -184,6 +236,8 @@ export function CreateComercioForm() {
             <input
               name="phone"
               type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               placeholder="+504 9999-9999"
               className={inputCls}
             />

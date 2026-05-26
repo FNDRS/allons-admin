@@ -133,15 +133,15 @@ export async function resendInviteAction(formData: FormData) {
     redirect("/providers?resent=already_confirmed");
   }
 
-  const redirectTo = process.env.APP_INVITE_REDIRECT_URL;
-  const options: { data: Record<string, unknown>; redirectTo?: string } = {
-    data: (target.user_metadata ?? {}) as Record<string, unknown>,
-  };
-  if (redirectTo) options.redirectTo = redirectTo;
-
+  // Same deep-link contract as createComercioAction: default to the mobile
+  // app scheme so the resent invite opens the app, not the marketing site.
+  const redirectTo = process.env.APP_INVITE_REDIRECT_URL ?? "allons://";
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
     target.email,
-    options,
+    {
+      data: (target.user_metadata ?? {}) as Record<string, unknown>,
+      redirectTo,
+    },
   );
 
   await logAdminAudit({
