@@ -155,11 +155,29 @@ export async function createComercioAction(
     );
 
     if (existing) {
-      // Existing user: keep idempotent. Only merge metadata — don't re-send an
-      // invite, since they already have an account / set a password.
+      // Refuse to re-create if this email already owns a comercio. Updating
+      // metadata for a confirmed user doesn't send a new invite email and
+      // produces duplicate provider rows in the API, so this branch is
+      // almost never what you want; bounce it with a clear message.
+      const existingMeta = (existing.user_metadata ?? {}) as Record<
+        string,
+        unknown
+      >;
+      if (
+        existingMeta.role === "provider" &&
+        existing.email_confirmed_at
+      ) {
+        return fail(
+          formData,
+          `Ya existe un comercio activo con ${email}. Si necesitas reasignarlo, edítalo desde la lista en lugar de crear uno nuevo.`,
+        );
+      }
+
+      // Pending user (invited but never confirmed): refresh the metadata so
+      // a re-send of the invite carries the latest brand info.
       const { data: updated, error: updateError } =
         await admin.auth.admin.updateUserById(existing.id, {
-          user_metadata: { ...(existing.user_metadata ?? {}), ...userMetadata },
+          user_metadata: { ...existingMeta, ...userMetadata },
         });
       if (updateError) return fail(formData, updateError.message);
       createdUserId = updated.user.id;
@@ -186,6 +204,71 @@ export async function createComercioAction(
       if (inviteError) return fail(formData, inviteError.message);
       createdUserId = invited.user.id;
       inviteStatus = "invited";
+    }
+
+    // Provision the API rows up front so allons-api never auto-creates a
+    // provider with `name='Mi comercio'` + `handle=NULL` (the legacy
+    // `ensureDefaultMembership` fallback). Doing it here, atomically, also
+    // prevents the race that produced 4 duplicate provider rows when several
+    // mobile requests landed before the membership row was committed.
+    if (!createdUserId) {
+      return fail(formData, "No se pudo obtener el ID del comercio creado.");
+    }
+
+    const { data: existingMembership, error: membershipLookupError } =
+      await admin
+        .from("provider_members")
+        .select("provider_id, role")
+        .eq("user_id", createdUserId)
+        .in("role", ["owner", "admin"])
+        .limit(1)
+        .maybeSingle();
+    if (membershipLookupError) {
+      return fail(formData, membershipLookupError.message);
+    }
+
+    let providerId = existingMembership?.provider_id ?? null;
+
+    if (providerId) {
+      // Pre-existing comercio (re-invite flow): keep the same provider row
+      // but make sure name / handle reflect the latest form values.
+      const { error: providerUpdateError } = await admin
+        .from("providers")
+        .update({ name: brandName, handle: brandHandle })
+        .eq("id", providerId);
+      if (providerUpdateError) {
+        return fail(formData, providerUpdateError.message);
+      }
+    } else {
+      const { data: provider, error: providerInsertError } = await admin
+        .from("providers")
+        .insert({ name: brandName, handle: brandHandle })
+        .select("id")
+        .single();
+      if (providerInsertError || !provider) {
+        return fail(
+          formData,
+          providerInsertError?.message ?? "No se pudo crear el provider.",
+        );
+      }
+      providerId = provider.id;
+
+      const { error: memberInsertError } = await admin
+        .from("provider_members")
+        .insert({
+          provider_id: providerId,
+          user_id: createdUserId,
+          role: "owner",
+          active: true,
+          full_name: fullName,
+          email,
+          phone,
+        });
+      if (memberInsertError) {
+        // Roll back the providers row so we don't leak orphaned brands.
+        await admin.from("providers").delete().eq("id", providerId);
+        return fail(formData, memberInsertError.message);
+      }
     }
 
     await logAdminAudit({
