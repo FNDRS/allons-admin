@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { PaymentDetailButton } from "@/app/(dashboard)/payments/_components/PaymentDetailButton";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
+import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
 import {
   countTicketsForProviderEvents,
   listEventPaymentsForProvider,
@@ -89,6 +90,8 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   "provider.plan_change": "Cambio de plan",
   "provider.comercio_create": "Alta de comercio",
   "provider.invite_resend": "Reenvío de invitación",
+  "provider.subscription_cancel": "Corte de suscripción",
+  "provider.data_export": "Exportación de datos",
 };
 
 function formatDate(iso: string | null) {
@@ -163,6 +166,13 @@ function auditSummary(row: {
     const email = row.stateAfter.email;
     if (email) return `Correo: ${String(email)}`;
   }
+  if (row.action === "provider.subscription_cancel") {
+    return "Acceso cortado · suscripción cancelada";
+  }
+  if (row.action === "provider.data_export") {
+    const n = row.stateAfter.events;
+    return typeof n === "number" ? `${n} eventos exportados` : "Datos exportados";
+  }
   return "";
 }
 
@@ -234,12 +244,19 @@ export default async function ProviderDetailPage({
           />
           <span className="text-sm text-muted">{subscriptionSummary(providerUser)}</span>
         </div>
-        <ProviderStatusActions
-          userId={userId}
-          status={status}
-          emailConfirmedAt={providerUser.emailConfirmedAt}
-          revalidatePath={revalidatePath}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <ProviderStatusActions
+            userId={userId}
+            status={status}
+            emailConfirmedAt={providerUser.emailConfirmedAt}
+            revalidatePath={revalidatePath}
+          />
+          <ProviderSubscriptionActions
+            userId={userId}
+            subscriptionStatus={providerUser.subscriptionStatus ?? null}
+            revalidatePath={revalidatePath}
+          />
+        </div>
       </div>
 
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
