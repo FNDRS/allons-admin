@@ -340,6 +340,7 @@ function PlanControl({
       <select
         name="plan"
         defaultValue={currentPlan}
+        aria-label="Plan de suscripción"
         className="border border-white/15 bg-white/[0.04] px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide focus:border-white focus:outline-none"
       >
         {PLAN_OPTIONS.map((o) => (
