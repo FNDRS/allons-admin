@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import {
   resendInviteAction,
+  setProviderPlanAction,
   setProviderStatusAction,
 } from "@/lib/admin/actions";
 import {
@@ -35,6 +36,34 @@ const STATUS_VARIANT: Record<ProviderStatus, "success" | "warning" | "muted" | "
   paused: "muted",
   suspended: "danger",
 };
+
+const PLAN_OPTIONS: { value: string; label: string }[] = [
+  { value: "pendiente", label: "Prueba (sin plan)" },
+  { value: "single_event", label: "Evento Único" },
+  { value: "basico", label: "Básico" },
+  { value: "pro", label: "Pro" },
+];
+const PLAN_LABEL: Record<string, string> = Object.fromEntries(
+  PLAN_OPTIONS.map((o) => [o.value, o.label]),
+);
+
+function subscriptionSummary(p: AdminUserRecord): string {
+  const planLabel = PLAN_LABEL[p.subscriptionPlan ?? "pendiente"] ?? "Prueba";
+  const isPlan =
+    p.subscriptionPlan === "single_event" ||
+    p.subscriptionPlan === "basico" ||
+    p.subscriptionPlan === "pro";
+  if (isPlan && p.subscriptionPeriodEnd) {
+    return `${planLabel} · renueva ${formatDate(p.subscriptionPeriodEnd)}`;
+  }
+  if (p.freeTrialEnd) {
+    const ended = new Date(p.freeTrialEnd).getTime() < Date.now();
+    return ended
+      ? `${planLabel} · prueba vencida (${formatDate(p.freeTrialEnd)})`
+      : `${planLabel} · prueba hasta ${formatDate(p.freeTrialEnd)}`;
+  }
+  return planLabel;
+}
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -203,6 +232,9 @@ export default async function ProvidersPage({
                   <div className="truncate text-xs text-muted">
                     {p.brandHandle ? `${p.brandHandle} · ` : ""}{p.email}
                   </div>
+                  <div className="truncate text-[11px] text-white/45">
+                    {subscriptionSummary(p)}
+                  </div>
                 </div>
                 <div>
                   <StatusPill
@@ -248,6 +280,10 @@ export default async function ProvidersPage({
                       tone="success"
                     />
                   )}
+                  <PlanControl
+                    userId={p.id}
+                    currentPlan={p.subscriptionPlan ?? "pendiente"}
+                  />
                 </div>
               </div>
             );
@@ -285,6 +321,40 @@ function ActionButton({
         className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
       >
         {label}
+      </button>
+    </form>
+  );
+}
+
+function PlanControl({
+  userId,
+  currentPlan,
+}: {
+  userId: string;
+  currentPlan: string;
+}) {
+  return (
+    <form action={setProviderPlanAction} className="flex items-center gap-1">
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="revalidate" value="/providers" />
+      <select
+        name="plan"
+        defaultValue={currentPlan}
+        aria-label="Plan de suscripción"
+        className="border border-white/15 bg-white/[0.04] px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide focus:border-white focus:outline-none"
+      >
+        {PLAN_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        title="Asignar plan al comercio"
+        className="border border-[#F67010]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#F67010] transition hover:bg-[#F67010]/10"
+      >
+        Plan
       </button>
     </form>
   );

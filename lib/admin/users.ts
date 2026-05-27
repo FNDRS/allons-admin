@@ -20,6 +20,11 @@ export interface AdminUserRecord {
   providerStatus?: ProviderStatus;
   brandName?: string | null;
   brandHandle?: string | null;
+  /** Subscription canonical state (owner metadata). */
+  subscriptionPlan?: string | null;
+  subscriptionStatus?: string | null;
+  freeTrialEnd?: string | null;
+  subscriptionPeriodEnd?: string | null;
   // Staff-specific:
   staffRole?: "scanner" | "admin" | "finance" | null;
   brandRef?: string | null;
@@ -79,6 +84,22 @@ function toRecord(user: {
     providerStatus: role === "provider" ? deriveProviderStatus(metadata) : undefined,
     brandName: (metadata?.brand_name as string | undefined) ?? null,
     brandHandle: (metadata?.brand_handle as string | undefined) ?? null,
+    subscriptionPlan:
+      role === "provider"
+        ? ((metadata?.subscription_plan as string | undefined) ?? null)
+        : null,
+    subscriptionStatus:
+      role === "provider"
+        ? ((metadata?.subscription_status as string | undefined) ?? null)
+        : null,
+    freeTrialEnd:
+      role === "provider"
+        ? ((metadata?.free_trial_end as string | undefined) ?? null)
+        : null,
+    subscriptionPeriodEnd:
+      role === "provider"
+        ? ((metadata?.subscription_period_end as string | undefined) ?? null)
+        : null,
     staffRole:
       role === "staff"
         ? ((metadata?.staff_role as AdminUserRecord["staffRole"]) ?? null)

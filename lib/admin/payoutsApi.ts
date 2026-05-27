@@ -47,3 +47,30 @@ export async function getRecentPayouts(limit = 20): Promise<AdminPayoutsRecentRe
   }
   return res.json();
 }
+
+export interface CompletePayoutResponse {
+  id: string;
+  status: string;
+}
+
+/** Marks a pending payout as completed (after the operator made the transfer). */
+export async function completePayout(
+  id: string,
+): Promise<CompletePayoutResponse> {
+  const res = await fetch(
+    payoutsSegmentUrl(`${encodeURIComponent(id)}/complete`),
+    {
+      method: "POST",
+      headers: { ...adminHeaders(), "Content-Type": "application/json" },
+      body: "{}",
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `No se pudo completar el retiro (${res.status})${detail ? `: ${detail.slice(0, 160)}` : ""}`,
+    );
+  }
+  return res.json();
+}
