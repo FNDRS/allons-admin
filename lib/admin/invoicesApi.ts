@@ -1,17 +1,35 @@
+import "server-only";
+
 /**
  * Subscription invoices admin API. Server-only (server components + server
  * actions) — calls allons-api `/admin/invoices` with the shared admin secret.
  */
+function getEnv() {
+  const baseUrl = process.env.ADMIN_API_BASE_URL;
+  const secret = process.env.ADMIN_API_SECRET;
+  if (!baseUrl) {
+    throw new Error(
+      "ADMIN_API_BASE_URL is not set. Point it at your allons-api deployment.",
+    );
+  }
+  if (!secret) {
+    throw new Error(
+      "ADMIN_API_SECRET is not set. It must match ADMIN_API_SECRET in allons-api.",
+    );
+  }
+  return { baseUrl: baseUrl.replace(/\/+$/, ""), secret };
+}
+
 function invoicesUrl(path: string, search?: URLSearchParams): string {
-  const base = process.env.ADMIN_API_BASE_URL?.replace(/\/+$/, "") ?? "";
-  if (!base) throw new Error("ADMIN_API_BASE_URL is not set");
+  const { baseUrl } = getEnv();
   const qs = search && search.toString() ? `?${search.toString()}` : "";
-  return `${base}/admin/invoices${path}${qs}`;
+  return `${baseUrl}/admin/invoices${path}${qs}`;
 }
 
 function adminHeaders(): HeadersInit {
+  const { secret } = getEnv();
   return {
-    "x-admin-secret": process.env.ADMIN_API_SECRET ?? "",
+    "x-admin-secret": secret,
     "Content-Type": "application/json",
   };
 }
@@ -82,7 +100,7 @@ export async function generateInvoice(body: {
 }
 
 export async function payInvoice(id: string): Promise<ProviderInvoice> {
-  const res = await fetch(invoicesUrl(`/${id}/pay`), {
+  const res = await fetch(invoicesUrl(`/${encodeURIComponent(id)}/pay`), {
     method: "POST",
     headers: adminHeaders(),
   });
@@ -91,7 +109,7 @@ export async function payInvoice(id: string): Promise<ProviderInvoice> {
 }
 
 export async function voidInvoice(id: string): Promise<ProviderInvoice> {
-  const res = await fetch(invoicesUrl(`/${id}/void`), {
+  const res = await fetch(invoicesUrl(`/${encodeURIComponent(id)}/void`), {
     method: "POST",
     headers: adminHeaders(),
   });

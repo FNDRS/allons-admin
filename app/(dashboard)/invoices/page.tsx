@@ -37,7 +37,8 @@ const STATUS_VARIANT: Record<
 
 function money(cents: number, currency = "HNL"): string {
   return `${currency === "HNL" ? "L. " : ""}${(cents / 100).toLocaleString("es-HN", {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })}`;
 }
 
@@ -68,7 +69,9 @@ export default async function InvoicesPage({
     loadError = e instanceof Error ? e.message : "Error al cargar facturas";
   }
 
-  const providers = (await loadProviders()).filter((p) => p.role === "provider");
+  const providersResult = await loadProviders();
+  const providers = providersResult.users.filter((p) => p.role === "provider");
+  const providersLoadError = providersResult.error;
   const nameByUserId = new Map(
     providers.map((p) => [p.id, p.brandName ?? p.fullName ?? p.email]),
   );
@@ -120,6 +123,9 @@ export default async function InvoicesPage({
       {/* Generate invoice */}
       <div className="futuristic-panel mb-5 p-5">
         <p className="eyebrow mb-3">Generar factura</p>
+        {providersLoadError ? (
+          <p className="mb-3 text-sm text-red-300">{providersLoadError}</p>
+        ) : null}
         <form action={generateInvoiceAction} className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-white/60">
             Comercio
@@ -227,11 +233,21 @@ export default async function InvoicesPage({
   );
 }
 
-async function loadProviders(): Promise<AdminUserRecord[]> {
+async function loadProviders(): Promise<{
+  users: AdminUserRecord[];
+  error: string | null;
+}> {
   try {
-    return await listAllUsers();
-  } catch {
-    return [];
+    return { users: await listAllUsers(), error: null };
+  } catch (e) {
+    console.error("[invoices] failed to load providers", e);
+    return {
+      users: [],
+      error:
+        e instanceof Error
+          ? e.message
+          : "No se pudieron cargar los comercios para generar facturas",
+    };
   }
 }
 
