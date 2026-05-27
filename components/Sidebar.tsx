@@ -5,6 +5,7 @@ import {
   Calendar,
   FileText,
   Gauge,
+  Loader2,
   LogOut,
   Bell,
   QrCode,
@@ -12,9 +13,10 @@ import {
   Store,
   Users,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
@@ -28,6 +30,39 @@ const NAV_ITEMS = [
   { href: "/refunds", label: "Reembolsos", icon: Receipt },
   { href: "/waitlist-qr", label: "Waitlist QR", icon: QrCode },
 ] as const;
+
+function NavIcon({ icon: Icon }: { icon: LucideIcon }) {
+  const { pending } = useLinkStatus();
+  if (pending) {
+    return <Loader2 size={16} className="animate-spin shrink-0" aria-hidden />;
+  }
+  return <Icon size={16} className="shrink-0" aria-hidden />;
+}
+
+function NavItem({
+  item,
+  active,
+}: {
+  item: (typeof NAV_ITEMS)[number];
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={item.href as never}
+      className={`flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3 text-sm transition ${
+        active
+          ? "bg-white text-black font-medium"
+          : "text-muted hover:bg-white/5 hover:text-white"
+      }`}
+      aria-current={active ? "page" : undefined}
+    >
+      <span className="flex items-center gap-3">
+        <NavIcon icon={item.icon} />
+        {item.label}
+      </span>
+    </Link>
+  );
+}
 
 export function Sidebar({ adminEmail }: { adminEmail: string }) {
   const pathname = usePathname();
@@ -66,22 +101,8 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
           const active =
             pathname === item.href ||
             (item.href !== "/overview" && pathname.startsWith(item.href));
-          const Icon = item.icon;
           return (
-            <Link
-              key={item.href}
-              href={item.href as never}
-              className={`flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3 text-sm transition ${
-                active
-                  ? "bg-white text-black font-medium"
-                  : "text-muted hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <Icon size={16} />
-                {item.label}
-              </span>
-            </Link>
+            <NavItem key={item.href} item={item} active={active} />
           );
         })}
       </nav>

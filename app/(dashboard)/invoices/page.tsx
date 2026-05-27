@@ -11,6 +11,7 @@ import {
   type ProviderInvoice,
 } from "@/lib/admin/invoicesApi";
 import { listAllUsers, type AdminUserRecord } from "@/lib/admin/users";
+import { InvoiceDetailButton } from "./_components/InvoiceDetailButton";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,14 @@ export default async function InvoicesPage({
         title="Facturación"
         description={`${money(totals.paidCents)} cobrado · ${money(totals.pendingCents)} pendiente`}
       />
+
+      <div className="mb-5 border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-white/55">
+        Cobro <strong className="text-white/80">manual</strong>: genera la
+        factura, confirma el pago (transferencia/depósito) y marca pagada para
+        activar el plan. Estos documentos son de control interno —{" "}
+        <strong className="text-white/80">no son comprobante fiscal</strong>{" "}
+        (CAI/SAR); el PDF y la numeración fiscal formal son un paso aparte.
+      </div>
 
       {/* KPIs */}
       <div className="mb-5 grid gap-4 sm:grid-cols-2">
@@ -257,6 +266,7 @@ function InvoiceRow({
         {formatDate(inv.periodStart)} → {formatDate(inv.periodEnd)}
       </div>
       <div className="flex flex-wrap justify-end gap-1.5">
+        <InvoiceDetailButton invoice={inv} comercio={comercio} />
         {inv.status === "pending" ? (
           <>
             <form action={markInvoicePaidAction}>
