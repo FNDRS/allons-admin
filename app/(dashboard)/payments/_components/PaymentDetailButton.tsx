@@ -109,9 +109,24 @@ export function PaymentDetailButton({
                   </p>
                 </div>
                 <div className="text-right text-white">
-                  {money(order.amountCents, order.currency)}
+                  {money(
+                    order.baseCents ?? order.amountCents,
+                    order.currency,
+                  )}
                 </div>
               </div>
+              {order.baseCents != null && order.taxCents != null ? (
+                <div className="space-y-1.5 border-t border-white/10 pt-3 text-sm">
+                  <div className="flex items-center justify-between text-white/55">
+                    <span>Base imponible</span>
+                    <span>{money(order.baseCents, order.currency)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/55">
+                    <span>ISV (15%)</span>
+                    <span>{money(order.taxCents, order.currency)}</span>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-3">
                 <p className="text-sm font-bold uppercase tracking-wide text-white/70">
                   Total
