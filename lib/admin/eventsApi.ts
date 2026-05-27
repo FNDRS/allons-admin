@@ -28,6 +28,18 @@ export interface AdminEventListItem {
   } | null;
 }
 
+export interface AdminEventDetailItem extends AdminEventListItem {
+  providerId: string | null;
+  address: string | null;
+  coverImageUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  smokingAllowed: boolean;
+  petFriendly: boolean;
+  parkingAvailable: boolean;
+  minAge: number | null;
+}
+
 export interface AdminEventListResponse {
   total: number;
   items: AdminEventListItem[];
@@ -46,8 +58,27 @@ export interface AdminEventListFilters {
 export interface AdminOverviewMetricsResponse {
   activeEvents: number;
   tickets30d: number;
-  scans30d: number;
+  posthogErrors30d: number | null;
   gmv30d: number | null;
+  totalEvents?: number;
+}
+
+export interface AdminPlatformStatusResponse {
+  adminAuditLogsReady: boolean;
+  paygate: {
+    configured: boolean;
+    connectivityStatus: string;
+  };
+  massSignupAlerts: {
+    mode: 'cron';
+    enabled: boolean;
+    windowMinutes: number;
+    threshold: number;
+    cooldownMinutes: number;
+    cron: string;
+    recipientsConfigured: boolean;
+    resendConfigured: boolean;
+  };
 }
 
 const ALLOWED_STATUSES = [
@@ -124,6 +155,13 @@ export function listAdminEvents(filters: AdminEventListFilters = {}) {
   });
 }
 
+export function getAdminEvent(id: string) {
+  return adminFetch<AdminEventDetailItem>(
+    `/admin/events/${encodeURIComponent(id)}`,
+    { method: "GET" },
+  );
+}
+
 export function updateAdminEventStatus(id: string, status: AdminEventStatus) {
   return adminFetch<{ ok: true; id: string; status: string }>(
     `/admin/events/${encodeURIComponent(id)}/status`,
@@ -136,6 +174,12 @@ export function updateAdminEventStatus(id: string, status: AdminEventStatus) {
 
 export function getAdminOverviewMetrics() {
   return adminFetch<AdminOverviewMetricsResponse>("/admin/overview-metrics", {
+    method: "GET",
+  });
+}
+
+export function getAdminPlatformStatus() {
+  return adminFetch<AdminPlatformStatusResponse>("/admin/platform-status", {
     method: "GET",
   });
 }

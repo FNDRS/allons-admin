@@ -1,13 +1,13 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
-import { getAdminOverviewMetrics } from "@/lib/admin/eventsApi";
+import { getAdminOverviewMetrics, getAdminPlatformStatus } from "@/lib/admin/eventsApi";
 import { listAllUsers } from "@/lib/admin/users";
 import {
   Activity,
+  Bug,
   Calendar,
   CircleDollarSign,
-  ScanLine,
   Store,
   Ticket,
   Users,
@@ -21,15 +21,35 @@ interface Counts {
   staff: number;
   signupsLast24h: number;
   pendingProviders: number;
-  suspended: number;
 }
 
 interface OverviewMetrics {
   activeEvents: number;
+  totalEvents: number;
   tickets30d: number;
-  scans30d: number;
+  posthogErrors30d: number | null;
   gmv30d: number | null;
   connected: boolean;
+}
+
+type PaygateStatus = {
+  connected: boolean;
+  configured: boolean;
+  connectivityStatus: string;
+};
+
+async function loadPaygateStatus(): Promise<PaygateStatus> {
+  try {
+    const status = await getAdminPlatformStatus();
+    return {
+      connected: true,
+      configured: Boolean(status.paygate?.configured),
+      connectivityStatus: String(status.paygate?.connectivityStatus ?? 'unknown'),
+    };
+  } catch (error) {
+    console.error('[overview] failed to load paygate status', error);
+    return { connected: false, configured: false, connectivityStatus: 'unknown' };
+  }
 }
 
 async function loadCounts(): Promise<Counts> {
@@ -42,14 +62,12 @@ async function loadCounts(): Promise<Counts> {
     let staff = 0;
     let signups = 0;
     let pendingProviders = 0;
-    let suspended = 0;
 
     for (const u of users) {
       if (u.role === "provider") providers += 1;
       else if (u.role === "staff") staff += 1;
       else clients += 1;
 
-      if (u.status === "suspended") suspended += 1;
       if (u.role === "provider" && u.providerStatus === "pending") {
         pendingProviders += 1;
       }
@@ -63,7 +81,6 @@ async function loadCounts(): Promise<Counts> {
       staff,
       signupsLast24h: signups,
       pendingProviders,
-      suspended,
     };
   } catch (error) {
     console.error("[overview] failed to load counts", error);
@@ -73,7 +90,6 @@ async function loadCounts(): Promise<Counts> {
       staff: 0,
       signupsLast24h: 0,
       pendingProviders: 0,
-      suspended: 0,
     };
   }
 }
@@ -85,13 +101,21 @@ function formatCurrency(value: number) {
 async function loadOverviewMetrics(): Promise<OverviewMetrics> {
   try {
     const metrics = await getAdminOverviewMetrics();
-    return { ...metrics, connected: true };
+    return {
+      activeEvents: metrics.activeEvents,
+      totalEvents: metrics.totalEvents ?? metrics.activeEvents,
+      tickets30d: metrics.tickets30d,
+      posthogErrors30d: metrics.posthogErrors30d,
+      gmv30d: metrics.gmv30d,
+      connected: true,
+    };
   } catch (error) {
     console.error("[overview] failed to load admin overview metrics", error);
     return {
       activeEvents: 0,
+      totalEvents: 0,
       tickets30d: 0,
-      scans30d: 0,
+      posthogErrors30d: null,
       gmv30d: null,
       connected: false,
     };
@@ -99,9 +123,10 @@ async function loadOverviewMetrics(): Promise<OverviewMetrics> {
 }
 
 export default async function OverviewPage() {
-  const [counts, metrics] = await Promise.all([
+  const [counts, metrics, paygate] = await Promise.all([
     loadCounts(),
     loadOverviewMetrics(),
+    loadPaygateStatus(),
   ]);
 
   return (
@@ -144,7 +169,11 @@ export default async function OverviewPage() {
           label="Eventos activos"
           value={metrics.activeEvents.toLocaleString()}
           hint={
-            metrics.connected ? "Publicados y vigentes" : "Sin conexión a Admin API"
+            metrics.connected
+              ? metrics.totalEvents > metrics.activeEvents
+                ? `${metrics.totalEvents.toLocaleString()} en catálogo (incl. borradores o vencidos)`
+                : "Publicados, agotados y vigentes"
+              : "Sin conexión a Admin API"
           }
           icon={Calendar}
         />
@@ -156,15 +185,27 @@ export default async function OverviewPage() {
         />
         <KpiCard
           label="GMV 30 d"
-          value={formatCurrency(metrics.gmv30d ?? 0)}
-          hint={metrics.gmv30d === null ? "Pasarela pendiente" : "Venta bruta 30 días"}
+          value={
+            metrics.gmv30d === null ? '—' : formatCurrency(metrics.gmv30d)
+          }
+          hint={
+            metrics.gmv30d === null ? 'Pendiente de pasarela' : 'Venta bruta 30 días'
+          }
           icon={CircleDollarSign}
         />
         <KpiCard
-          label="Escaneos 30 d"
-          value={metrics.scans30d.toLocaleString()}
-          hint={metrics.connected ? "Check-ins válidos" : "Sin conexión"}
-          icon={ScanLine}
+          label="Errores 30 d"
+          value={
+            metrics.posthogErrors30d === null
+              ? "—"
+              : metrics.posthogErrors30d.toLocaleString()
+          }
+          hint={
+            metrics.posthogErrors30d === null
+              ? "PostHog no configurado o sin acceso"
+              : "Excepciones capturadas en PostHog"
+          }
+          icon={Bug}
         />
       </section>
 
@@ -191,27 +232,23 @@ export default async function OverviewPage() {
             />
             <Row
               label="Pasarela de pagos"
-              value={<StatusPill label="No conectado" variant="danger" />}
-            />
-            <Row
-              label="Cuentas suspendidas"
               value={
-                <span className="text-sm font-bold text-danger">
-                  {counts.suspended}
-                </span>
+                paygate.connected &&
+                paygate.configured &&
+                paygate.connectivityStatus === 'ok' ? (
+                  <StatusPill label="Operativo" variant="success" />
+                ) : paygate.connected && paygate.connectivityStatus === 'unauthorized' ? (
+                  <StatusPill label="No autorizado" variant="danger" />
+                ) : paygate.connected && paygate.configured ? (
+                  <StatusPill label="Intermitente" variant="warning" />
+                ) : paygate.connected ? (
+                  <StatusPill label="No conectado" variant="danger" />
+                ) : (
+                  <StatusPill label="Pendiente" variant="warning" />
+                )
               }
             />
           </div>
-        </div>
-
-        <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Próximos pasos</div>
-          <ol className="list-decimal space-y-2 pl-5 text-sm text-muted">
-            <li>Exponer tabla de eventos vía RPC para conectar Overview y Eventos.</li>
-            <li>Auditoría de acciones del root (suspender, aprobar) en Postgres.</li>
-            <li>Webhook de Auth para alertas de signups masivos.</li>
-            <li>Conectar payouts y métricas de GMV en Finanzas.</li>
-          </ol>
         </div>
       </section>
     </div>

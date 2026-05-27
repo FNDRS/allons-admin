@@ -9,6 +9,7 @@ export async function setEventStatus(formData: FormData) {
   const caller = await requireRootActor();
   const id = String(formData.get("eventId") ?? "");
   const status = String(formData.get("status") ?? "");
+  const revalidate = String(formData.get("revalidate") ?? "/events");
 
   if (!id) throw new Error("eventId requerido");
   if (!isValidAdminEventStatus(status)) {
@@ -27,6 +28,7 @@ export async function setEventStatus(formData: FormData) {
       outcome: "success",
       state_after: { status },
     });
+    revalidatePath(revalidate);
     revalidatePath("/events");
   } catch (err) {
     const message =
