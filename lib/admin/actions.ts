@@ -111,8 +111,8 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Sets a comercio's subscription plan. A real plan activates the account for a
- * one-year term; "pendiente" clears the plan so the API derives trial/expired
- * from `free_trial_end`. Canonical state lives in the owner's user_metadata
+ * one-year term; "pendiente" clears `subscription_status`/`subscription_period_end`
+ * so the API derives trialing/expired from `free_trial_end`. Canonical state lives in the owner's user_metadata
  * (read by allons-api and allons-mobile).
  */
 export async function setProviderPlanAction(formData: FormData) {
