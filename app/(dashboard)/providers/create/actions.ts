@@ -185,10 +185,10 @@ export async function createComercioAction(
     } else {
       // `redirectTo` is embedded in {{ .ConfirmationURL }} (Supabase preview +
       // legacy flows). Must be HTTPS — email clients block allons://. The invite
-      // template button should use https://allons.app/verify?token_hash=…
+      // template button should use https://allonsapp.com/verify?token_hash=…
       // directly; this redirect is a fallback only.
       const redirectTo =
-        process.env.APP_INVITE_REDIRECT_URL ?? "https://allons.app/verify";
+        process.env.APP_INVITE_REDIRECT_URL ?? "https://allonsapp.com/verify";
 
       const { data: invited, error: inviteError } =
         await admin.auth.admin.inviteUserByEmail(email, {

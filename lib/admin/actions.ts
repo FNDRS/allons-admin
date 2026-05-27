@@ -265,7 +265,7 @@ export async function resendInviteAction(formData: FormData) {
   // Same contract as createComercioAction — HTTPS so Supabase preview / mail
   // clients never surface allons:// (blocked in email).
   const redirectTo =
-    process.env.APP_INVITE_REDIRECT_URL ?? "https://allons.app/verify";
+    process.env.APP_INVITE_REDIRECT_URL ?? "https://allonsapp.com/verify";
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
     target.email,
     {
