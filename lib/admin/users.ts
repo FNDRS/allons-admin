@@ -111,8 +111,20 @@ function toRecord(user: {
   };
 }
 
+/** GoTrue listUsers breaks when auth.users token columns are NULL. Repair first. */
+async function repairAuthUsersForListing(
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
+): Promise<void> {
+  const { error } = await admin.rpc("repair_auth_users_token_nulls");
+  if (error && error.code !== "PGRST202") {
+    // PGRST202 = function not found (migration not deployed yet).
+    console.warn("[admin/users] repair_auth_users_token_nulls:", error.message);
+  }
+}
+
 export async function listAllUsers(): Promise<AdminUserRecord[]> {
   const admin = createSupabaseServiceRoleClient();
+  await repairAuthUsersForListing(admin);
   const all: AdminUserRecord[] = [];
   const perPage = 200;
   let page = 1;
