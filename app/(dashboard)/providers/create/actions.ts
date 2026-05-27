@@ -183,18 +183,12 @@ export async function createComercioAction(
       createdUserId = updated.user.id;
       inviteStatus = "existing";
     } else {
-      // `redirectTo` must point at the mobile app's deep link so the invite
-      // email opens Allons and the `code=` param can be exchanged for a
-      // session. Without it, Supabase falls back to the project Site URL
-      // (`https://allonsapp.com`) and the comercio lands on the marketing
-      // site, where there is no set-password UI.
-      //
-      //   Production / dev client builds : `allons://`
-      //   Expo Go on a phone (dev)       : `exp://<LAN_IP>:8081/--/`
-      //   Web (`expo start --web`)       : `http://localhost:8081`
-      //
-      // Override per environment via `APP_INVITE_REDIRECT_URL` env var.
-      const redirectTo = process.env.APP_INVITE_REDIRECT_URL ?? "allons://";
+      // `redirectTo` is embedded in {{ .ConfirmationURL }} (Supabase preview +
+      // legacy flows). Must be HTTPS — email clients block allons://. The invite
+      // template button should use https://allons.app/verify?token_hash=…
+      // directly; this redirect is a fallback only.
+      const redirectTo =
+        process.env.APP_INVITE_REDIRECT_URL ?? "https://allons.app/verify";
 
       const { data: invited, error: inviteError } =
         await admin.auth.admin.inviteUserByEmail(email, {
