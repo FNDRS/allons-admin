@@ -1,8 +1,14 @@
+"use client";
+
 import {
   resendInviteAction,
   setProviderStatusAction,
 } from "@/lib/admin/actions";
 import type { ProviderStatus } from "@/lib/admin/users";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { toast } from "sonner";
 
 export function ProviderStatusActions({
   userId,
@@ -68,6 +74,18 @@ export function ProviderStatusActions({
   );
 }
 
+function statusToastMessage(
+  status: ProviderStatus,
+  label: string,
+): string {
+  if (status === "approved") {
+    return label === "Reactivar" ? "Comercio reactivado" : "Comercio aprobado";
+  }
+  if (status === "paused") return "Comercio pausado";
+  if (status === "suspended") return "Comercio suspendido";
+  return "Estado del comercio actualizado";
+}
+
 function StatusActionButton({
   userId,
   status,
@@ -81,6 +99,9 @@ function StatusActionButton({
   tone: "success" | "danger" | "muted";
   revalidatePath: string;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const styles =
     tone === "success"
       ? "border-success/40 text-success hover:bg-success/10"
@@ -89,15 +110,41 @@ function StatusActionButton({
         : "border-white/15 text-muted hover:bg-white/5";
 
   return (
-    <form action={setProviderStatusAction}>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        startTransition(async () => {
+          try {
+            await setProviderStatusAction(formData);
+            toast.success(statusToastMessage(status, label));
+            router.refresh();
+          } catch (err) {
+            toast.error(
+              err instanceof Error
+                ? err.message
+                : "No se pudo actualizar el comercio",
+            );
+          }
+        });
+      }}
+    >
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
       <button
         type="submit"
-        className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
+        disabled={isPending}
+        className={`inline-flex items-center gap-1.5 border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60 ${styles}`}
       >
-        {label}
+        {isPending ? (
+          <>
+            <Loader2 size={12} className="animate-spin" aria-hidden />
+            <span>{label}…</span>
+          </>
+        ) : (
+          label
+        )}
       </button>
     </form>
   );

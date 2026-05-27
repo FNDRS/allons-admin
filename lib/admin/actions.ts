@@ -3,6 +3,7 @@
 import { logAdminAudit } from "@/lib/admin/auditLog";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import type { ProviderStatus } from "@/lib/admin/users";
+import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -262,17 +263,13 @@ export async function resendInviteAction(formData: FormData) {
     redirect("/providers?resent=already_confirmed");
   }
 
-  // Same contract as createComercioAction — HTTPS so Supabase preview / mail
-  // clients never surface allons:// (blocked in email).
-  const redirectTo =
-    process.env.APP_INVITE_REDIRECT_URL ?? "https://allonsapp.com/verify";
-  const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
-    target.email,
-    {
-      data: (target.user_metadata ?? {}) as Record<string, unknown>,
-      redirectTo,
-    },
-  );
+  const invited = await sendComercioInviteEmail({
+    email: target.email,
+    metadata: (target.user_metadata ?? {}) as Record<string, unknown>,
+  });
+
+  const inviteError =
+    invited.error ?? (!invited.emailSent ? "No se envió el correo" : null);
 
   await logAdminAudit({
     actor_user_id: caller.userId,
@@ -283,12 +280,12 @@ export async function resendInviteAction(formData: FormData) {
     resource_id: userId,
     outcome: inviteError ? "failure" : "success",
     state_after: { email: target.email },
-    error_message: inviteError?.message ?? null,
+    error_message: inviteError,
   });
 
   if (inviteError) {
     redirect(
-      `/providers?resent=failed&reason=${encodeURIComponent(inviteError.message.slice(0, 120))}`,
+      `/providers?resent=failed&reason=${encodeURIComponent(inviteError.slice(0, 120))}`,
     );
   }
 

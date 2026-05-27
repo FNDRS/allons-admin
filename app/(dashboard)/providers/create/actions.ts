@@ -1,6 +1,7 @@
 "use server";
 
 import { logAdminAudit } from "@/lib/admin/auditLog";
+import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -183,20 +184,25 @@ export async function createComercioAction(
       createdUserId = updated.user.id;
       inviteStatus = "existing";
     } else {
-      // `redirectTo` is embedded in {{ .ConfirmationURL }} (Supabase preview +
-      // legacy flows). Must be HTTPS — email clients block allons://. The invite
-      // template button should use https://allonsapp.com/verify?token_hash=…
-      // directly; this redirect is a fallback only.
-      const redirectTo =
-        process.env.APP_INVITE_REDIRECT_URL ?? "https://allonsapp.com/verify";
-
-      const { data: invited, error: inviteError } =
-        await admin.auth.admin.inviteUserByEmail(email, {
-          data: userMetadata,
-          redirectTo,
-        });
-      if (inviteError) return fail(formData, inviteError.message);
-      createdUserId = invited.user.id;
+      // Invite email is sent via Resend (lib/admin/comercioInviteMail.ts), not
+      // Supabase's built-in template — so links always use allonsapp.com.
+      const invited = await sendComercioInviteEmail({
+        email,
+        metadata: userMetadata,
+      });
+      if (invited.error || !invited.userId) {
+        return fail(
+          formData,
+          invited.error ?? "No se pudo crear la invitación del comercio.",
+        );
+      }
+      if (!invited.emailSent) {
+        return fail(
+          formData,
+          invited.error ?? "No se pudo enviar el correo de invitación.",
+        );
+      }
+      createdUserId = invited.userId;
       inviteStatus = "invited";
     }
 
