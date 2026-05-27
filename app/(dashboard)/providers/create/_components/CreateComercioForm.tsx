@@ -6,6 +6,8 @@ import { createComercioAction, type CreateComercioFormValues } from "../actions"
 const ALLONS_FEE_PCT = 12;
 const ISV_RATE = 0.15;
 const EXAMPLE_TICKET = 1000;
+/** Precio por usuario staff adicional (plan Evento Único). */
+const STAFF_USER_ADDON_LPS = 200;
 
 const BUSINESS_TYPES = [
   { value: "ong", label: "ONG / Sin fines de lucro", defaultPct: 2 },
@@ -18,29 +20,38 @@ type BusinessType = (typeof BUSINESS_TYPES)[number]["value"];
 
 const PLANS = [
   {
+    id: "single_event",
+    name: "Evento Único",
+    price: 2500,
+    period: "/año",
+    tagline: "Para un único evento al año",
+    features: [
+      "1 evento activo",
+      "Tickets ilimitados",
+      `L. ${STAFF_USER_ADDON_LPS.toLocaleString("es-HN")} por nuevo usuario`,
+    ],
+  },
+  {
     id: "basico",
     name: "Básico",
     price: 499,
-    tagline: "Para ONGs y negocios pequeños",
+    period: "/mes",
+    tagline: "Estudios pequeños, bares y comercios locales",
     features: [
       "Hasta 4 eventos activos",
       "Hasta 500 tickets por evento",
-      "Analytics básicos",
-      "Soporte por email",
-      "Panel de gestión de staff",
+      "Soporte por correo",
     ],
   },
   {
     id: "pro",
     name: "Pro",
     price: 1499,
+    period: "/mes",
     tagline: "Para empresas y tecnología",
     features: [
       "Eventos y tickets ilimitados",
-      "Analytics avanzados con gráficas",
       "Soporte WhatsApp + email",
-      "Códigos de descuento y referidos",
-      "Branding personalizado",
     ],
   },
 ] as const;
@@ -456,7 +467,7 @@ export function CreateComercioForm() {
           <strong className="text-white">{freeTrialEnd}</strong>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PLANS.map((p) => (
             <label
               key={p.id}
@@ -483,7 +494,7 @@ export function CreateComercioForm() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-white">L. {p.price}</p>
-                  <p className="text-xs text-white/40">/mes</p>
+                  <p className="text-xs text-white/40">{p.period}</p>
                 </div>
               </div>
               <ul className="space-y-1.5">

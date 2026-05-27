@@ -105,6 +105,75 @@ export async function setProviderStatusAction(formData: FormData) {
   revalidatePath(revalidate);
 }
 
+const PLAN_VALUES = ["pendiente", "single_event", "basico", "pro"] as const;
+type PlanValue = (typeof PLAN_VALUES)[number];
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Sets a comercio's subscription plan. A real plan activates the account for a
+ * one-year term; "pendiente" clears the plan so the API derives trial/expired
+ * from `free_trial_end`. Canonical state lives in the owner's user_metadata
+ * (read by allons-api and allons-mobile).
+ */
+export async function setProviderPlanAction(formData: FormData) {
+  const caller = await requireRootActor();
+  const userId = String(formData.get("userId") ?? "");
+  const plan = String(formData.get("plan") ?? "") as PlanValue;
+  const revalidate = String(formData.get("revalidate") ?? "/providers");
+
+  if (!userId || !PLAN_VALUES.includes(plan)) {
+    throw new Error("Parámetros inválidos");
+  }
+
+  const admin = createSupabaseServiceRoleClient();
+  const { data: existing, error: lookupError } =
+    await admin.auth.admin.getUserById(userId);
+  if (lookupError) throw new Error(lookupError.message);
+  if (!existing.user) throw new Error("Usuario no encontrado");
+
+  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
+  const previousPlan =
+    typeof meta.subscription_plan === "string" ? meta.subscription_plan : null;
+
+  const merged: Record<string, unknown> = {
+    ...meta,
+    subscription_plan: plan,
+    subscriptionUpdatedBy: caller.userId,
+    subscriptionUpdatedAt: new Date().toISOString(),
+  };
+  if (plan === "pendiente") {
+    // No active plan — let the API derive trialing/expired from free_trial_end.
+    delete merged.subscription_status;
+    delete merged.subscription_period_end;
+  } else {
+    merged.subscription_status = "active";
+    merged.subscription_period_end = new Date(
+      Date.now() + ONE_YEAR_MS,
+    ).toISOString();
+  }
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: merged,
+  });
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "provider.plan_change",
+    resource_type: "provider_user",
+    resource_id: userId,
+    outcome: updateError ? "failure" : "success",
+    state_before: { subscription_plan: previousPlan },
+    state_after: { subscription_plan: plan },
+    error_message: updateError?.message ?? null,
+  });
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(revalidate);
+}
+
 export async function resendInviteAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
