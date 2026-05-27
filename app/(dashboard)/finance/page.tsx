@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Suspense } from "react";
 import { StatusPill } from "@/components/StatusPill";
+import { CompletePayoutButton } from "@/components/CompletePayoutButton";
 import { getPaymentsSummary } from "@/lib/admin/paymentsApi";
 import { getRecentPayouts } from "@/lib/admin/payoutsApi";
 
@@ -45,7 +46,13 @@ async function PaymentsSummaryCards() {
     );
   }
 
-  const feeCents = Math.round(summary.gmvCents * 0.06);
+  // Platform revenue = Allons commission + ISV on it (env-configurable). The
+  // per-comercio Paygate/bank fee goes to the bank, not Allons, and varies per
+  // comercio, so it's not part of this platform-wide aggregate.
+  const allonsPct = Number(process.env.PLATFORM_ALLONS_FEE_PCT) || 12;
+  const isvPct = Number(process.env.PLATFORM_ISV_PCT) || 15;
+  const platformFeePct = allonsPct + (allonsPct * isvPct) / 100;
+  const feeCents = Math.round(summary.gmvCents * (platformFeePct / 100));
   const paidCents = summary.gmvCents - feeCents;
 
   return (
@@ -60,7 +67,7 @@ async function PaymentsSummaryCards() {
         <KpiCard
           label="Fee plataforma"
           value={formatCurrency(feeCents / 100)}
-          hint="6% del GMV"
+          hint={`${platformFeePct.toFixed(1)}% del GMV (Allons + ISV)`}
           icon={CreditCard}
         />
         <KpiCard
@@ -106,14 +113,15 @@ async function RecentPayoutsPanel() {
     return (
       <div className="-mx-2 overflow-x-auto">
         <div
-          className="grid min-w-[640px] border-b border-white/12 bg-white/[0.02] px-2 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "110px 100px 1fr 120px 1fr" }}
+          className="grid min-w-[720px] border-b border-white/12 bg-white/[0.02] px-2 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+          style={{ gridTemplateColumns: "110px 100px 1fr 120px 1fr 96px" }}
         >
           <div>Estado</div>
           <div className="text-right">Monto</div>
           <div>Comercio</div>
           <div>Fecha</div>
           <div>Método</div>
+          <div className="text-right">Acción</div>
         </div>
         {items.map((row) => {
           const meta = PAYOUT_STATUS_META[row.status] ?? {
@@ -123,8 +131,8 @@ async function RecentPayoutsPanel() {
           return (
             <div
               key={row.id}
-              className="grid min-w-[640px] items-center border-b border-white/8 px-2 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
-              style={{ gridTemplateColumns: "110px 100px 1fr 120px 1fr" }}
+              className="grid min-w-[720px] items-center border-b border-white/8 px-2 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
+              style={{ gridTemplateColumns: "110px 100px 1fr 120px 1fr 96px" }}
             >
               <div>
                 <StatusPill label={meta.label} variant={meta.variant} />
@@ -146,6 +154,11 @@ async function RecentPayoutsPanel() {
               </div>
               <div className="truncate font-mono text-[11px] text-muted" title={row.method}>
                 {row.method}
+              </div>
+              <div className="flex justify-end">
+                {row.status === "pending" ? (
+                  <CompletePayoutButton id={row.id} />
+                ) : null}
               </div>
             </div>
           );
