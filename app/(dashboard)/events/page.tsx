@@ -1,13 +1,14 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
-import { setEventStatus } from "@/lib/admin/eventActions";
 import {
   listAdminEvents,
   type AdminEventListItem,
   type AdminEventListResponse,
 } from "@/lib/admin/eventsApi";
+import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
 import { Calendar, Plug, Ticket, Users } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -243,70 +244,19 @@ function EventRow({ event }: { event: AdminEventListItem }) {
       </div>
       <div className="text-xs text-muted">{formatDate(event.startsAt)}</div>
       <div className="flex flex-wrap justify-end gap-1.5">
-        {status !== "published" ? (
-          <ActionButton
-            eventId={event.id}
-            status="published"
-            label="Publicar"
-            tone="success"
-          />
-        ) : null}
-        {status !== "suspended" ? (
-          <ActionButton
-            eventId={event.id}
-            status="suspended"
-            label="Suspender"
-            tone="danger"
-          />
-        ) : (
-          <ActionButton
-            eventId={event.id}
-            status="published"
-            label="Reactivar"
-            tone="success"
-          />
-        )}
-        {status !== "ended" ? (
-          <ActionButton
-            eventId={event.id}
-            status="ended"
-            label="Finalizar"
-            tone="muted"
-          />
-        ) : null}
+        <Link
+          href={`/events/${event.id}` as never}
+          className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+        >
+          Ver
+        </Link>
+        <EventStatusActions
+          eventId={event.id}
+          status={status}
+          revalidatePath="/events"
+        />
       </div>
     </div>
-  );
-}
-
-function ActionButton({
-  eventId,
-  status,
-  label,
-  tone,
-}: {
-  eventId: string;
-  status: string;
-  label: string;
-  tone: "success" | "danger" | "muted";
-}) {
-  const styles =
-    tone === "success"
-      ? "border-success/40 text-success hover:bg-success/10"
-      : tone === "danger"
-      ? "border-danger/40 text-danger hover:bg-danger/10"
-      : "border-white/15 text-muted hover:bg-white/5";
-  return (
-    <form action={setEventStatus}>
-      <input type="hidden" name="eventId" value={eventId} />
-      <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
-        className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
-      >
-        {label}
-      </button>
-    </form>
   );
 }
 

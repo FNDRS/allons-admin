@@ -15,6 +15,8 @@ export type AdminAuditAction =
   | "provider.plan_change"
   | "provider.comercio_create"
   | "provider.invite_resend"
+  | "provider.subscription_cancel"
+  | "provider.data_export"
   | "event.status_patch"
   | "waitlist_qr.source_upsert"
   | "waitlist_qr.source_delete";

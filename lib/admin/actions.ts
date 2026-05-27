@@ -174,6 +174,66 @@ export async function setProviderPlanAction(formData: FormData) {
   revalidatePath(revalidate);
 }
 
+/**
+ * Immediate cut: cancels a comercio's subscription right now (not at period end).
+ * Sets `subscription_status='canceled'` and ends the term immediately so allons-api
+ * and allons-mobile lock the account and show the paywall. Use for fraud, chargebacks
+ * or ToS violations — the ordinary self-serve "cancelar al final del período" lives in
+ * the mobile app and keeps access until the term ends.
+ */
+export async function cancelProviderSubscriptionAction(formData: FormData) {
+  const caller = await requireRootActor();
+  const userId = String(formData.get("userId") ?? "");
+  const revalidate = String(formData.get("revalidate") ?? "/providers");
+
+  if (!userId) throw new Error("userId requerido");
+
+  const admin = createSupabaseServiceRoleClient();
+  const { data: existing, error: lookupError } =
+    await admin.auth.admin.getUserById(userId);
+  if (lookupError) throw new Error(lookupError.message);
+  if (!existing.user) throw new Error("Usuario no encontrado");
+
+  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
+  const previousStatus =
+    typeof meta.subscription_status === "string"
+      ? meta.subscription_status
+      : null;
+  const now = new Date().toISOString();
+
+  const merged: Record<string, unknown> = {
+    ...meta,
+    subscription_status: "canceled",
+    // End the term now so the derived state is locked, not "cancel at period end".
+    subscription_period_end: now,
+    subscription_cancel_at_period_end: false,
+    subscription_canceled_at: now,
+    subscriptionUpdatedBy: caller.userId,
+    subscriptionUpdatedAt: now,
+  };
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: merged,
+  });
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "provider.subscription_cancel",
+    resource_type: "provider_user",
+    resource_id: userId,
+    outcome: updateError ? "failure" : "success",
+    state_before: { subscription_status: previousStatus },
+    state_after: { subscription_status: "canceled" },
+    error_message: updateError?.message ?? null,
+  });
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(revalidate);
+}
+
 export async function resendInviteAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");

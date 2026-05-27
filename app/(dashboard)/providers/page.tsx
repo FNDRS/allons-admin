@@ -1,15 +1,12 @@
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
-import {
-  resendInviteAction,
-  setProviderPlanAction,
-  setProviderStatusAction,
-} from "@/lib/admin/actions";
+import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import {
   listAllUsers,
   type AdminUserRecord,
   type ProviderStatus,
 } from "@/lib/admin/users";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -37,15 +34,12 @@ const STATUS_VARIANT: Record<ProviderStatus, "success" | "warning" | "muted" | "
   suspended: "danger",
 };
 
-const PLAN_OPTIONS: { value: string; label: string }[] = [
-  { value: "pendiente", label: "Prueba (sin plan)" },
-  { value: "single_event", label: "Evento Único" },
-  { value: "basico", label: "Básico" },
-  { value: "pro", label: "Pro" },
-];
-const PLAN_LABEL: Record<string, string> = Object.fromEntries(
-  PLAN_OPTIONS.map((o) => [o.value, o.label]),
-);
+const PLAN_LABEL: Record<string, string> = {
+  pendiente: "Prueba (sin plan)",
+  single_event: "Evento Único",
+  basico: "Básico",
+  pro: "Pro",
+};
 
 function subscriptionSummary(p: AdminUserRecord): string {
   const planLabel = PLAN_LABEL[p.subscriptionPlan ?? "pendiente"] ?? "Prueba";
@@ -178,12 +172,12 @@ export default async function ProvidersPage({
           type="search"
           defaultValue={params.q ?? ""}
           placeholder="Buscar comercio, email o handle"
-          className="w-80 max-w-full border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-80 max-w-full border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
         />
         <select
           name="status"
           defaultValue={statusFilter}
-          className="border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
         >
           <option value="all">Todos los estados</option>
           <option value="pending">Pendiente</option>
@@ -201,8 +195,8 @@ export default async function ProvidersPage({
 
       <div className="futuristic-panel overflow-hidden">
         <div
-          className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.6fr" }}
+          className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+          style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
         >
           <div>Proveedor</div>
           <div>Estado</div>
@@ -222,8 +216,8 @@ export default async function ProvidersPage({
             return (
               <div
                 key={p.id}
-                className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
-                style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.6fr" }}
+                className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
+                style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
               >
                 <div className="min-w-0">
                   <div className="truncate font-semibold">
@@ -246,43 +240,17 @@ export default async function ProvidersPage({
                   {formatDate(p.createdAt)}
                 </div>
                 <div className="flex flex-wrap justify-end gap-1.5">
-                  {p.emailConfirmedAt === null ? (
-                    <ResendInviteButton userId={p.id} />
-                  ) : null}
-                  {status !== "approved" ? (
-                    <ActionButton
-                      userId={p.id}
-                      status="approved"
-                      label="Aprobar"
-                      tone="success"
-                    />
-                  ) : null}
-                  {status !== "paused" && status !== "pending" ? (
-                    <ActionButton
-                      userId={p.id}
-                      status="paused"
-                      label="Pausar"
-                      tone="muted"
-                    />
-                  ) : null}
-                  {status !== "suspended" ? (
-                    <ActionButton
-                      userId={p.id}
-                      status="suspended"
-                      label="Suspender"
-                      tone="danger"
-                    />
-                  ) : (
-                    <ActionButton
-                      userId={p.id}
-                      status="approved"
-                      label="Reactivar"
-                      tone="success"
-                    />
-                  )}
-                  <PlanControl
+                  <Link
+                    href={`/providers/${p.id}` as never}
+                    className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+                  >
+                    Ver
+                  </Link>
+                  <ProviderStatusActions
                     userId={p.id}
-                    currentPlan={p.subscriptionPlan ?? "pendiente"}
+                    status={status}
+                    emailConfirmedAt={p.emailConfirmedAt}
+                    revalidatePath="/providers"
                   />
                 </div>
               </div>
@@ -291,86 +259,5 @@ export default async function ProvidersPage({
         )}
       </div>
     </div>
-  );
-}
-
-function ActionButton({
-  userId,
-  status,
-  label,
-  tone,
-}: {
-  userId: string;
-  status: ProviderStatus;
-  label: string;
-  tone: "success" | "danger" | "muted";
-}) {
-  const styles =
-    tone === "success"
-      ? "border-success/40 text-success hover:bg-success/10"
-      : tone === "danger"
-      ? "border-danger/40 text-danger hover:bg-danger/10"
-      : "border-white/15 text-muted hover:bg-white/5";
-  return (
-    <form action={setProviderStatusAction}>
-      <input type="hidden" name="userId" value={userId} />
-      <input type="hidden" name="status" value={status} />
-      <input type="hidden" name="revalidate" value="/providers" />
-      <button
-        type="submit"
-        className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
-      >
-        {label}
-      </button>
-    </form>
-  );
-}
-
-function PlanControl({
-  userId,
-  currentPlan,
-}: {
-  userId: string;
-  currentPlan: string;
-}) {
-  return (
-    <form action={setProviderPlanAction} className="flex items-center gap-1">
-      <input type="hidden" name="userId" value={userId} />
-      <input type="hidden" name="revalidate" value="/providers" />
-      <select
-        name="plan"
-        defaultValue={currentPlan}
-        aria-label="Plan de suscripción"
-        className="border border-white/15 bg-white/[0.04] px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide focus:border-white focus:outline-none"
-      >
-        {PLAN_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        title="Asignar plan al comercio"
-        className="border border-[#F67010]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#F67010] transition hover:bg-[#F67010]/10"
-      >
-        Plan
-      </button>
-    </form>
-  );
-}
-
-function ResendInviteButton({ userId }: { userId: string }) {
-  return (
-    <form action={resendInviteAction}>
-      <input type="hidden" name="userId" value={userId} />
-      <button
-        type="submit"
-        title="Reenviar enlace de invitación por correo"
-        className="border border-[#3A86FF]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3A86FF] transition hover:bg-[#3A86FF]/10"
-      >
-        ↻ Reenviar invitación
-      </button>
-    </form>
   );
 }

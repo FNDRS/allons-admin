@@ -122,6 +122,13 @@ async function repairAuthUsersForListing(
   }
 }
 
+export async function getUserById(userId: string): Promise<AdminUserRecord | null> {
+  const admin = createSupabaseServiceRoleClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data?.user) return null;
+  return toRecord(data.user);
+}
+
 export async function listAllUsers(): Promise<AdminUserRecord[]> {
   const admin = createSupabaseServiceRoleClient();
   await repairAuthUsersForListing(admin);

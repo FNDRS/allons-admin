@@ -33,6 +33,9 @@ export interface SubscriptionOrder {
   providerId: string;
   planId: string;
   amountCents: number;
+  /** Tax-inclusive breakdown (ISV): base + tax = amountCents. Null on legacy orders. */
+  baseCents: number | null;
+  taxCents: number | null;
   currency: string;
   status: PaymentOrderStatus;
   periodEnd: string | null;
