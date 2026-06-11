@@ -121,23 +121,57 @@ async function adminFetch<T>(
     }
   }
 
-  const response = await fetch(url.toString(), {
-    ...rest,
-    cache: "no-store",
-    headers: {
-      "content-type": "application/json",
-      "x-admin-secret": secret,
-      ...(headers ?? {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      ...rest,
+      cache: "no-store",
+      redirect: "error",
+      headers: {
+        "content-type": "application/json",
+        "x-admin-secret": secret,
+        ...(headers ?? {}),
+      },
+    });
+  } catch (error) {
+    const code =
+      error instanceof Error && "cause" in error
+        ? (error.cause as { code?: string } | undefined)?.code
+        : undefined;
+    if (code === "ECONNREFUSED") {
+      throw new Error(
+        `Cannot reach allons-api at ${baseUrl}. Start it with \`pnpm dev\` in allons-api.`,
+      );
+    }
+    throw error;
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const text = await response.text().catch(() => "");
 
   if (!response.ok) {
-    const text = await response.text().catch(() => "");
     throw new Error(
       `Admin API ${path} failed (${response.status}): ${text || response.statusText}`,
     );
   }
-  return (await response.json()) as T;
+
+  if (!contentType.includes("application/json")) {
+    const hint =
+      baseUrl.includes("localhost:3001") || baseUrl.includes("localhost:3000")
+        ? " ADMIN_API_BASE_URL must point at allons-api (default :3000), not allons-admin."
+        : "";
+    throw new Error(
+      `Admin API ${path} returned non-JSON (${contentType || "unknown"}).${hint}`,
+    );
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(
+      `Admin API ${path} returned invalid JSON. Check ADMIN_API_BASE_URL (${baseUrl}).`,
+    );
+  }
 }
 
 export function listAdminEvents(filters: AdminEventListFilters = {}) {

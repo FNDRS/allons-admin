@@ -47,7 +47,8 @@ async function loadPaygateStatus(): Promise<PaygateStatus> {
       connectivityStatus: String(status.paygate?.connectivityStatus ?? 'unknown'),
     };
   } catch (error) {
-    console.error('[overview] failed to load paygate status', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[overview] paygate status unavailable: ${message}`);
     return { connected: false, configured: false, connectivityStatus: 'unknown' };
   }
 }
