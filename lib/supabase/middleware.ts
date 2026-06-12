@@ -46,7 +46,12 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/.well-known") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
-    /\.[a-z0-9]+$/i.test(pathname);
+    // Static assets only. The previous `/\.[a-z0-9]+$/` treated ANY path
+    // ending in a dot-extension as public, which could expose a sensitive
+    // route that happens to end that way. Restrict to known asset extensions.
+    /\.(?:ico|png|jpe?g|gif|svg|webp|avif|css|js|map|txt|xml|json|woff2?|ttf|eot)$/i.test(
+      pathname,
+    );
 
   if (isPublicRoute) return response;
 

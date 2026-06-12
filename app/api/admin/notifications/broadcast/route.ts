@@ -3,11 +3,19 @@ import {
   getAdminApiBaseUrl,
   getAdminApiSecretHeader,
 } from "@/lib/admin/allonsPaymentsBackendRequest";
+import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  await getRootActor();
+  // getRootActor() returns null (does not throw) for unauthenticated/non-root
+  // callers — the result MUST be checked. This endpoint forwards to the backend
+  // using the trusted ADMIN_API_SECRET to broadcast to all clients/providers,
+  // so an unguarded path is a platform-wide push-broadcast vector.
+  if (!(await getRootActor())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const base = getAdminApiBaseUrl();
   const body = await req.json().catch(() => null);

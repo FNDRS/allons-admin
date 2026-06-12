@@ -66,14 +66,7 @@ export async function GET() {
   if (sourcesError && !isMissingSourcesTable) {
     console.error("[waitlist-qr] list sources error", sourcesError);
     return NextResponse.json(
-      {
-        error: describeDbError(sourcesError),
-        db: {
-          code: sourcesError.code ?? null,
-          message: sourcesError.message ?? null,
-          hint: sourcesError.hint ?? null,
-        },
-      },
+      { error: describeDbError(sourcesError) },
       { status: 500 },
     );
   }
@@ -88,14 +81,7 @@ export async function GET() {
   if (statsError && !isMissingStatsView) {
     console.error("[waitlist-qr] list source stats error", statsError);
     return NextResponse.json(
-      {
-        error: describeDbError(statsError),
-        db: {
-          code: statsError.code ?? null,
-          message: statsError.message ?? null,
-          hint: statsError.hint ?? null,
-        },
-      },
+      { error: describeDbError(statsError) },
       { status: 500 },
     );
   }
@@ -230,14 +216,7 @@ export async function POST(req: NextRequest) {
       state_after: { slug, label, location, notes, is_active: isActive },
     });
     return NextResponse.json(
-      {
-        error: describeDbError(error),
-        db: {
-          code: error.code ?? null,
-          message: error.message ?? null,
-          hint: error.hint ?? null,
-        },
-      },
+      { error: describeDbError(error) },
       { status: 500 },
     );
   }
