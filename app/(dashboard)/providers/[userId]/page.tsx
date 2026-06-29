@@ -4,6 +4,8 @@ import { StatusPill } from "@/components/StatusPill";
 import { PaymentDetailButton } from "@/app/(dashboard)/payments/_components/PaymentDetailButton";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
+import { ProviderPasarelaFeeActions } from "@/app/(dashboard)/providers/_components/ProviderPasarelaFeeActions";
+import { COMMISSION_TIERS, totalFee } from "@/lib/commissionTiers";
 import {
   countTicketsForProviderEvents,
   listEventPaymentsForProvider,
@@ -28,6 +30,13 @@ const PLAN_LABEL: Record<string, string> = {
   single_event: "Evento Único",
   basico: "Básico",
   pro: "Pro",
+};
+
+const BUSINESS_TYPE_LABEL: Record<string, string> = {
+  ong: "ONG / Sin fines de lucro",
+  tecnologia: "Tecnología / Startup",
+  empresa: "Empresa / Comercio",
+  otro: "Otro",
 };
 
 const STATUS_LABEL: Record<ProviderStatus, string> = {
@@ -329,6 +338,45 @@ export default async function ProviderDetailPage({
         {provider?.description ? (
           <p className="mt-4 text-sm text-white/70">{provider.description}</p>
         ) : null}
+      </Section>
+
+      <Section title="Comisión">
+        <dl className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <InfoItem
+            label="Tipo de negocio"
+            value={BUSINESS_TYPE_LABEL[providerUser.businessType ?? ""] ?? "—"}
+          />
+          <InfoItem
+            label="Pasarela (Clinpays / banco)"
+            value={
+              providerUser.pasarelaFeePct != null
+                ? `${providerUser.pasarelaFeePct}%`
+                : "Sin definir"
+            }
+          />
+          <InfoItem
+            label="Comisión base Allons"
+            value="8–15% por volumen de eventos"
+          />
+        </dl>
+        <p className="mb-4 text-xs leading-relaxed text-white/45">
+          El total por ticket = comisión base de Allons (según el nivel por
+          volumen de eventos del mes, calculado automáticamente) + la pasarela
+          de este comercio. Ej. con la pasarela actual:{" "}
+          {COMMISSION_TIERS.map(
+            (t) =>
+              `${t.name} ${totalFee(
+                t.baseFee,
+                providerUser.pasarelaFeePct ?? 0,
+              )}%`,
+          ).join(" · ")}
+          .
+        </p>
+        <ProviderPasarelaFeeActions
+          userId={userId}
+          pasarelaFeePct={providerUser.pasarelaFeePct ?? null}
+          revalidatePath={revalidatePath}
+        />
       </Section>
 
       {members.length > 0 ? (

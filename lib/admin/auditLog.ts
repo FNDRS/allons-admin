@@ -13,6 +13,7 @@ export type AdminAuditAction =
   | "auth.user_unsuspend"
   | "provider.status_change"
   | "provider.plan_change"
+  | "provider.pasarela_fee_change"
   | "provider.comercio_create"
   | "provider.invite_resend"
   | "provider.subscription_cancel"

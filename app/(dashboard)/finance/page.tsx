@@ -48,10 +48,10 @@ async function PaymentsSummaryCards() {
   }
 
   // Platform revenue = the volume-based Allons base commission (per provider,
-  // 8–15% by monthly events). The 2.5% pasarela fee is pass-through to the
-  // payment gateway, not Allons revenue. We don't have a per-provider GMV
-  // split here, so this aggregate uses the average base across tiers as a
-  // blended estimate.
+  // 8–15% by monthly events). The per-comercio pasarela fee (Clinpays + bank)
+  // is pass-through to the payment gateway, not Allons revenue. We don't have a
+  // per-provider GMV split here, so this aggregate uses the average base across
+  // tiers as a blended estimate.
   const platformFeePct =
     COMMISSION_TIERS.reduce((sum, t) => sum + t.baseFee, 0) /
     COMMISSION_TIERS.length;

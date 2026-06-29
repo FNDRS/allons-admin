@@ -2,17 +2,21 @@
 
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
-import { COMMISSION_TIERS, GATEWAY_FEE, totalFee } from "@/lib/commissionTiers";
+import {
+  COMMISSION_TIERS,
+  PASARELA_FEE_BY_BUSINESS_TYPE,
+  totalFee,
+} from "@/lib/commissionTiers";
 
 const EXAMPLE_TICKET = 1000;
 /** Precio por usuario staff adicional (plan Evento Único). */
 const STAFF_USER_ADDON_LPS = 200;
 
 const BUSINESS_TYPES = [
-  { value: "ong", label: "ONG / Sin fines de lucro" },
-  { value: "tecnologia", label: "Tecnología / Startup" },
-  { value: "empresa", label: "Empresa / Comercio" },
-  { value: "otro", label: "Otro" },
+  { value: "ong", label: "ONG / Sin fines de lucro", defaultPct: 2 },
+  { value: "tecnologia", label: "Tecnología / Startup", defaultPct: 7 },
+  { value: "empresa", label: "Empresa / Comercio", defaultPct: 5 },
+  { value: "otro", label: "Otro", defaultPct: 5 },
 ] as const;
 
 type BusinessType = (typeof BUSINESS_TYPES)[number]["value"];
@@ -84,6 +88,7 @@ function applyFormValues(
     setHandleEdited: (v: boolean) => void;
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
+    setPasarelaFeePct: (v: string) => void;
     setPlan: (v: string) => void;
   },
 ) {
@@ -95,6 +100,7 @@ function applyFormValues(
   setters.setHandleEdited(Boolean(values.brandHandle));
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
+  setters.setPasarelaFeePct(values.pasarelaFeePct);
   setters.setPlan(values.subscriptionPlan);
 }
 
@@ -113,7 +119,8 @@ export function CreateComercioForm() {
   const [businessType, setBusinessType] = useState<BusinessType>("empresa");
   const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0]);
 
-  // ── Contrato ──
+  // ── Pasarela (Clinpays / banco) & Contrato ──
+  const [pasarelaFeePct, setPasarelaFeePct] = useState("5");
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [contractPreview, setContractPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,6 +139,7 @@ export function CreateComercioForm() {
       setHandleEdited,
       setBusinessType,
       setBrandColor,
+      setPasarelaFeePct,
       setPlan,
     });
   }, [state]);
@@ -146,7 +154,17 @@ export function CreateComercioForm() {
 
   const handleBusinessTypeChange = useCallback((type: BusinessType) => {
     setBusinessType(type);
+    const def =
+      PASARELA_FEE_BY_BUSINESS_TYPE[type] ??
+      BUSINESS_TYPES.find((t) => t.value === type)?.defaultPct ??
+      5;
+    setPasarelaFeePct(def.toString());
   }, []);
+
+  const parsedPasarela = useMemo(() => {
+    const n = parseFloat(pasarelaFeePct);
+    return isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+  }, [pasarelaFeePct]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,6 +345,9 @@ export function CreateComercioForm() {
                 />
                 <div>
                   <p className="text-sm font-semibold text-white">{t.label}</p>
+                  <p className="text-xs text-white/40">
+                    Pasarela sugerida: {t.defaultPct}%
+                  </p>
                 </div>
               </label>
             ))}
@@ -356,11 +377,35 @@ export function CreateComercioForm() {
         </div>
       </section>
 
-      {/* ── CONTRATO ── */}
+      {/* ── PASARELA & CONTRATO ── */}
       <section className="futuristic-panel space-y-5 p-6">
-        <p className="eyebrow">Contrato</p>
+        <p className="eyebrow">Pasarela (Clinpays / banco) & Contrato</p>
 
-        <div className="grid gap-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+              Comisión Pasarela (%) <span className="text-orange-400">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                name="pasarelaFeePct"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={pasarelaFeePct}
+                onChange={(e) => setPasarelaFeePct(e.target.value)}
+                className={`${inputCls} w-32`}
+              />
+              <span className="text-sm text-white/50">%</span>
+            </div>
+            <p className="mt-1.5 text-xs text-white/35">
+              Tasa que Clinpays y el banco acuerdan por contrato según el tipo
+              de negocio. ONGs ~2% · Tecnología ~7% · Empresas ~5%. Se cobra
+              automáticamente por ticket, sumada a la comisión base de Allons.
+            </p>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-white/60">
               Contrato Paygate
@@ -496,9 +541,10 @@ export function CreateComercioForm() {
       <section className="futuristic-panel p-6">
         <p className="eyebrow mb-4">Comisión por nivel</p>
         <p className="mb-4 text-xs leading-relaxed text-white/45">
-          La comisión es por volumen: depende de cuántos eventos publica el
-          comercio cada mes. A más eventos, menor comisión. El nivel se calcula
-          automáticamente; no se configura al crear el comercio.
+          La comisión combina la base de Allons (por volumen: depende de
+          cuántos eventos publica el comercio cada mes — a más eventos, menor
+          base; el nivel se calcula automáticamente) más la pasarela de este
+          comercio ({parsedPasarela}%). Total = base + pasarela.
         </p>
 
         <div className="overflow-x-auto rounded-lg border border-white/8 bg-white/[0.02]">
@@ -522,9 +568,9 @@ export function CreateComercioForm() {
                 <span className="font-semibold text-white">{t.name}</span>
                 <span className="text-white/55">{t.eventsLabel}</span>
                 <span className="text-right text-white/70">{t.baseFee}%</span>
-                <span className="text-right text-white/70">{GATEWAY_FEE}%</span>
+                <span className="text-right text-white/70">{parsedPasarela}%</span>
                 <span className="text-right font-semibold text-orange-400">
-                  {totalFee(t.baseFee)}%
+                  {totalFee(t.baseFee, parsedPasarela)}%
                 </span>
               </div>
             ))}
@@ -532,10 +578,12 @@ export function CreateComercioForm() {
         </div>
 
         <p className="mt-3 text-xs text-white/35">
-          Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()}: nivel
-          Platino retiene L. {(EXAMPLE_TICKET * (totalFee(8) / 100)).toFixed(2)}{" "}
-          ({totalFee(8)}%); nivel Base retiene L.{" "}
-          {(EXAMPLE_TICKET * (totalFee(15) / 100)).toFixed(2)} ({totalFee(15)}%).
+          Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()} con
+          pasarela {parsedPasarela}%: nivel Platino retiene L.{" "}
+          {(EXAMPLE_TICKET * (totalFee(8, parsedPasarela) / 100)).toFixed(2)} (
+          {totalFee(8, parsedPasarela)}%); nivel Base retiene L.{" "}
+          {(EXAMPLE_TICKET * (totalFee(15, parsedPasarela) / 100)).toFixed(2)} (
+          {totalFee(15, parsedPasarela)}%).
         </p>
 
         <div className="mt-4 space-y-1.5 rounded-lg border border-white/6 bg-white/[0.02] p-4">
