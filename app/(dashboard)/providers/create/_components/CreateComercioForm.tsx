@@ -2,18 +2,17 @@
 
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
+import { COMMISSION_TIERS, GATEWAY_FEE, totalFee } from "@/lib/commissionTiers";
 
-const ALLONS_FEE_PCT = 12;
-const ISV_RATE = 0.15;
 const EXAMPLE_TICKET = 1000;
 /** Precio por usuario staff adicional (plan Evento Único). */
 const STAFF_USER_ADDON_LPS = 200;
 
 const BUSINESS_TYPES = [
-  { value: "ong", label: "ONG / Sin fines de lucro", defaultPct: 2 },
-  { value: "tecnologia", label: "Tecnología / Startup", defaultPct: 7 },
-  { value: "empresa", label: "Empresa / Comercio", defaultPct: 5 },
-  { value: "otro", label: "Otro", defaultPct: 5 },
+  { value: "ong", label: "ONG / Sin fines de lucro" },
+  { value: "tecnologia", label: "Tecnología / Startup" },
+  { value: "empresa", label: "Empresa / Comercio" },
+  { value: "otro", label: "Otro" },
 ] as const;
 
 type BusinessType = (typeof BUSINESS_TYPES)[number]["value"];
@@ -85,7 +84,6 @@ function applyFormValues(
     setHandleEdited: (v: boolean) => void;
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
-    setPaygateFeePct: (v: string) => void;
     setPlan: (v: string) => void;
   },
 ) {
@@ -97,7 +95,6 @@ function applyFormValues(
   setters.setHandleEdited(Boolean(values.brandHandle));
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
-  setters.setPaygateFeePct(values.paygateFeePct);
   setters.setPlan(values.subscriptionPlan);
 }
 
@@ -116,8 +113,7 @@ export function CreateComercioForm() {
   const [businessType, setBusinessType] = useState<BusinessType>("empresa");
   const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0]);
 
-  // ── Paygate ──
-  const [paygateFeePct, setPaygateFeePct] = useState("5");
+  // ── Contrato ──
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [contractPreview, setContractPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -136,7 +132,6 @@ export function CreateComercioForm() {
       setHandleEdited,
       setBusinessType,
       setBrandColor,
-      setPaygateFeePct,
       setPlan,
     });
   }, [state]);
@@ -151,8 +146,6 @@ export function CreateComercioForm() {
 
   const handleBusinessTypeChange = useCallback((type: BusinessType) => {
     setBusinessType(type);
-    const def = BUSINESS_TYPES.find((t) => t.value === type)?.defaultPct ?? 5;
-    setPaygateFeePct(def.toString());
   }, []);
 
   const handleFileChange = useCallback(
@@ -178,19 +171,6 @@ export function CreateComercioForm() {
       year: "numeric",
     });
   }, []);
-
-  const parsedPct = useMemo(() => {
-    const n = parseFloat(paygateFeePct);
-    return isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
-  }, [paygateFeePct]);
-
-  const breakdown = useMemo(() => {
-    const allons = EXAMPLE_TICKET * (ALLONS_FEE_PCT / 100);
-    const isv = allons * ISV_RATE;
-    const paygate = EXAMPLE_TICKET * (parsedPct / 100);
-    const organizer = EXAMPLE_TICKET - allons - isv - paygate;
-    return { allons, isv, paygate, organizer };
-  }, [parsedPct]);
 
   const inputCls =
     "w-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none rounded-lg";
@@ -347,9 +327,6 @@ export function CreateComercioForm() {
                 />
                 <div>
                   <p className="text-sm font-semibold text-white">{t.label}</p>
-                  <p className="text-xs text-white/40">
-                    Paygate sugerido: {t.defaultPct}%
-                  </p>
                 </div>
               </label>
             ))}
@@ -379,33 +356,11 @@ export function CreateComercioForm() {
         </div>
       </section>
 
-      {/* ── PAYGATE & CONTRATO ── */}
+      {/* ── CONTRATO ── */}
       <section className="futuristic-panel space-y-5 p-6">
-        <p className="eyebrow">Paygate & Contrato</p>
+        <p className="eyebrow">Contrato</p>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
-              Comisión Paygate (%) <span className="text-orange-400">*</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                name="paygateFeePct"
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={paygateFeePct}
-                onChange={(e) => setPaygateFeePct(e.target.value)}
-                className={`${inputCls} w-32`}
-              />
-              <span className="text-sm text-white/50">%</span>
-            </div>
-            <p className="mt-1.5 text-xs text-white/35">
-              ONGs: ~2% · Tecnología: ~7% · Empresas: ~5% (según contrato bancario)
-            </p>
-          </div>
-
+        <div className="grid gap-5">
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-white/60">
               Contrato Paygate
@@ -537,52 +492,51 @@ export function CreateComercioForm() {
         </label>
       </section>
 
-      {/* ── DESGLOSE ── */}
+      {/* ── COMISIÓN POR NIVEL ── */}
       <section className="futuristic-panel p-6">
-        <p className="eyebrow mb-4">Desglose por ticket</p>
+        <p className="eyebrow mb-4">Comisión por nivel</p>
+        <p className="mb-4 text-xs leading-relaxed text-white/45">
+          La comisión es por volumen: depende de cuántos eventos publica el
+          comercio cada mes. A más eventos, menor comisión. El nivel se calcula
+          automáticamente; no se configura al crear el comercio.
+        </p>
 
-        <div className="rounded-lg border border-white/8 bg-white/[0.02] overflow-hidden">
-          <div className="border-b border-white/8 bg-white/[0.03] px-4 py-2.5 text-xs text-white/40">
-            Ejemplo: ticket de L. {EXAMPLE_TICKET.toLocaleString()}
+        <div className="overflow-x-auto rounded-lg border border-white/8 bg-white/[0.02]">
+          <div
+            className="grid min-w-[520px] border-b border-white/8 bg-white/[0.03] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white/40"
+            style={{ gridTemplateColumns: "1.4fr 1.4fr 0.8fr 0.8fr 0.8fr" }}
+          >
+            <div>Nivel</div>
+            <div>Eventos / mes</div>
+            <div className="text-right">Base app</div>
+            <div className="text-right">Pasarela</div>
+            <div className="text-right">Total</div>
           </div>
           <div className="divide-y divide-white/6 text-sm">
-            {[
-              {
-                label: `Comisión Allons (${ALLONS_FEE_PCT}%)`,
-                value: `− L. ${breakdown.allons.toFixed(2)}`,
-                cls: "text-red-400",
-              },
-              {
-                label: `ISV sobre comisión (${(ISV_RATE * 100).toFixed(0)}%)`,
-                value: `− L. ${breakdown.isv.toFixed(2)}`,
-                cls: "text-red-400",
-              },
-              {
-                label: `Paygate (${parsedPct}%)`,
-                value: `− L. ${breakdown.paygate.toFixed(2)}`,
-                cls: "text-red-400",
-              },
-            ].map((row) => (
+            {COMMISSION_TIERS.map((t) => (
               <div
-                key={row.label}
-                className="flex items-center justify-between px-4 py-3"
+                key={t.level}
+                className="grid min-w-[520px] items-center px-4 py-3"
+                style={{ gridTemplateColumns: "1.4fr 1.4fr 0.8fr 0.8fr 0.8fr" }}
               >
-                <span className="text-white/55">{row.label}</span>
-                <span className={`font-semibold ${row.cls}`}>{row.value}</span>
+                <span className="font-semibold text-white">{t.name}</span>
+                <span className="text-white/55">{t.eventsLabel}</span>
+                <span className="text-right text-white/70">{t.baseFee}%</span>
+                <span className="text-right text-white/70">{GATEWAY_FEE}%</span>
+                <span className="text-right font-semibold text-orange-400">
+                  {totalFee(t.baseFee)}%
+                </span>
               </div>
             ))}
-            <div className="flex items-center justify-between bg-white/[0.03] px-4 py-3.5 font-bold">
-              <span className="text-white">Organizador recibe</span>
-              <span className="text-green-400">
-                L. {breakdown.organizer.toFixed(2)}{" "}
-                <span className="text-xs font-normal text-green-400/60">
-                  ({((breakdown.organizer / EXAMPLE_TICKET) * 100).toFixed(1)}
-                  %)
-                </span>
-              </span>
-            </div>
           </div>
         </div>
+
+        <p className="mt-3 text-xs text-white/35">
+          Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()}: nivel
+          Platino retiene L. {(EXAMPLE_TICKET * (totalFee(8) / 100)).toFixed(2)}{" "}
+          ({totalFee(8)}%); nivel Base retiene L.{" "}
+          {(EXAMPLE_TICKET * (totalFee(15) / 100)).toFixed(2)} ({totalFee(15)}%).
+        </p>
 
         <div className="mt-4 space-y-1.5 rounded-lg border border-white/6 bg-white/[0.02] p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/35">
@@ -590,10 +544,10 @@ export function CreateComercioForm() {
           </p>
           {[
             "Chargebacks: ~$25 USD por disputa perdida (cargo del banco).",
-            "Tarjetas internacionales: +1–3% adicional (varía por banco/Paygate).",
+            "Tarjetas internacionales: +1–3% adicional (varía por banco).",
             "ISR sobre pagos: posible retención del 12.5% si el organizador supera L. 5,000/mes.",
             "Liquidación: fondos disponibles 3–7 días hábiles después del evento.",
-            "Reembolsos: la comisión de Paygate no se devuelve en casos de reembolso.",
+            "Reembolsos: la comisión de la pasarela no se devuelve en casos de reembolso.",
           ].map((note) => (
             <p key={note} className="text-xs text-white/35">
               · {note}

@@ -14,6 +14,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { CompletePayoutButton } from "@/components/CompletePayoutButton";
 import { getPaymentsSummary } from "@/lib/admin/paymentsApi";
 import { getRecentPayouts } from "@/lib/admin/payoutsApi";
+import { COMMISSION_TIERS } from "@/lib/commissionTiers";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +47,14 @@ async function PaymentsSummaryCards() {
     );
   }
 
-  // Platform revenue = Allons commission + ISV on it (env-configurable). The
-  // per-comercio Paygate/bank fee goes to the bank, not Allons, and varies per
-  // comercio, so it's not part of this platform-wide aggregate.
-  const allonsPct = Number(process.env.PLATFORM_ALLONS_FEE_PCT) || 12;
-  const isvPct = Number(process.env.PLATFORM_ISV_PCT) || 15;
-  const platformFeePct = allonsPct + (allonsPct * isvPct) / 100;
+  // Platform revenue = the volume-based Allons base commission (per provider,
+  // 8–15% by monthly events). The 2.5% pasarela fee is pass-through to the
+  // payment gateway, not Allons revenue. We don't have a per-provider GMV
+  // split here, so this aggregate uses the average base across tiers as a
+  // blended estimate.
+  const platformFeePct =
+    COMMISSION_TIERS.reduce((sum, t) => sum + t.baseFee, 0) /
+    COMMISSION_TIERS.length;
   const feeCents = Math.round(summary.gmvCents * (platformFeePct / 100));
   const paidCents = summary.gmvCents - feeCents;
 
@@ -67,7 +70,7 @@ async function PaymentsSummaryCards() {
         <KpiCard
           label="Fee plataforma"
           value={formatCurrency(feeCents / 100)}
-          hint={`${platformFeePct.toFixed(1)}% del GMV (Allons + ISV)`}
+          hint={`~${platformFeePct.toFixed(1)}% del GMV · comisión base estimada`}
           icon={CreditCard}
         />
         <KpiCard

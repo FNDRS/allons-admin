@@ -14,7 +14,6 @@ export type CreateComercioFormValues = {
   brandHandle: string;
   businessType: string;
   brandColor: string;
-  paygateFeePct: string;
   subscriptionPlan: string;
 };
 
@@ -23,7 +22,6 @@ export type CreateComercioState = {
   values: CreateComercioFormValues;
 } | null;
 
-const ALLONS_FEE_PCT = 12;
 const FREE_TRIAL_MONTHS = 6;
 
 function readFormValues(formData: FormData): CreateComercioFormValues {
@@ -40,8 +38,6 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
       (formData.get("businessType") as string | null) ?? "empresa",
     brandColor:
       (formData.get("brandColor") as string | null)?.trim() || "#F67010",
-    paygateFeePct:
-      (formData.get("paygateFeePct") as string | null)?.trim() || "5",
     subscriptionPlan:
       (formData.get("subscriptionPlan") as string | null) ?? "pendiente",
   };
@@ -71,10 +67,6 @@ export async function createComercioAction(
     const brandHandle = values.brandHandle;
     const businessType = values.businessType;
     const brandColor = values.brandColor;
-    const paygateFeePct = Math.max(
-      0,
-      Math.min(100, parseFloat(values.paygateFeePct) || 0),
-    );
     const subscriptionPlan = values.subscriptionPlan;
     const contractFile = formData.get("contractFile") as File | null;
 
@@ -129,12 +121,10 @@ export async function createComercioAction(
       brand_handle: brandHandle,
       brand_logo_color: brandColor,
       business_type: businessType,
-      paygate_fee_pct: paygateFeePct,
       contract_url: contractUrl,
       subscription_plan: subscriptionPlan,
       free_trial_start: freeTrialStart,
       free_trial_end: freeTrialEnd,
-      allons_fee_pct: ALLONS_FEE_PCT,
       providerStatus: "pending",
       // Read by allons-mobile `lib/role.ts` to force `/(auth)/set-password`
       // on first sign-in (since the invite link logs the user in without a
@@ -284,7 +274,6 @@ export async function createComercioAction(
         brandName,
         brandHandle,
         businessType,
-        paygateFeePct,
         subscriptionPlan,
         hasContract: Boolean(contractUrl),
         invite: inviteStatus,
