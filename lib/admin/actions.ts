@@ -235,6 +235,63 @@ export async function cancelProviderSubscriptionAction(formData: FormData) {
   revalidatePath(revalidate);
 }
 
+/**
+ * Sets a comercio's pasarela (Clinpays + bank) fee %. Negotiated by business
+ * type and typically finalized after the bank contract, so it's editable here
+ * post-creation. Stored on the owner's `paygate_fee_pct` metadata, read by
+ * allons-api and added to the volume-based Allons base commission per ticket.
+ */
+export async function setProviderPasarelaFeeAction(formData: FormData) {
+  const caller = await requireRootActor();
+  const userId = String(formData.get("userId") ?? "");
+  const revalidate = String(formData.get("revalidate") ?? "/providers");
+  const pct = Math.max(
+    0,
+    Math.min(100, parseFloat(String(formData.get("pasarelaFeePct") ?? ""))),
+  );
+
+  if (!userId || !Number.isFinite(pct)) {
+    throw new Error("Parámetros inválidos");
+  }
+
+  const admin = createSupabaseServiceRoleClient();
+  const { data: existing, error: lookupError } =
+    await admin.auth.admin.getUserById(userId);
+  if (lookupError) throw new Error(lookupError.message);
+  if (!existing.user) throw new Error("Usuario no encontrado");
+
+  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
+  const previousPct =
+    typeof meta.paygate_fee_pct === "number" ? meta.paygate_fee_pct : null;
+
+  const merged = {
+    ...meta,
+    paygate_fee_pct: pct,
+    pasarelaFeeUpdatedBy: caller.userId,
+    pasarelaFeeUpdatedAt: new Date().toISOString(),
+  };
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: merged,
+  });
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "provider.pasarela_fee_change",
+    resource_type: "provider_user",
+    resource_id: userId,
+    outcome: updateError ? "failure" : "success",
+    state_before: { paygate_fee_pct: previousPct },
+    state_after: { paygate_fee_pct: pct },
+    error_message: updateError?.message ?? null,
+  });
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(revalidate);
+}
+
 export async function resendInviteAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");

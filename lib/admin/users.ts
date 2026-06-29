@@ -25,6 +25,10 @@ export interface AdminUserRecord {
   subscriptionStatus?: string | null;
   freeTrialEnd?: string | null;
   subscriptionPeriodEnd?: string | null;
+  /** Business type (drives the suggested pasarela rate). */
+  businessType?: string | null;
+  /** Per-comercio pasarela (Clinpays + bank) fee %, added to the base commission. */
+  pasarelaFeePct?: number | null;
   // Staff-specific:
   staffRole?: "scanner" | "admin" | "finance" | null;
   brandRef?: string | null;
@@ -99,6 +103,16 @@ function toRecord(user: {
     subscriptionPeriodEnd:
       role === "provider"
         ? ((metadata?.subscription_period_end as string | undefined) ?? null)
+        : null,
+    businessType:
+      role === "provider"
+        ? ((metadata?.business_type as string | undefined) ?? null)
+        : null,
+    pasarelaFeePct:
+      role === "provider"
+        ? (typeof metadata?.paygate_fee_pct === "number"
+            ? (metadata.paygate_fee_pct as number)
+            : null)
         : null,
     staffRole:
       role === "staff"
