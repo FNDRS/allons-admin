@@ -14,7 +14,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { CompletePayoutButton } from "@/components/CompletePayoutButton";
 import { getPaymentsSummary } from "@/lib/admin/paymentsApi";
 import { getRecentPayouts } from "@/lib/admin/payoutsApi";
-import { COMMISSION_TIERS } from "@/lib/commissionTiers";
+import { PLAN_COMMISSIONS } from "@/lib/commissionTiers";
 
 export const dynamic = "force-dynamic";
 
@@ -47,14 +47,14 @@ async function PaymentsSummaryCards() {
     );
   }
 
-  // Platform revenue = the volume-based Allons base commission (per provider,
-  // 8–15% by monthly events). The per-comercio pasarela fee (Clinpays + bank)
-  // is pass-through to the payment gateway, not Allons revenue. We don't have a
-  // per-provider GMV split here, so this aggregate uses the average base across
-  // tiers as a blended estimate.
+  // Platform revenue = the plan-based Allons base commission (per provider,
+  // Pro 8% / Básico 12% / Evento Único 15%). The per-comercio pasarela fee
+  // (Clinpays + bank) is pass-through to the payment gateway, not Allons
+  // revenue. We don't have a per-provider GMV split here, so this aggregate
+  // uses the average base across plans as a blended estimate.
   const platformFeePct =
-    COMMISSION_TIERS.reduce((sum, t) => sum + t.baseFee, 0) /
-    COMMISSION_TIERS.length;
+    PLAN_COMMISSIONS.reduce((sum, p) => sum + p.baseFee, 0) /
+    PLAN_COMMISSIONS.length;
   const feeCents = Math.round(summary.gmvCents * (platformFeePct / 100));
   const paidCents = summary.gmvCents - feeCents;
 

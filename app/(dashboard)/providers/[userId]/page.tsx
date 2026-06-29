@@ -5,7 +5,12 @@ import { PaymentDetailButton } from "@/app/(dashboard)/payments/_components/Paym
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
 import { ProviderPasarelaFeeActions } from "@/app/(dashboard)/providers/_components/ProviderPasarelaFeeActions";
-import { COMMISSION_TIERS, totalFee } from "@/lib/commissionTiers";
+import {
+  PLAN_COMMISSIONS,
+  getBaseFeeByPlan,
+  planLabel,
+  totalFee,
+} from "@/lib/commissionTiers";
 import {
   countTicketsForProviderEvents,
   listEventPaymentsForProvider,
@@ -355,18 +360,20 @@ export default async function ProviderDetailPage({
             }
           />
           <InfoItem
-            label="Comisión base Allons"
-            value="8–15% por volumen de eventos"
+            label="Comisión base (plan)"
+            value={`${planLabel(providerUser.subscriptionPlan)} · ${getBaseFeeByPlan(
+              providerUser.subscriptionPlan,
+            )}%`}
           />
         </dl>
         <p className="mb-4 text-xs leading-relaxed text-white/45">
-          El total por ticket = comisión base de Allons (según el nivel por
-          volumen de eventos del mes, calculado automáticamente) + la pasarela
-          de este comercio. Ej. con la pasarela actual:{" "}
-          {COMMISSION_TIERS.map(
-            (t) =>
-              `${t.name} ${totalFee(
-                t.baseFee,
+          El total por ticket = comisión base de Allons (según el plan) + la
+          pasarela de este comercio. Ej. con la pasarela actual (
+          {providerUser.pasarelaFeePct ?? 0}%):{" "}
+          {PLAN_COMMISSIONS.map(
+            (p) =>
+              `${p.name} ${totalFee(
+                p.baseFee,
                 providerUser.pasarelaFeePct ?? 0,
               )}%`,
           ).join(" · ")}

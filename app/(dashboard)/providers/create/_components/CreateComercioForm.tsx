@@ -3,7 +3,7 @@
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
 import {
-  COMMISSION_TIERS,
+  PLAN_COMMISSIONS,
   PASARELA_FEE_BY_BUSINESS_TYPE,
   totalFee,
 } from "@/lib/commissionTiers";
@@ -537,40 +537,40 @@ export function CreateComercioForm() {
         </label>
       </section>
 
-      {/* ── COMISIÓN POR NIVEL ── */}
+      {/* ── COMISIÓN POR PLAN ── */}
       <section className="futuristic-panel p-6">
-        <p className="eyebrow mb-4">Comisión por nivel</p>
+        <p className="eyebrow mb-4">Comisión por plan</p>
         <p className="mb-4 text-xs leading-relaxed text-white/45">
-          La comisión combina la base de Allons (por volumen: depende de
-          cuántos eventos publica el comercio cada mes — a más eventos, menor
-          base; el nivel se calcula automáticamente) más la pasarela de este
-          comercio ({parsedPasarela}%). Total = base + pasarela.
+          La comisión combina la base de Allons (según el plan del comercio: los
+          planes con más volumen pagan menos) más la pasarela de este comercio
+          ({parsedPasarela}%). Total = base + pasarela. Se cobra automáticamente
+          por ticket.
         </p>
 
         <div className="overflow-x-auto rounded-lg border border-white/8 bg-white/[0.02]">
           <div
-            className="grid min-w-[520px] border-b border-white/8 bg-white/[0.03] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white/40"
-            style={{ gridTemplateColumns: "1.4fr 1.4fr 0.8fr 0.8fr 0.8fr" }}
+            className="grid min-w-[420px] border-b border-white/8 bg-white/[0.03] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white/40"
+            style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr" }}
           >
-            <div>Nivel</div>
-            <div>Eventos / mes</div>
+            <div>Plan</div>
             <div className="text-right">Base app</div>
             <div className="text-right">Pasarela</div>
             <div className="text-right">Total</div>
           </div>
           <div className="divide-y divide-white/6 text-sm">
-            {COMMISSION_TIERS.map((t) => (
+            {PLAN_COMMISSIONS.map((p) => (
               <div
-                key={t.level}
-                className="grid min-w-[520px] items-center px-4 py-3"
-                style={{ gridTemplateColumns: "1.4fr 1.4fr 0.8fr 0.8fr 0.8fr" }}
+                key={p.plan}
+                className={`grid min-w-[420px] items-center px-4 py-3 ${
+                  plan === p.plan ? "bg-orange-500/8" : ""
+                }`}
+                style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr" }}
               >
-                <span className="font-semibold text-white">{t.name}</span>
-                <span className="text-white/55">{t.eventsLabel}</span>
-                <span className="text-right text-white/70">{t.baseFee}%</span>
+                <span className="font-semibold text-white">{p.name}</span>
+                <span className="text-right text-white/70">{p.baseFee}%</span>
                 <span className="text-right text-white/70">{parsedPasarela}%</span>
                 <span className="text-right font-semibold text-orange-400">
-                  {totalFee(t.baseFee, parsedPasarela)}%
+                  {totalFee(p.baseFee, parsedPasarela)}%
                 </span>
               </div>
             ))}
@@ -579,9 +579,9 @@ export function CreateComercioForm() {
 
         <p className="mt-3 text-xs text-white/35">
           Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()} con
-          pasarela {parsedPasarela}%: nivel Platino retiene L.{" "}
+          pasarela {parsedPasarela}%: Pro retiene L.{" "}
           {(EXAMPLE_TICKET * (totalFee(8, parsedPasarela) / 100)).toFixed(2)} (
-          {totalFee(8, parsedPasarela)}%); nivel Base retiene L.{" "}
+          {totalFee(8, parsedPasarela)}%); Evento Único retiene L.{" "}
           {(EXAMPLE_TICKET * (totalFee(15, parsedPasarela) / 100)).toFixed(2)} (
           {totalFee(15, parsedPasarela)}%).
         </p>
