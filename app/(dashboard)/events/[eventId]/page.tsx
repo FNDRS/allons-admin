@@ -125,6 +125,7 @@ export default async function EventDetailPage({
     <DashboardPage>
       <PageHeader
         title={event.title}
+        description={[event.city, event.venue].filter(Boolean).join(" · ") || "Sin ubicación"}
         action={
           <div className="flex flex-wrap gap-2">
             <Link

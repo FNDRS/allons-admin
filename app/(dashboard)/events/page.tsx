@@ -101,7 +101,14 @@ export default async function EventsPage({
 
   return (
     <DashboardPage>
-      <PageHeader title="Eventos" />
+      <PageHeader
+        title="Eventos"
+        description={
+          error
+            ? "No se pudieron cargar los eventos."
+            : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados`
+        }
+      />
 
       {error ? (
         <DashboardScroll>

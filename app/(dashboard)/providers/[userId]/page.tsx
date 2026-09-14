@@ -237,6 +237,7 @@ export default async function ProviderDetailPage({
     <DashboardPage>
       <PageHeader
         title={displayName}
+        description={`${providerUser.email}${providerUser.brandHandle ? ` · ${providerUser.brandHandle}` : ""}`}
         action={
           <Link
             href="/providers"

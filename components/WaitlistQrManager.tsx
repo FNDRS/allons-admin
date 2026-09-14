@@ -406,6 +406,9 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
     <DashboardPage>
       <header className="shrink-0">
         <h1 className="text-2xl font-semibold">Waitlist QR</h1>
+        <p className="mt-1 text-sm text-muted">
+          Un QR por lugar. Acá ves cuántos se registran desde cada uno.
+        </p>
       </header>
 
       <DashboardScroll className="space-y-6 pt-6">

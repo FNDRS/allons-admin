@@ -119,7 +119,10 @@ function DisputesPanel() {
 export default function RefundsPage() {
   return (
     <DashboardPage>
-      <PageHeader title="Reembolsos y disputas" />
+      <PageHeader
+        title="Reembolsos y disputas"
+        description="Pedidos desde la app y disputas con el banco."
+      />
 
       <DashboardScroll>
       <Suspense

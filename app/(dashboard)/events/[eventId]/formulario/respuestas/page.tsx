@@ -46,6 +46,7 @@ export default async function EventRegistrationResponsesPage({
     <DashboardPage>
       <PageHeader
         title="Respuestas del formulario"
+        description={`${event.title} · ${registrations.length.toLocaleString()} registros demo`}
         action={
           <div className="flex flex-wrap gap-2">
             <Link

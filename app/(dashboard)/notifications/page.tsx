@@ -44,7 +44,10 @@ export default function NotificationsPage() {
 
   return (
     <DashboardPage>
-      <PageHeader title="Notificaciones" />
+      <PageHeader
+        title="Notificaciones"
+        description="Aviso para clientes o comercios."
+      />
 
       <DashboardScroll>
       <section className="futuristic-panel p-5 space-y-4 max-w-3xl">

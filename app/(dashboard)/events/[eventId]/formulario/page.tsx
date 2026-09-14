@@ -56,6 +56,7 @@ export default async function EventRegistrationFormPage({
     <DashboardPage>
       <PageHeader
         title="Formulario personalizado"
+        description="Crea los campos que se pedirán en el registro web de este evento único."
         action={
           <Link
             href={`/events/${eventId}` as never}
