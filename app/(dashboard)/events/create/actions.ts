@@ -5,6 +5,11 @@ import {
   saveDemoEventForm,
   type DemoEventFormField,
 } from "@/lib/demoEventForms";
+import { toInterestSlug } from "@/lib/eventCategories";
+import {
+  normalizeTicketDrafts,
+  type EventTicketDraft,
+} from "@/lib/eventTickets";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -53,6 +58,52 @@ function parseFormFields(formData: FormData): DemoEventFormField[] | null {
   } catch {
     return null;
   }
+}
+
+function parseTicketTypes(formData: FormData): EventTicketDraft[] | null {
+  const raw = formString(formData, "ticketTypes");
+  if (!raw) return [];
+
+  try {
+    return normalizeTicketDrafts(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * La categoría vive en `interests` + `event_interests`, igual que cuando la
+ * crea la app: ver `event-category.ts` en allons-api.
+ */
+async function resolveInterestId(
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
+  name: string,
+): Promise<string | null> {
+  const trimmed = name.trim();
+  const slug = toInterestSlug(trimmed);
+  if (!trimmed || !slug) return null;
+
+  const { data: existing } = await admin
+    .from("interests")
+    .select("id")
+    .or(`slug.eq.${slug},name.eq.${trimmed}`)
+    .maybeSingle();
+  if (existing?.id) return existing.id as string;
+
+  const { data: created } = await admin
+    .from("interests")
+    .insert({ slug, name: trimmed })
+    .select("id")
+    .maybeSingle();
+  if (created?.id) return created.id as string;
+
+  // Otra escritura ganó la carrera con el mismo slug.
+  const { data: raced } = await admin
+    .from("interests")
+    .select("id")
+    .or(`slug.eq.${slug},name.eq.${trimmed}`)
+    .maybeSingle();
+  return (raced?.id as string | undefined) ?? null;
 }
 
 const EVENT_IMAGE_CONTENT_TYPES: Record<string, string> = {
@@ -169,6 +220,7 @@ export async function createAdminEventAction(
   const date = formString(formData, "date");
   const time = formString(formData, "time");
   const startsAt = parseLocalDateTime(date, time);
+  const endTime = formString(formData, "endTime");
   const city = resolveKnownCity({
     parts: [formString(formData, "city"), address, venue],
     latitude,
@@ -202,19 +254,49 @@ export async function createAdminEventAction(
 
   const status = formString(formData, "status") === "published" ? "published" : "draft";
   const capacity = Math.max(1, Math.floor(formNumber(formData, "capacity", 1)));
-  const ticketName = formString(formData, "ticketName") || "General";
-  const ticketPrice = Math.max(0, formNumber(formData, "ticketPrice", 0));
-  const ticketTotal = Math.max(1, Math.floor(formNumber(formData, "ticketTotal", capacity)));
-  const saleStartsAt = new Date().toISOString();
-  const saleEndsAt = startsAt;
-  const ticketMode = ticketPrice > 0 ? "single_access" : "free";
   const themeColor = formString(formData, "themeColor") || "#F67010";
+  const category = formString(formData, "category");
   const formFields = parseFormFields(formData);
+  const ticketTypes = parseTicketTypes(formData);
   const imageFiles = eventImageFiles(formData);
 
   if (formFields === null) {
     return fail("El formulario personalizado no tiene un formato válido.");
   }
+  if (ticketTypes === null) {
+    return fail("Los tipos de entrada no tienen un formato válido.");
+  }
+  if (ticketTypes.length === 0) {
+    return fail("Agrega al menos un tipo de entrada con nombre y cantidad.");
+  }
+  if (!category) {
+    return fail("Selecciona la categoría del evento.");
+  }
+
+  // Un evento con cualquier entrada de pago cobra por Paygate; si todas son
+  // gratuitas queda como registro libre, igual que en la app.
+  const hasAnyPaidTicket = ticketTypes.some((ticket) => ticket.price > 0);
+  const ticketMode = hasAnyPaidTicket ? "single_access" : "free";
+  const refundPolicyRaw = formString(formData, "refundPolicy");
+  const refundPolicy =
+    hasAnyPaidTicket && (refundPolicyRaw === "partial" || refundPolicyRaw === "full")
+      ? refundPolicyRaw
+      : "none";
+  const refundPartialPct =
+    refundPolicy === "partial"
+      ? Math.max(1, Math.min(99, formNumber(formData, "refundPartialPct", 50)))
+      : null;
+  const refundDeadlineDays =
+    refundPolicy !== "none"
+      ? Math.max(0, Math.floor(formNumber(formData, "refundDeadlineDays", 2)))
+      : null;
+
+  // El fin declarado sólo se respeta si cae después del inicio; si no, una hora.
+  const endsAtCandidate = parseLocalDateTime(date, endTime);
+  const endsAt =
+    endsAtCandidate && new Date(endsAtCandidate) > new Date(startsAt)
+      ? endsAtCandidate
+      : addHours(startsAt, 1);
 
   let uploadedImages: UploadedEventImage[] = [];
   try {
@@ -232,7 +314,7 @@ export async function createAdminEventAction(
       title,
       description: formString(formData, "description") || null,
       starts_at: startsAt,
-      ends_at: addHours(startsAt, 2),
+      ends_at: endsAt,
       city,
       venue: venue || null,
       address: address || null,
@@ -244,7 +326,9 @@ export async function createAdminEventAction(
       ticket_mode: ticketMode,
       theme_color: themeColor,
       cover_image_url: uploadedImages[0]?.url ?? null,
-      refund_policy: "none",
+      refund_policy: refundPolicy,
+      refund_partial_pct: refundPartialPct,
+      refund_deadline_days: refundDeadlineDays,
     })
     .select("id")
     .single();
@@ -256,23 +340,33 @@ export async function createAdminEventAction(
 
   const { error: ticketError } = await admin
     .from("provider_event_ticket_types")
-    .insert({
-      provider_id: providerId,
-      event_id: event.id,
-      name: ticketName,
-      kind: "general",
-      price: ticketPrice,
-      total: ticketTotal,
-      active: true,
-      sort_order: 0,
-      sale_starts_at: ticketPrice > 0 ? saleStartsAt : null,
-      sale_ends_at: ticketPrice > 0 ? saleEndsAt : null,
-    });
+    .insert(
+      ticketTypes.map((ticket, index) => ({
+        provider_id: providerId,
+        event_id: event.id,
+        name: ticket.name,
+        kind: ticket.kind,
+        price: ticket.price,
+        total: ticket.total,
+        active: true,
+        sort_order: index,
+        // Los tickets gratuitos no tienen ventana: se venden hasta que empieza.
+        sale_starts_at: ticket.price > 0 ? ticket.saleStartsAt : null,
+        sale_ends_at: ticket.price > 0 ? ticket.saleEndsAt : null,
+      })),
+    );
 
   if (ticketError) {
     await admin.from("events").delete().eq("id", event.id);
     await deleteUploadedEventImages(uploadedImages);
     return fail(ticketError.message);
+  }
+
+  const interestId = await resolveInterestId(admin, category);
+  if (interestId) {
+    await admin
+      .from("event_interests")
+      .insert({ event_id: event.id, interest_id: interestId });
   }
 
   const galleryImages = uploadedImages.slice(1);

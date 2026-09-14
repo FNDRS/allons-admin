@@ -28,7 +28,7 @@ export function DashboardList({
   return (
     <div className="futuristic-panel flex min-h-0 flex-1 flex-col overflow-hidden">
       {header}
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
     </div>
   );
 }

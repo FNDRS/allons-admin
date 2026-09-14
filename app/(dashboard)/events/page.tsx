@@ -9,7 +9,7 @@ import {
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { Plug } from "lucide-react";
 import Link from "next/link";
 
@@ -18,7 +18,6 @@ export const dynamic = "force-dynamic";
 interface SearchParams {
   q?: string;
   status?: string;
-  city?: string;
   providerId?: string;
 }
 
@@ -63,7 +62,6 @@ async function loadEvents(filters: SearchParams): Promise<LoadResult> {
     const data = await listAdminEvents({
       q: filters.q,
       status: filters.status,
-      city: filters.city,
       providerId: filters.providerId,
       limit: 200,
     });
@@ -129,24 +127,18 @@ export default async function EventsPage({
               placeholder="Buscar por título"
               className="w-72 max-w-full"
             />
-            <NativeSelect
+            <Select
               name="status"
               defaultValue={params.status ?? ""}
               className="w-44"
             >
-              <option value="">Todos los estados</option>
-              <option value="draft">Borrador</option>
-              <option value="published">Publicado</option>
-              <option value="sold_out">Agotado</option>
-              <option value="ended">Finalizado</option>
-              <option value="suspended">Suspendido</option>
-            </NativeSelect>
-            <Input
-              name="city"
-              defaultValue={params.city ?? ""}
-              placeholder="Ciudad"
-              className="w-40"
-            />
+              <SelectItem value="">Todos los estados</SelectItem>
+              <SelectItem value="draft">Borrador</SelectItem>
+              <SelectItem value="published">Publicado</SelectItem>
+              <SelectItem value="sold_out">Agotado</SelectItem>
+              <SelectItem value="ended">Finalizado</SelectItem>
+              <SelectItem value="suspended">Suspendido</SelectItem>
+            </Select>
             <Button type="submit" size="sm">
               Filtrar
             </Button>
@@ -155,9 +147,10 @@ export default async function EventsPage({
           <DashboardList
             header={
               <div
-                className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+                className="grid items-center gap-x-6 border-b border-white/12 bg-white/[0.02] px-5 py-3.5 text-[10px] font-bold uppercase tracking-wide text-muted"
                 style={{
-                  gridTemplateColumns: "2fr 1.4fr 1fr 1fr 1.4fr",
+                  gridTemplateColumns:
+                    "minmax(0,2fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr)",
                 }}
               >
                 <div>Evento</div>
@@ -189,8 +182,11 @@ function EventRow({ event }: { event: AdminEventListItem }) {
 
   return (
     <div
-      className="group relative grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 transition-[background-color,transform] duration-150 ease-out hover:translate-x-0.5 hover:bg-white/5"
-      style={{ gridTemplateColumns: "2fr 1.4fr 1fr 1fr 1.4fr" }}
+      className="group relative grid min-w-0 items-center gap-x-6 border-b border-white/8 px-5 py-5 text-sm last:border-b-0 transition-colors duration-150 ease-out hover:bg-white/5"
+      style={{
+        gridTemplateColumns:
+          "minmax(0,2fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr)",
+      }}
     >
       <Link
         href={`/events/${event.id}` as never}
@@ -225,11 +221,11 @@ function EventRow({ event }: { event: AdminEventListItem }) {
           </div>
         ) : null}
       </div>
-      <div>
+      <div className="min-w-0">
         <StatusPill label={label} variant={variant} />
       </div>
-      <div className="text-xs text-muted">{formatDate(event.startsAt)}</div>
-      <div className="relative z-10 flex flex-wrap justify-end gap-1.5">
+      <div className="min-w-0 text-xs text-muted">{formatDate(event.startsAt)}</div>
+      <div className="relative z-10 flex min-w-0 flex-wrap justify-end gap-1.5">
         <EventStatusActions
           eventId={event.id}
           status={status}
