@@ -145,7 +145,7 @@ jobs:
             set -e
             [ $STATUS -eq 0 ] && echo "$OUT" && exit 0
             echo "$OUT"
-            echo "$OUT" | rg -q "InvalidStateException|OPERATION_IN_PROGRESS" && sleep 20 && continue
+            echo "$OUT" | grep -q "InvalidStateException\|OPERATION_IN_PROGRESS" && sleep 20 && continue
             exit $STATUS
           done
           exit 1
