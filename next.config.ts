@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   typedRoutes: true,
+  // Abrir el panel por 127.0.0.1 en vez de localhost hace que Next bloquee el
+  // HMR por ser otro origen, y la página deja de refrescarse sola. Sólo aplica
+  // en dev.
+  allowedDevOrigins: ["127.0.0.1"],
   compress: true,
   // Trim JS for lucide/recharts - admin ships both, saves ~100kb parsed.
   experimental: {
