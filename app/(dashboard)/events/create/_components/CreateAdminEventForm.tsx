@@ -5,6 +5,14 @@ import { EventCategoryField } from "@/components/admin/EventCategoryField";
 import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
 import { EventTicketsField } from "@/components/admin/EventTicketsField";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -13,8 +21,10 @@ import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
 import type { ProviderOption } from "@/lib/admin/providerOptions";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { createAdminEventAction } from "../actions";
+import Link from "next/link";
 
 /** Fecha por defecto del evento: dentro de 7 días. */
 function defaultEventDate() {
@@ -35,6 +45,15 @@ const DEFAULT_TIME = "20:00";
 export function CreateAdminEventForm({ providers }: { providers: ProviderOption[] }) {
   const [state, action, isPending] = useActionState(createAdminEventAction, null);
 
+  useEffect(() => {
+    if (!state || state.ok) return;
+    toast.error("No se pudo crear el evento", {
+      id: "create-admin-event-error",
+      description: state.error,
+      duration: 6000,
+    });
+  }, [state]);
+
   // El banner, la ventana de venta y el aviso de capacidad reaccionan a estos
   // valores, así que viven en el formulario y no en cada campo.
   const [title, setTitle] = useState("");
@@ -47,7 +66,7 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
 
   return (
     <form action={action} className="space-y-6">
-      {state?.error ? (
+      {state && !state.ok ? (
         <div className="border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">
           {state.error}
         </div>
@@ -210,6 +229,42 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
           comercio. Si está publicado, aparecerá en la app.
         </p>
       </section>
+      {/*
+        Al crear no se redirige: el modal confirma y deja elegir a dónde ir.
+        No tiene cancelar — el formulario de atrás ya no sirve para nada, sus
+        campos crearían un evento duplicado.
+      */}
+      <AlertDialog open={Boolean(state?.ok)}>
+        <AlertDialogContent className="rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {state?.ok && state.published
+                ? "Evento publicado"
+                : "Borrador guardado"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {state?.ok ? (
+                <>
+                  <span className="font-medium text-white">{state.title}</span>{" "}
+                  {state.published
+                    ? "ya está en la app y sus tickets quedaron cargados."
+                    : "quedó como borrador: no aparece en la app hasta que lo publiques."}
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button asChild variant="outline">
+              <Link href="/events">Ir a eventos</Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/events/${state?.ok ? state.eventId : ""}` as never}>
+                Ver detalles
+              </Link>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

@@ -17,9 +17,15 @@ import {
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
-export type CreateAdminEventState = { error: string } | null;
+/**
+ * El caso exitoso no redirige: vuelve al formulario para que muestre el modal
+ * con el evento creado y sus accesos.
+ */
+export type CreateAdminEventState =
+  | { ok: false; error: string }
+  | { ok: true; eventId: string; title: string; published: boolean }
+  | null;
 
 function formString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -50,7 +56,7 @@ function addHours(iso: string, hours: number) {
 }
 
 function fail(message: string): CreateAdminEventState {
-  return { error: message };
+  return { ok: false, error: message };
 }
 
 function parseFormFields(formData: FormData): DemoEventFormField[] | null {
@@ -348,5 +354,11 @@ export async function createAdminEventAction(
   revalidatePath("/events");
   revalidatePath(`/events/${event.id}`);
   revalidatePath(`/events/${event.id}/formulario`);
-  redirect(`/events/${event.id}/formulario?created=1` as unknown as never);
+
+  return {
+    ok: true,
+    eventId: event.id,
+    title,
+    published: status === "published",
+  };
 }

@@ -8,12 +8,23 @@
 
 export const DEMO_FORM_FIELD_KINDS = [
   "text",
+  "textarea",
   "number",
+  "date",
   "select",
+  "radio",
+  "checkbox",
   "boolean",
 ] as const;
 
 export type DemoFormFieldKind = (typeof DEMO_FORM_FIELD_KINDS)[number];
+
+/** Tipos donde el usuario elige de una lista y por lo tanto necesitan opciones. */
+export const OPTION_FIELD_KINDS = ["select", "radio", "checkbox"] as const;
+
+export function needsOptions(kind: DemoFormFieldKind) {
+  return (OPTION_FIELD_KINDS as readonly string[]).includes(kind);
+}
 
 export interface DemoEventFormField {
   id: string;
@@ -62,7 +73,11 @@ export function normalizeDemoFormFields(value: unknown): DemoEventFormField[] {
         label,
         kind,
         required: raw.required === true,
-        options: kind === "select" ? (options.length ? options : ["Opción 1"]) : [],
+        options: needsOptions(kind)
+          ? options.length
+            ? options
+            : ["Opción 1"]
+          : [],
         sortOrder: index,
       };
     })
