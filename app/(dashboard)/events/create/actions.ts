@@ -10,6 +10,10 @@ import {
   normalizeTicketDrafts,
   type EventTicketDraft,
 } from "@/lib/eventTickets";
+import {
+  parseUploadedEventImages,
+  type UploadedEventImage,
+} from "@/lib/admin/eventImages";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -55,6 +59,22 @@ function parseFormFields(formData: FormData): DemoEventFormField[] | null {
 
   try {
     return normalizeDemoFormFields(JSON.parse(rawFields));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Las imágenes ya se subieron desde el navegador contra
+ * `/api/admin/event-images`: por el Server Action sólo viajan sus URLs, porque
+ * Next corta el body del action a 1 MB.
+ */
+function parseEventImages(formData: FormData): UploadedEventImage[] | null {
+  const raw = formString(formData, "eventImages");
+  if (!raw) return [];
+
+  try {
+    return parseUploadedEventImages(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -113,99 +133,6 @@ async function resolveInterestId(
 
   // Otra escritura ganó la carrera con el mismo slug.
   return findExisting();
-}
-
-const EVENT_IMAGE_CONTENT_TYPES: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  heic: "image/heic",
-  heif: "image/heif",
-};
-
-const EVENT_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
-
-type UploadedEventImage = {
-  url: string;
-  path: string;
-};
-
-function describeImageFile(file: File) {
-  const rawExtension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const contentTypeFromExtension = EVENT_IMAGE_CONTENT_TYPES[rawExtension];
-  const contentTypeFromFile = Object.values(EVENT_IMAGE_CONTENT_TYPES).includes(
-    file.type,
-  )
-    ? file.type
-    : null;
-  const contentType = contentTypeFromExtension ?? contentTypeFromFile;
-  const extension = contentTypeFromExtension
-    ? rawExtension
-    : Object.entries(EVENT_IMAGE_CONTENT_TYPES).find(
-        ([, type]) => type === contentTypeFromFile,
-      )?.[0] ?? "jpg";
-
-  if (!contentType) {
-    throw new Error(
-      `Formato no permitido para ${file.name}. Usa JPG, PNG, WEBP, HEIC o HEIF.`,
-    );
-  }
-
-  return { extension, contentType };
-}
-
-function eventImageFiles(formData: FormData) {
-  return formData
-    .getAll("eventImages")
-    .filter((value): value is File => value instanceof File && value.size > 0)
-    .slice(0, 10);
-}
-
-async function uploadEventImages(files: File[]): Promise<UploadedEventImage[]> {
-  if (files.length === 0) return [];
-  const admin = createSupabaseServiceRoleClient();
-
-  const results = await Promise.allSettled(
-    files.map(async (file, index): Promise<UploadedEventImage> => {
-      if (file.size > EVENT_IMAGE_MAX_BYTES) {
-        throw new Error(`${file.name} supera el limite de 10 MB.`);
-      }
-
-      const { extension, contentType } = describeImageFile(file);
-      const filename = `gallery/admin_${Date.now()}_${index}_${Math.random()
-        .toString(36)
-        .slice(2, 8)}.${extension}`;
-      const { data, error } = await admin.storage
-        .from("event-images")
-        .upload(filename, await file.arrayBuffer(), {
-          contentType,
-          upsert: false,
-        });
-
-      if (error) {
-        throw new Error(`Error subiendo ${file.name}: ${error.message}`);
-      }
-      return {
-        path: data.path,
-        url: admin.storage.from("event-images").getPublicUrl(data.path).data
-          .publicUrl,
-      };
-    }),
-  );
-
-  const uploaded = results.flatMap((result) =>
-    result.status === "fulfilled" ? [result.value] : [],
-  );
-  const rejected = results.find((result) => result.status === "rejected");
-  if (rejected?.status === "rejected") {
-    await deleteUploadedEventImages(uploaded);
-    throw rejected.reason instanceof Error
-      ? rejected.reason
-      : new Error("No se pudieron subir las imagenes.");
-  }
-
-  return uploaded;
 }
 
 async function deleteUploadedEventImages(images: UploadedEventImage[]) {
@@ -267,10 +194,13 @@ export async function createAdminEventAction(
   const category = formString(formData, "category");
   const formFields = parseFormFields(formData);
   const ticketTypes = parseTicketTypes(formData);
-  const imageFiles = eventImageFiles(formData);
+  const uploadedImages = parseEventImages(formData);
 
   if (formFields === null) {
     return fail("El formulario personalizado no tiene un formato válido.");
+  }
+  if (uploadedImages === null) {
+    return fail("Las imágenes del evento no tienen un formato válido.");
   }
   if (ticketTypes === null) {
     return fail("Los tipos de entrada no tienen un formato válido.");
@@ -306,15 +236,6 @@ export async function createAdminEventAction(
     endsAtCandidate && new Date(endsAtCandidate) > new Date(startsAt)
       ? endsAtCandidate
       : addHours(startsAt, 1);
-
-  let uploadedImages: UploadedEventImage[] = [];
-  try {
-    uploadedImages = await uploadEventImages(imageFiles);
-  } catch (error) {
-    return fail(
-      error instanceof Error ? error.message : "No se pudieron subir las imagenes.",
-    );
-  }
 
   const { data: event, error: eventError } = await admin
     .from("events")

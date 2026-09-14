@@ -46,7 +46,7 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
   );
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-6">
+    <form action={action} className="space-y-6">
       {state?.error ? (
         <div className="border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">
           {state.error}
