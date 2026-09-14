@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  EVENT_IMAGE_ACCEPT,
   EVENT_IMAGE_MAX_COUNT,
-  type UploadedEventImage,
-} from "@/lib/admin/eventImages";
+  UPLOAD_CONFIGS,
+  type UploadedFile,
+} from "@/lib/admin/uploads";
 import { useRef, useState } from "react";
 
 /** Paleta de banner del evento (`EVENT_THEME_COLORS` en allons-mobile). */
@@ -20,13 +20,13 @@ const EVENT_THEME_COLORS = [
   "#1C1B20",
 ];
 
-type GalleryImage = UploadedEventImage & { name: string };
+type GalleryImage = UploadedFile & { name: string };
 
 /**
  * Banner del evento: la portada es la primera imagen, y el color sólido sólo
  * se ve mientras no haya imágenes.
  *
- * Las imágenes se suben apenas se eligen, contra `/api/admin/event-images`, y
+ * Las imágenes se suben apenas se eligen, contra `/api/admin/uploads`, y
  * al formulario sólo viajan sus URLs. Mandar los archivos por el Server Action
  * rompía con "Body exceeded 1 MB limit".
  */
@@ -53,13 +53,14 @@ export function EventBannerMediaField({ title }: { title: string }) {
     for (const file of files.slice(0, room)) {
       const body = new FormData();
       body.append("file", file);
+      body.append("kind", "event-image");
       try {
-        const response = await fetch("/api/admin/event-images", {
+        const response = await fetch("/api/admin/uploads", {
           method: "POST",
           body,
         });
         const payload = (await response.json()) as
-          | UploadedEventImage
+          | UploadedFile
           | { error: string };
         if (!response.ok || !("url" in payload)) {
           setUploadError(
@@ -80,10 +81,10 @@ export function EventBannerMediaField({ title }: { title: string }) {
     setImages((current) => current.filter((item) => item.path !== image.path));
     // El evento todavía no existe: si no se borra, el archivo queda huérfano.
     try {
-      await fetch("/api/admin/event-images", {
+      await fetch("/api/admin/uploads", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: image.path }),
+        body: JSON.stringify({ path: image.path, kind: "event-image" }),
       });
     } catch {
       // Un huérfano en storage no debe bloquear la creación del evento.
@@ -154,7 +155,7 @@ export function EventBannerMediaField({ title }: { title: string }) {
       <input
         ref={inputRef}
         type="file"
-        accept={EVENT_IMAGE_ACCEPT}
+        accept={UPLOAD_CONFIGS["event-image"].accept}
         multiple
         onChange={(event) =>
           void uploadFiles(Array.from(event.target.files ?? []))

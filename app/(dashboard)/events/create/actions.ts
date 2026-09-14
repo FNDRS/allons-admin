@@ -11,9 +11,9 @@ import {
   type EventTicketDraft,
 } from "@/lib/eventTickets";
 import {
-  parseUploadedEventImages,
-  type UploadedEventImage,
-} from "@/lib/admin/eventImages";
+  parseUploadedFiles,
+  type UploadedFile,
+} from "@/lib/admin/uploads";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -66,15 +66,15 @@ function parseFormFields(formData: FormData): DemoEventFormField[] | null {
 
 /**
  * Las imágenes ya se subieron desde el navegador contra
- * `/api/admin/event-images`: por el Server Action sólo viajan sus URLs, porque
+ * `/api/admin/uploads`: por el Server Action sólo viajan sus URLs, porque
  * Next corta el body del action a 1 MB.
  */
-function parseEventImages(formData: FormData): UploadedEventImage[] | null {
+function parseEventImages(formData: FormData): UploadedFile[] | null {
   const raw = formString(formData, "eventImages");
   if (!raw) return [];
 
   try {
-    return parseUploadedEventImages(JSON.parse(raw));
+    return parseUploadedFiles(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -135,7 +135,7 @@ async function resolveInterestId(
   return findExisting();
 }
 
-async function deleteUploadedEventImages(images: UploadedEventImage[]) {
+async function deleteUploadedEventImages(images: UploadedFile[]) {
   if (images.length === 0) return;
   const admin = createSupabaseServiceRoleClient();
   await admin.storage
