@@ -43,12 +43,13 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <DashboardPage>
       <PageHeader
         title="Notificaciones"
         description="Aviso para clientes o comercios."
       />
 
+      <DashboardScroll>
       <section className="futuristic-panel p-5 space-y-4 max-w-3xl">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1">
@@ -119,6 +120,7 @@ export default function NotificationsPage() {
           {result ? <div className="text-sm text-muted">{result}</div> : null}
         </div>
       </section>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }

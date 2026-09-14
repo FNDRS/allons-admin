@@ -161,6 +161,7 @@ export default function RefundsPage() {
       <section className="mt-8">
         <DisputesPanel />
       </section>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }

@@ -6,13 +6,15 @@ export const metadata = { title: "Nuevo Comercio | Allons Admin" };
 
 export default function CreateComercioPage() {
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Comercios"
         title="Nuevo Comercio"
         description="Alta de un comercio. Se manda un enlace de invitación al correo."
       />
-      <CreateComercioForm />
-    </div>
+      <DashboardScroll>
+        <CreateComercioForm />
+      </DashboardScroll>
+    </DashboardPage>
   );
 }
