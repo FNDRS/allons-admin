@@ -331,42 +331,44 @@ export function CreateComercioForm() {
           <Label className="mb-3">
             Tipo de negocio <span className="text-orange-400">*</span>
           </Label>
+          <input type="hidden" name="businessType" value={businessType} />
           <div className="grid gap-2 sm:grid-cols-2">
-            {BUSINESS_TYPES.map((t) => (
-              <label
-                key={t.value}
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-md border p-3.5 transition",
-                  businessType === t.value
-                    ? "border-orange-500/50 bg-orange-500/10"
-                    : "border-white/10 bg-white/[0.02] hover:border-white/20",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="businessType"
-                  value={t.value}
-                  checked={businessType === t.value}
-                  onChange={() => handleBusinessTypeChange(t.value)}
-                  className="sr-only"
-                />
-                <span
+            {BUSINESS_TYPES.map((t) => {
+              const active = businessType === t.value;
+              return (
+                <Button
+                  key={t.value}
+                  type="button"
+                  variant="outline"
+                  aria-pressed={active}
+                  onClick={() => handleBusinessTypeChange(t.value)}
                   className={cn(
-                    "size-4 shrink-0 rounded-full border",
-                    businessType === t.value
-                      ? "border-orange-400 bg-orange-500"
-                      : "border-white/30",
+                    "h-auto w-full justify-start gap-3 py-3.5 text-left font-normal normal-case tracking-normal",
+                    active
+                      ? "border-orange-500/50 bg-orange-500/10"
+                      : "border-white/10 bg-white/[0.02]",
                   )}
-                  aria-hidden
-                />
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.label}</p>
-                  <p className="text-xs text-white/40">
-                    Pasarela sugerida: {t.defaultPct}%
-                  </p>
-                </div>
-              </label>
-            ))}
+                >
+                  <span
+                    className={cn(
+                      "size-4 shrink-0 rounded-full border",
+                      active
+                        ? "border-orange-400 bg-orange-500"
+                        : "border-white/30",
+                    )}
+                    aria-hidden
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-white">
+                      {t.label}
+                    </span>
+                    <span className="block text-xs text-white/40">
+                      Pasarela sugerida: {t.defaultPct}%
+                    </span>
+                  </span>
+                </Button>
+              );
+            })}
           </div>
         </div>
 

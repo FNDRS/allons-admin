@@ -37,7 +37,7 @@ export default async function DemoEventRegistrationPage({
     <main className="min-h-screen bg-[#050505] px-5 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-3xl">
         <Link
-          href={`/demo/eventos/${eventId}` as never}
+          href={`/registro/eventos/${eventId}` as never}
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white"
         >
           <ArrowLeft size={14} />

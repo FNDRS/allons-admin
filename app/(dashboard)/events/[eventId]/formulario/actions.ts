@@ -20,7 +20,7 @@ function parseFieldsPayload(value: FormDataEntryValue | null) {
 
 function redirectRegistrationError(eventId: string, message: string): never {
   redirect(
-    `/demo/eventos/${encodeURIComponent(eventId)}/registro?error=${encodeURIComponent(message)}` as unknown as never,
+    `/registro/eventos/${encodeURIComponent(eventId)}/registro?error=${encodeURIComponent(message)}` as unknown as never,
   );
 }
 
@@ -32,8 +32,8 @@ export async function saveDemoRegistrationForm(
   await saveDemoEventForm(eventId, fields);
   revalidatePath(`/events/${eventId}/formulario`);
   revalidatePath(`/events/${eventId}/formulario/respuestas`);
-  revalidatePath(`/demo/eventos/${eventId}`);
-  revalidatePath(`/demo/eventos/${eventId}/registro`);
+  revalidatePath(`/registro/eventos/${eventId}`);
+  revalidatePath(`/registro/eventos/${eventId}/registro`);
   redirect(`/events/${encodeURIComponent(eventId)}/formulario?saved=1` as unknown as never);
 }
 
@@ -85,5 +85,5 @@ export async function submitDemoRegistration(
     answers,
   });
   revalidatePath(`/events/${eventId}/formulario/respuestas`);
-  redirect(`/demo/eventos/${encodeURIComponent(eventId)}?registered=1` as unknown as never);
+  redirect(`/registro/eventos/${encodeURIComponent(eventId)}?registered=1` as unknown as never);
 }

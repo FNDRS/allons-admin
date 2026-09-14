@@ -15,7 +15,7 @@ export default async function CreateAdminEventPage() {
     <DashboardPage>
       <PageHeader
         title="Nuevo evento"
-        description="Backoffice interno: crea el evento completo y su formulario especial de registro web en una sola pantalla."
+        description="Crea el evento completo y su formulario de registro web en una sola pantalla."
         action={
           <Button asChild size="sm" variant="outline">
             <Link href="/events">

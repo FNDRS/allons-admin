@@ -6,15 +6,17 @@ import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor"
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
 import { EventTicketsField } from "@/components/admin/EventTicketsField";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TimePicker } from "@/components/ui/time-picker";
 import type { ProviderOption } from "@/lib/admin/providerOptions";
 import { useActionState, useState } from "react";
 import { createAdminEventAction } from "../actions";
 
-/** Mismos valores por defecto que el formulario de la app: dentro de 7 días. */
+/** Fecha por defecto del evento: dentro de 7 días. */
 function defaultEventDate() {
   return new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 }
@@ -51,8 +53,11 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         </div>
       ) : null}
 
-      <EventBannerMediaField title={title} />
-
+      {/*
+        Fila 1: los datos que se escriben a la izquierda y su resultado visual
+        (banner y galería) a la derecha, para verlos juntos.
+      */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       <section className="futuristic-panel p-5">
         <div className="eyebrow">Evento</div>
         <h2 className="mt-1 text-xl font-semibold">Datos públicos</h2>
@@ -112,6 +117,11 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         </div>
       </section>
 
+      <EventBannerMediaField title={title} />
+      </div>
+
+      {/* Fila 2: el mapa ocupa alto, así que el resto de la ubicación va al lado. */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       <EventLocationPickerField />
 
       <section className="futuristic-panel p-5">
@@ -132,36 +142,34 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <Label>Fecha *</Label>
-              <Input
+              <DatePicker
                 name="date"
-                type="date"
                 required
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={setDate}
               />
             </div>
             <div>
               <Label>Hora inicio *</Label>
-              <Input
+              <TimePicker
                 name="time"
-                type="time"
                 required
                 value={time}
-                onChange={(event) => setTime(event.target.value)}
+                onChange={setTime}
               />
             </div>
             <div>
               <Label>Hora fin</Label>
-              <Input
+              <TimePicker
                 name="endTime"
-                type="time"
                 value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
+                onChange={setEndTime}
               />
             </div>
           </div>
         </div>
       </section>
+      </div>
 
       <EventCategoryField />
 
@@ -170,37 +178,37 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
       <EventFormFieldsEditor
         initialFields={[]}
         eyebrow="Formulario"
-        title="Formulario especial del evento"
+        title="Formulario del evento"
         description="Opcional. Agrega aquí las preguntas que se pedirán en el registro web antes de publicar el evento. Nombre y correo siempre se solicitan."
         emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
       />
 
       <section className="futuristic-panel p-5">
         <div className="eyebrow">Publicación</div>
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-end">
           <div>
             <Label>Estado</Label>
-              <Select name="status" defaultValue="published">
-                <SelectItem value="published">Publicar en la app</SelectItem>
-                <SelectItem value="draft">Guardar borrador</SelectItem>
-              </Select>
+            <Select name="status" defaultValue="published">
+              <SelectItem value="published">Publicar en la app</SelectItem>
+              <SelectItem value="draft">Guardar borrador</SelectItem>
+            </Select>
           </div>
 
           <Button
             type="submit"
+            variant="default"
             disabled={isPending || providers.length === 0}
             className="w-full"
             size="lg"
           >
-            {isPending ? "Creando..." : "Crear evento y formulario"}
+            {isPending ? "Creando..." : "Crear evento"}
           </Button>
-
-          <p className="text-xs leading-5 text-white/45">
-            Al crear, el evento, sus tickets y su formulario especial quedan
-            asociados al comercio real. Si está publicado, aparecerá en la app
-            cliente.
-          </p>
         </div>
+
+        <p className="mt-4 text-xs leading-5 text-white/45">
+          Al crear, el evento, sus tickets y su formulario quedan asociados al
+          comercio. Si está publicado, aparecerá en la app.
+        </p>
       </section>
     </form>
   );

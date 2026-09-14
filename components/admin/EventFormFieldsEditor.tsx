@@ -1,10 +1,12 @@
 "use client";
 
-import type {
-  DemoEventFormField,
-  DemoFormFieldKind,
-} from "@/lib/demoEventForms";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import {
+  parseFormFieldsJson,
+  toFormFieldsJson,
+  type DemoEventFormField,
+  type DemoFormFieldKind,
+} from "@/lib/eventFormFields";
+import { ArrowDown, ArrowUp, Braces, Copy, Plus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   initialFields: DemoEventFormField[];
@@ -24,6 +27,14 @@ type Props = {
   className?: string;
 };
 
+const JSON_PLACEHOLDER = `{
+  "fields": [
+    { "label": "¿Cómo te enteraste?", "kind": "select", "required": true,
+      "options": ["Instagram", "Un amigo", "Otro"] },
+    { "label": "Restricciones alimentarias", "kind": "text", "required": false }
+  ]
+}`;
+
 const FIELD_KIND_LABEL: Record<DemoFormFieldKind, string> = {
   text: "Texto",
   number: "Número",
@@ -31,15 +42,14 @@ const FIELD_KIND_LABEL: Record<DemoFormFieldKind, string> = {
   boolean: "Sí / No",
 };
 
+/**
+ * La pregunta nace vacía: un texto de relleno se publica tal cual si el usuario
+ * no lo borra, y obliga a limpiar el campo antes de escribir.
+ */
 function newField(kind: DemoFormFieldKind): DemoEventFormField {
   return {
     id: `field-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    label:
-      kind === "select"
-        ? "Selecciona una opción"
-        : kind === "boolean"
-          ? "Acepto las condiciones"
-          : "Nueva pregunta",
+    label: "",
     kind,
     required: true,
     options: kind === "select" ? ["Opción 1", "Opción 2"] : [],
@@ -58,9 +68,70 @@ export function EventFormFieldsEditor({
   className,
 }: Props) {
   const [fields, setFields] = useState<DemoEventFormField[]>(initialFields);
+  /** Campo recién agregado, para llevarle el cursor a su input de pregunta. */
+  const [fieldToFocus, setFieldToFocus] = useState<string | null>(null);
+  /** Lo que `normalizeDemoFormFields` va a conservar al guardar. */
+  const savedFields = fields.filter((field) => field.label.trim());
+
+  /**
+   * Texto crudo del input de opciones, por campo.
+   *
+   * Sin esto no se puede escribir una coma: el valor se re-derivaba de
+   * `options.join(", ")`, y como al partir se descartan los tramos vacíos, la
+   * coma recién tecleada desaparecía antes de poder escribir la opción
+   * siguiente. Lo que se guarda sigue siendo la lista limpia.
+   */
+  const [optionsDrafts, setOptionsDrafts] = useState<Record<string, string>>({});
+
+  const setOptionsText = (fieldId: string, text: string) => {
+    setOptionsDrafts((current) => ({ ...current, [fieldId]: text }));
+    updateField(fieldId, {
+      options: text
+        .split(",")
+        .map((option) => option.trim())
+        .filter(Boolean),
+    });
+  };
+
+  const [showJson, setShowJson] = useState(false);
+  const [jsonDraft, setJsonDraft] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonApplied, setJsonApplied] = useState(false);
+
+  const openJsonEditor = () => {
+    setShowJson((current) => {
+      // Al abrirlo se precarga lo que ya hay, para editar en vez de empezar de cero.
+      if (!current) setJsonDraft(toFormFieldsJson(fields));
+      setJsonError(null);
+      setJsonApplied(false);
+      return !current;
+    });
+  };
+
+  /** Reemplaza la lista completa: el JSON es la fuente, no un agregado. */
+  const applyJson = () => {
+    const result = parseFormFieldsJson(jsonDraft);
+    if (!result.fields) {
+      setJsonError(result.error);
+      setJsonApplied(false);
+      return;
+    }
+    setFields(
+      result.fields.map((field, index) => ({
+        ...field,
+        id: `field-${Date.now()}-${index}`,
+      })),
+    );
+    // Los campos son otros: el texto en curso de las opciones ya no aplica.
+    setOptionsDrafts({});
+    setJsonError(null);
+    setJsonApplied(true);
+  };
 
   const addField = (kind: DemoFormFieldKind) => {
-    setFields((current) => [...current, newField(kind)]);
+    const field = newField(kind);
+    setFields((current) => [...current, field]);
+    setFieldToFocus(field.id);
   };
 
   const updateField = (
@@ -126,6 +197,68 @@ export function EventFormFieldsEditor({
           ))}
         </div>
 
+        <div className="mt-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={openJsonEditor}
+            aria-expanded={showJson}
+          >
+            <Braces size={14} /> {showJson ? "Cerrar JSON" : "Pegar o copiar JSON"}
+          </Button>
+
+          {showJson ? (
+            <div className="mt-3 rounded-lg border border-white/12 bg-white/[0.03] p-4">
+              <Label>JSON del formulario</Label>
+              <Textarea
+                value={jsonDraft}
+                onChange={(event) => {
+                  setJsonDraft(event.target.value);
+                  setJsonError(null);
+                  setJsonApplied(false);
+                }}
+                rows={10}
+                spellCheck={false}
+                className="font-mono text-xs"
+                placeholder={JSON_PLACEHOLDER}
+              />
+
+              {jsonError ? (
+                <p className="mt-2 text-xs text-red-300">{jsonError}</p>
+              ) : jsonApplied ? (
+                <p className="mt-2 text-xs text-emerald-300">
+                  JSON aplicado: los campos de abajo son los que se van a guardar.
+                </p>
+              ) : (
+                <p className="mt-2 text-xs leading-5 text-white/40">
+                  Un arreglo de campos, o un objeto con la clave{" "}
+                  <code className="text-white/60">fields</code>. Cada campo
+                  necesita <code className="text-white/60">label</code>;{" "}
+                  <code className="text-white/60">kind</code> puede ser text,
+                  number, select o boolean (por defecto text), y{" "}
+                  <code className="text-white/60">options</code> aplica solo a
+                  select.
+                </p>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={applyJson}>
+                  Aplicar JSON
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setJsonDraft(toFormFieldsJson(fields))}
+                >
+                  <Copy size={14} /> Cargar campos actuales
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <div className="mt-5 space-y-3">
           {fields.length === 0 ? (
             <div className="border border-dashed border-white/20 p-8 text-center text-sm text-muted">
@@ -174,15 +307,26 @@ export function EventFormFieldsEditor({
                   </div>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-[1fr_160px_140px]">
+                <div className="grid items-start gap-3 md:grid-cols-[1fr_160px_auto]">
                   <div>
                     <Label>Pregunta</Label>
                     <Input
+                      ref={(node) => {
+                        if (!node || fieldToFocus !== field.id) return;
+                        node.focus();
+                        setFieldToFocus(null);
+                      }}
                       value={field.label}
+                      placeholder="Ej. ¿Cómo te enteraste del evento?"
                       onChange={(event) =>
                         updateField(field.id, { label: event.target.value })
                       }
                     />
+                    {!field.label.trim() ? (
+                      <p className="mt-1.5 text-xs text-amber-300">
+                        Sin pregunta, este campo no se guarda.
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -209,30 +353,28 @@ export function EventFormFieldsEditor({
                     </Select>
                   </div>
 
-                  <label className="flex items-end gap-2 pb-2 text-sm text-white/75">
-                    <Checkbox
-                      checked={field.required}
-                      onChange={(event) =>
-                        updateField(field.id, { required: event.target.checked })
-                      }
-                    />
-                    Obligatorio
-                  </label>
+                  <div>
+                    <Label className="invisible" aria-hidden>
+                      Obligatorio
+                    </Label>
+                    <label className="flex h-9 items-center gap-2 whitespace-nowrap text-sm text-white/75">
+                      <Checkbox
+                        checked={field.required}
+                        onCheckedChange={(required) =>
+                          updateField(field.id, { required })
+                        }
+                      />
+                      Obligatorio
+                    </label>
+                  </div>
                 </div>
 
                 {field.kind === "select" ? (
                   <div className="mt-3">
                     <Label>Opciones separadas por coma</Label>
                     <Input
-                      value={field.options.join(", ")}
-                      onChange={(event) =>
-                        updateField(field.id, {
-                          options: event.target.value
-                            .split(",")
-                            .map((option) => option.trim())
-                            .filter(Boolean),
-                        })
-                      }
+                      value={optionsDrafts[field.id] ?? field.options.join(", ")}
+                      onChange={(event) => setOptionsText(field.id, event.target.value)}
                       placeholder="S, M, L, XL"
                     />
                   </div>
@@ -249,12 +391,14 @@ export function EventFormFieldsEditor({
         <div className="mt-5 space-y-4">
           <PreviewInput label="Nombre completo" required />
           <PreviewInput label="Correo electrónico" required />
-          {fields.length === 0 ? (
+          {/* La vista previa muestra lo que se va a publicar: un campo sin
+              pregunta se descarta al guardar, así que tampoco aparece acá. */}
+          {savedFields.length === 0 ? (
             <p className="border border-dashed border-white/15 p-4 text-sm text-muted">
               El registro web solo pedirá nombre y correo hasta que agregues campos.
             </p>
           ) : (
-            fields.map((field) => (
+            savedFields.map((field) => (
               <PreviewInput
                 key={field.id}
                 label={field.label}
@@ -292,7 +436,7 @@ function PreviewInput({
         </div>
       ) : kind === "boolean" ? (
         <div className="flex items-center gap-2 text-sm text-white/70">
-          <span className="size-4 border border-white/30" /> Sí
+          <Checkbox disabled /> Sí
         </div>
       ) : (
         <div className="h-10 border border-white/15 bg-white/[0.03]" />

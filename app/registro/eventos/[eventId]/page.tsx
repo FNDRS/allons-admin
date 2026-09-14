@@ -51,7 +51,7 @@ export default async function DemoEventPage({
             </div>
           </div>
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href={`/demo/eventos/${eventId}/registro` as never}>
+            <Link href={`/registro/eventos/${eventId}/registro` as never}>
               Registrarme
             </Link>
           </Button>
@@ -118,12 +118,12 @@ export default async function DemoEventPage({
                 </div>
               </div>
               <Button asChild className="w-full">
-                <Link href={`/demo/eventos/${eventId}/registro` as never}>
+                <Link href={`/registro/eventos/${eventId}/registro` as never}>
                   Registrarme
                 </Link>
               </Button>
               <p className="text-xs leading-5 text-white/45">
-                Registro web operado por Allons para formularios especiales solicitados por el comercio.
+                Registro web de Allons para el formulario de este evento.
               </p>
             </div>
           </aside>

@@ -245,7 +245,8 @@ export function EventLocationPickerField() {
         */}
         <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center">
           <div className="-translate-y-5 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
-            <svg width="36" height="46" viewBox="0 0 36 46" fill="none" aria-hidden>
+            {/* viewBox con 2px de aire para que el contorno blanco no se recorte */}
+            <svg width="40" height="48" viewBox="-2 -2 40 48" fill="none" aria-hidden>
               <path
                 d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 24 18 24s18-10.5 18-24C36 8.06 27.94 0 18 0Z"
                 fill="#F67010"

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 
-/** Mismos colores que ofrece la app mobile (`EVENT_THEME_COLORS`). */
+/** Paleta de banner del evento (`EVENT_THEME_COLORS` en allons-mobile). */
 const EVENT_THEME_COLORS = [
   "#F67010",
   "#8338EC",
@@ -21,8 +21,8 @@ type PreviewImage = {
 };
 
 /**
- * Banner del evento: igual que en el formulario de la app, la portada es la
- * primera imagen y el color sólo se ve cuando todavía no hay imágenes.
+ * Banner del evento: la portada es la primera imagen, y el color sólido sólo
+ * se ve mientras no haya imágenes.
  */
 export function EventBannerMediaField({ title }: { title: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -139,7 +139,7 @@ export function EventBannerMediaField({ title }: { title: string }) {
           No has agregado imágenes todavía.
         </div>
       ) : (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-3">
           {previews.map((preview, index) => (
             <div
               key={`${preview.name}-${index}`}

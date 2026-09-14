@@ -72,8 +72,8 @@ function parseTicketTypes(formData: FormData): EventTicketDraft[] | null {
 }
 
 /**
- * La categoría vive en `interests` + `event_interests`, igual que cuando la
- * crea la app: ver `event-category.ts` en allons-api.
+ * La categoría vive en `interests` + `event_interests`. Misma resolución de
+ * slug que `event-category.ts` en allons-api, para no duplicar filas.
  */
 async function resolveInterestId(
   admin: ReturnType<typeof createSupabaseServiceRoleClient>,
@@ -283,7 +283,7 @@ export async function createAdminEventAction(
   }
 
   // Un evento con cualquier entrada de pago cobra por Paygate; si todas son
-  // gratuitas queda como registro libre, igual que en la app.
+  // gratuitas queda como registro libre.
   const hasAnyPaidTicket = ticketTypes.some((ticket) => ticket.price > 0);
   const ticketMode = hasAnyPaidTicket ? "single_access" : "free";
   const refundPolicyRaw = formString(formData, "refundPolicy");

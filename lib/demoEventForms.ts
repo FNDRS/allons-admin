@@ -2,24 +2,20 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import {
+  asFormFieldOptions,
+  isFieldKind,
+  type DemoEventFormField,
+} from "@/lib/eventFormFields";
 
-export const DEMO_FORM_FIELD_KINDS = [
-  "text",
-  "number",
-  "select",
-  "boolean",
-] as const;
-
-export type DemoFormFieldKind = (typeof DEMO_FORM_FIELD_KINDS)[number];
-
-export interface DemoEventFormField {
-  id: string;
-  label: string;
-  kind: DemoFormFieldKind;
-  required: boolean;
-  options: string[];
-  sortOrder: number;
-}
+// La definición y la validación viven en `eventFormFields` para que el editor
+// del panel (cliente) pueda reutilizarlas; acá se re-exportan sin cambios.
+export {
+  DEMO_FORM_FIELD_KINDS,
+  normalizeDemoFormFields,
+  type DemoEventFormField,
+  type DemoFormFieldKind,
+} from "@/lib/eventFormFields";
 
 export interface DemoEventForm {
   eventId: string;
@@ -42,52 +38,8 @@ export interface DemoEventRegistration {
   createdAt: string;
 }
 
-function cleanString(value: unknown, maxLength: number) {
-  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function isFieldKind(value: unknown): value is DemoFormFieldKind {
-  return (
-    typeof value === "string" &&
-    DEMO_FORM_FIELD_KINDS.includes(value as DemoFormFieldKind)
-  );
-}
-
 function asString(value: unknown) {
   return typeof value === "string" ? value : value == null ? "" : String(value);
-}
-
-function asOptions(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((option) => cleanString(option, 120)).filter(Boolean);
-}
-
-export function normalizeDemoFormFields(value: unknown): DemoEventFormField[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((raw, index): DemoEventFormField | null => {
-      if (!isRecord(raw)) return null;
-      const label = cleanString(raw.label, 160);
-      if (!label) return null;
-
-      const kind = isFieldKind(raw.kind) ? raw.kind : "text";
-      const options = asOptions(raw.options).slice(0, 20);
-
-      return {
-        id: cleanString(raw.id, 80) || `field-${index}`,
-        label,
-        kind,
-        required: raw.required === true,
-        options: kind === "select" ? (options.length ? options : ["Opción 1"]) : [],
-        sortOrder: index,
-      };
-    })
-    .filter((field): field is DemoEventFormField => field !== null);
 }
 
 export async function getDemoEventForm(eventId: string): Promise<DemoEventForm> {
@@ -108,7 +60,7 @@ export async function getDemoEventForm(eventId: string): Promise<DemoEventForm> 
     id: asString(row.id),
     label: asString(row.label),
     kind: isFieldKind(row.kind) ? row.kind : "text",
-    options: asOptions(row.options),
+    options: asFormFieldOptions(row.options),
     required: Boolean(row.required),
     sortOrder: Number(row.sort_order ?? 0),
   }));
