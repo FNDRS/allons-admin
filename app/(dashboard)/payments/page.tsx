@@ -1,6 +1,8 @@
 import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   listSubscriptionOrders,
   type PaymentOrderStatus,
@@ -129,10 +131,10 @@ export default async function PaymentsPage({
 
       {/* Filter */}
       <form className="mb-4 flex shrink-0 items-center gap-2">
-        <select
+        <NativeSelect
           name="status"
           defaultValue={params.status ?? "all"}
-          className="border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-44"
         >
           <option value="all">Todos</option>
           <option value="paid">Pagados</option>
@@ -140,13 +142,10 @@ export default async function PaymentsPage({
           <option value="failed">Fallidos</option>
           <option value="cancelled">Cancelados</option>
           <option value="refunded">Reembolsados</option>
-        </select>
-        <button
-          type="submit"
-          className="border border-white/30 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black hover:bg-white/90"
-        >
+        </NativeSelect>
+        <Button type="submit" size="sm">
           Filtrar
-        </button>
+        </Button>
       </form>
 
       {/* Table */}

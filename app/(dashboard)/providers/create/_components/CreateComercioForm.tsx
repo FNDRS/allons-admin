@@ -171,7 +171,7 @@ export function CreateComercioForm() {
     "w-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none rounded-lg";
 
   return (
-    <form action={action} className="space-y-8">
+    <form action={action} encType="multipart/form-data" className="space-y-8">
       {/* Error banner */}
       {state?.error ? (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">

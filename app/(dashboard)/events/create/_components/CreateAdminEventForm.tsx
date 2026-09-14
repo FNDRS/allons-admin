@@ -243,7 +243,7 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
               disabled={isPending || providers.length === 0}
               className="w-full border border-white bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90 disabled:opacity-50"
             >
-              {isPending ? "Creando..." : "Crear evento y configurar formulario"}
+              {isPending ? "Creando..." : "Crear evento y formulario"}
             </button>
 
             <p className="text-xs leading-5 text-white/45">

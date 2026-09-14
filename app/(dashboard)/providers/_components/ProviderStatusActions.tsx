@@ -5,6 +5,7 @@ import {
   setProviderStatusAction,
 } from "@/lib/admin/actions";
 import type { ProviderStatus } from "@/lib/admin/users";
+import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -26,14 +27,15 @@ export function ProviderStatusActions({
       {emailConfirmedAt === null ? (
         <form action={resendInviteAction}>
           <input type="hidden" name="userId" value={userId} />
-          <button
+          <Button
             type="submit"
+            size="sm"
+            variant="info"
             title="Reenviar enlace de invitación por correo"
-            className="inline-flex items-center gap-1.5 border border-[#3A86FF]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3A86FF] transition hover:bg-[#3A86FF]/10"
           >
             <RefreshCw size={12} />
             Reenviar invitación
-          </button>
+          </Button>
         </form>
       ) : null}
       {status !== "approved" ? (
@@ -102,13 +104,12 @@ function StatusActionButton({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  const styles =
+  const variant =
     tone === "success"
-      ? "border-success/40 text-success hover:bg-success/10"
+      ? "success"
       : tone === "danger"
-        ? "border-danger/40 text-danger hover:bg-danger/10"
-        : "border-white/15 text-muted hover:bg-white/5";
+        ? "destructive"
+        : "outline";
 
   return (
     <form
@@ -133,11 +134,7 @@ function StatusActionButton({
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
-      <button
-        type="submit"
-        disabled={isPending}
-        className={`inline-flex items-center gap-1.5 border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60 ${styles}`}
-      >
+      <Button type="submit" size="sm" variant={variant} disabled={isPending}>
         {isPending ? (
           <>
             <Loader2 size={12} className="animate-spin" aria-hidden />
@@ -146,7 +143,7 @@ function StatusActionButton({
         ) : (
           label
         )}
-      </button>
+      </Button>
     </form>
   );
 }
