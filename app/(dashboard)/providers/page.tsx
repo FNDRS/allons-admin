@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import {
   listAllUsers,
@@ -174,13 +174,13 @@ export default async function ProvidersPage({
           placeholder="Buscar comercio, email o handle"
           className="w-80 max-w-full"
         />
-        <NativeSelect name="status" defaultValue={statusFilter} className="w-44">
-          <option value="all">Todos los estados</option>
-          <option value="pending">Pendiente</option>
-          <option value="approved">Aprobado</option>
-          <option value="paused">Pausado</option>
-          <option value="suspended">Suspendido</option>
-        </NativeSelect>
+        <Select name="status" defaultValue={statusFilter} className="w-44">
+          <SelectItem value="all">Todos los estados</SelectItem>
+          <SelectItem value="pending">Pendiente</SelectItem>
+          <SelectItem value="approved">Aprobado</SelectItem>
+          <SelectItem value="paused">Pausado</SelectItem>
+          <SelectItem value="suspended">Suspendido</SelectItem>
+        </Select>
         <Button type="submit" size="sm">
           Filtrar
         </Button>

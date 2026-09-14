@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { overridePaymentOrder } from "@/lib/admin/paymentsApi";
 
 export function OverrideButton({
@@ -54,15 +54,15 @@ export function OverrideButton({
 
   return (
     <div className="flex flex-col gap-2 rounded bg-white/5 p-2">
-      <NativeSelect
+      <Select
         value={targetStatus}
-        onChange={(e) => setTargetStatus(e.target.value)}
-        className="h-8 text-[11px]"
+        onValueChange={setTargetStatus}
+        className="text-[11px]"
       >
-        <option value="paid">Marcar como pagado</option>
-        <option value="cancelled">Cancelar orden</option>
-        <option value="failed">Marcar como fallido</option>
-      </NativeSelect>
+        <SelectItem value="paid">Marcar como pagado</SelectItem>
+        <SelectItem value="cancelled">Cancelar orden</SelectItem>
+        <SelectItem value="failed">Marcar como fallido</SelectItem>
+      </Select>
       <Input
         value={reason}
         onChange={(e) => setReason(e.target.value)}

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 
 type Props = {
   initialFields: DemoEventFormField[];
@@ -187,26 +187,26 @@ export function EventFormFieldsEditor({
 
                   <div>
                     <Label>Tipo</Label>
-                    <NativeSelect
+                    <Select
                       value={field.kind}
-                      onChange={(event) => {
-                        const kind = event.target.value as DemoFormFieldKind;
+                      onValueChange={(kind) => {
+                        const next = kind as DemoFormFieldKind;
                         updateField(field.id, {
-                          kind,
+                          kind: next,
                           options:
-                            kind === "select" && field.options.length === 0
+                            next === "select" && field.options.length === 0
                               ? ["Opción 1", "Opción 2"]
-                              : kind === "select"
+                              : next === "select"
                                 ? field.options
                                 : [],
                         });
                       }}
                     >
-                      <option value="text">Texto</option>
-                      <option value="number">Número</option>
-                      <option value="select">Selección</option>
-                      <option value="boolean">Sí / No</option>
-                    </NativeSelect>
+                      <SelectItem value="text">Texto</SelectItem>
+                      <SelectItem value="number">Número</SelectItem>
+                      <SelectItem value="select">Selección</SelectItem>
+                      <SelectItem value="boolean">Sí / No</SelectItem>
+                    </Select>
                   </div>
 
                   <label className="flex items-end gap-2 pb-2 text-sm text-white/75">

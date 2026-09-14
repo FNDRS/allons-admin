@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   broadcastNotification,
@@ -59,15 +59,15 @@ export default function NotificationsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Label>Audiencia</Label>
-            <NativeSelect
+            <Select
               value={audience}
-              onChange={(e) =>
-                setAudience(e.target.value as AdminNotificationAudience)
+              onValueChange={(next) =>
+                setAudience(next as AdminNotificationAudience)
               }
             >
-              <option value="clients">Clientes</option>
-              <option value="providers">Proveedores</option>
-            </NativeSelect>
+              <SelectItem value="clients">Clientes</SelectItem>
+              <SelectItem value="providers">Proveedores</SelectItem>
+            </Select>
           </div>
 
           <div>

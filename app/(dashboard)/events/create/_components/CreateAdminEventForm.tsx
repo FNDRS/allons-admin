@@ -8,7 +8,7 @@ import { EventTicketsField } from "@/components/admin/EventTicketsField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProviderOption } from "@/lib/admin/providerOptions";
 import { useActionState, useState } from "react";
@@ -60,17 +60,19 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         <div className="mt-5 space-y-4">
           <div>
             <Label>Comercio *</Label>
-            <NativeSelect name="providerId" required defaultValue="">
-              <option value="" disabled>
-                Selecciona comercio
-              </option>
+            <Select
+              name="providerId"
+              required
+              defaultValue=""
+              placeholder="Selecciona comercio"
+            >
               {providers.map((provider) => (
-                <option key={provider.id} value={provider.id}>
+                <SelectItem key={provider.id} value={provider.id}>
                   {provider.name}
                   {provider.handle ? ` · ${provider.handle}` : ""}
-                </option>
+                </SelectItem>
               ))}
-            </NativeSelect>
+            </Select>
           </div>
 
           <div>
@@ -178,10 +180,10 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         <div className="mt-5 space-y-4">
           <div>
             <Label>Estado</Label>
-            <NativeSelect name="status" defaultValue="published">
-              <option value="published">Publicar en la app</option>
-              <option value="draft">Guardar borrador</option>
-            </NativeSelect>
+              <Select name="status" defaultValue="published">
+                <SelectItem value="published">Publicar en la app</SelectItem>
+                <SelectItem value="draft">Guardar borrador</SelectItem>
+              </Select>
           </div>
 
           <Button

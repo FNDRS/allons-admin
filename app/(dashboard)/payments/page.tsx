@@ -2,7 +2,7 @@ import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import {
   listSubscriptionOrders,
   type PaymentOrderStatus,
@@ -131,18 +131,18 @@ export default async function PaymentsPage({
 
       {/* Filter */}
       <form className="mb-4 flex shrink-0 items-center gap-2">
-        <NativeSelect
+        <Select
           name="status"
           defaultValue={params.status ?? "all"}
           className="w-44"
         >
-          <option value="all">Todos</option>
-          <option value="paid">Pagados</option>
-          <option value="pending_payment">Pendientes</option>
-          <option value="failed">Fallidos</option>
-          <option value="cancelled">Cancelados</option>
-          <option value="refunded">Reembolsados</option>
-        </NativeSelect>
+          <SelectItem value="all">Todos</SelectItem>
+          <SelectItem value="paid">Pagados</SelectItem>
+          <SelectItem value="pending_payment">Pendientes</SelectItem>
+          <SelectItem value="failed">Fallidos</SelectItem>
+          <SelectItem value="cancelled">Cancelados</SelectItem>
+          <SelectItem value="refunded">Reembolsados</SelectItem>
+        </Select>
         <Button type="submit" size="sm">
           Filtrar
         </Button>

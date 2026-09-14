@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -114,16 +114,17 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
     return (
       <div>
         <Label>{label}</Label>
-        <NativeSelect name={name} required={field.required} defaultValue="">
-          <option value="" disabled>
-            Selecciona una opción
-          </option>
+        <Select
+          name={name}
+          required={field.required}
+          placeholder="Selecciona una opción"
+        >
           {field.options.map((option) => (
-            <option key={option} value={option}>
+            <SelectItem key={option} value={option}>
               {option}
-            </option>
+            </SelectItem>
           ))}
-        </NativeSelect>
+        </Select>
       </div>
     );
   }

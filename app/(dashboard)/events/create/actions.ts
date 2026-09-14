@@ -83,12 +83,26 @@ async function resolveInterestId(
   const slug = toInterestSlug(trimmed);
   if (!trimmed || !slug) return null;
 
-  const { data: existing } = await admin
-    .from("interests")
-    .select("id")
-    .or(`slug.eq.${slug},name.eq.${trimmed}`)
-    .maybeSingle();
-  if (existing?.id) return existing.id as string;
+  // `slug` y `name` son únicos, y una categoría libre puede traer comas, así
+  // que se consultan por separado en vez de con un filtro `or` interpolado.
+  const findExisting = async () => {
+    const { data: bySlug } = await admin
+      .from("interests")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (bySlug?.id) return bySlug.id as string;
+
+    const { data: byName } = await admin
+      .from("interests")
+      .select("id")
+      .eq("name", trimmed)
+      .maybeSingle();
+    return (byName?.id as string | undefined) ?? null;
+  };
+
+  const existing = await findExisting();
+  if (existing) return existing;
 
   const { data: created } = await admin
     .from("interests")
@@ -98,12 +112,7 @@ async function resolveInterestId(
   if (created?.id) return created.id as string;
 
   // Otra escritura ganó la carrera con el mismo slug.
-  const { data: raced } = await admin
-    .from("interests")
-    .select("id")
-    .or(`slug.eq.${slug},name.eq.${trimmed}`)
-    .maybeSingle();
-  return (raced?.id as string | undefined) ?? null;
+  return findExisting();
 }
 
 const EVENT_IMAGE_CONTENT_TYPES: Record<string, string> = {

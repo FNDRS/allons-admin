@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select, SelectItem } from "@/components/ui/select";
 import { setUserSuspended } from "@/lib/admin/actions";
 import { listAllUsers, type AdminUserRecord } from "@/lib/admin/users";
 
@@ -81,14 +81,14 @@ export default async function UsersPage({
           placeholder="Buscar email o nombre"
           className="w-72 max-w-full"
         />
-        <NativeSelect
+        <Select
           name="status"
           defaultValue={statusFilter}
           className="w-40"
         >
-          <option value="all">Todos</option>
-          <option value="suspended">Suspendidos</option>
-        </NativeSelect>
+          <SelectItem value="all">Todos</SelectItem>
+          <SelectItem value="suspended">Suspendidos</SelectItem>
+        </Select>
         <Button type="submit" size="sm">
           Filtrar
         </Button>
