@@ -91,7 +91,7 @@ export default async function DemoEventRegistrationPage({
                 <p className="mt-1 text-sm text-white/55">
                   {form.fields.length === 0
                     ? "Este evento todavía no tiene campos personalizados."
-                    : "Completa los datos que pide el organizador."}
+                    : "Completa los datos solicitados."}
                 </p>
               </div>
               <div className="space-y-4">

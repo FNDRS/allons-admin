@@ -47,9 +47,40 @@ function formatDate(iso: string | null) {
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
+    // Sin el año, un evento del año pasado se lee igual que uno de este mes.
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Un evento terminó cuando pasó su fin — o su inicio, si no tiene fin.
+ *
+ * La app sólo lista eventos futuros, así que sin esta marca un evento se ve
+ * "Publicado" en el panel y en la app no aparece por ningún lado.
+ */
+function hasEnded(event: { startsAt: string | null; endsAt: string | null }) {
+  const reference = event.endsAt ?? event.startsAt;
+  if (!reference) return false;
+  const date = new Date(reference);
+  return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
+}
+
+/** "hace 11 días" / "en 3 días": ubica el evento sin leer la fecha. */
+function formatRelative(iso: string | null) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const diffDays = Math.round((date.getTime() - Date.now()) / 86_400_000);
+  if (diffDays === 0) return "hoy";
+  if (diffDays === 1) return "mañana";
+  if (diffDays === -1) return "ayer";
+  if (diffDays > 0) return `en ${diffDays} días`;
+  const past = Math.abs(diffDays);
+  if (past < 30) return `hace ${past} días`;
+  const months = Math.round(past / 30);
+  return months === 1 ? "hace 1 mes" : `hace ${months} meses`;
 }
 
 interface LoadResult {
@@ -92,9 +123,10 @@ export default async function EventsPage({
     (acc, ev) => {
       if (ev.status === "published") acc.published += 1;
       if (ev.status === "sold_out") acc.soldOut += 1;
+      if (hasEnded(ev)) acc.ended += 1;
       return acc;
     },
-    { published: 0, soldOut: 0 },
+    { published: 0, soldOut: 0, ended: 0 },
   );
 
   return (
@@ -104,7 +136,7 @@ export default async function EventsPage({
         description={
           error
             ? "No se pudieron cargar los eventos."
-            : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados`
+            : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados · ${summary.ended} finalizados`
         }
         action={
           <Button asChild size="sm">
@@ -179,10 +211,13 @@ function EventRow({ event }: { event: AdminEventListItem }) {
   const status = event.status ?? "draft";
   const variant = STATUS_VARIANT[status] ?? "muted";
   const label = STATUS_LABEL[status] ?? status;
+  const ended = hasEnded(event);
 
   return (
     <div
-      className="group relative grid min-w-0 items-center gap-x-6 border-b border-white/8 px-5 py-5 text-sm last:border-b-0 transition-colors duration-150 ease-out hover:bg-white/5"
+      className={`group relative grid min-w-0 items-center gap-x-6 border-b border-white/8 px-5 py-5 text-sm last:border-b-0 transition-colors duration-150 ease-out hover:bg-white/5 ${
+        ended ? "opacity-60 hover:opacity-100" : ""
+      }`}
       style={{
         gridTemplateColumns:
           "minmax(0,2fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr)",
@@ -221,10 +256,18 @@ function EventRow({ event }: { event: AdminEventListItem }) {
           </div>
         ) : null}
       </div>
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         <StatusPill label={label} variant={variant} />
+        {ended ? <StatusPill label="Finalizado" variant="muted" /> : null}
       </div>
-      <div className="min-w-0 text-xs text-muted">{formatDate(event.startsAt)}</div>
+      <div className="min-w-0 text-xs">
+        <div className={ended ? "text-muted line-through" : "text-muted"}>
+          {formatDate(event.startsAt)}
+        </div>
+        <div className={ended ? "text-white/35" : "text-white/45"}>
+          {formatRelative(event.startsAt)}
+        </div>
+      </div>
       <div className="relative z-10 flex min-w-0 flex-wrap justify-end gap-1.5">
         <EventStatusActions
           eventId={event.id}
