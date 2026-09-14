@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { EventRegistrationFormBuilder } from "@/app/(dashboard)/events/[eventId]/formulario/_components/EventRegistrationFormBuilder";
@@ -52,7 +53,7 @@ export default async function EventRegistrationFormPage({
   const isSingleEvent = event.eventType === "single";
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Demo Hub"
         title="Formulario personalizado"
@@ -67,6 +68,7 @@ export default async function EventRegistrationFormPage({
         }
       />
 
+      <DashboardScroll>
       {query.saved ? (
         <div className="mb-5 border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
           Formulario guardado. El link público ya usa estos campos.
@@ -134,6 +136,7 @@ export default async function EventRegistrationFormPage({
         initialFields={form.fields}
         saveAction={saveAction}
       />
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }

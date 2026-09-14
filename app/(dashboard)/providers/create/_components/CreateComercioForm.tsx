@@ -421,11 +421,15 @@ export function CreateComercioForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <label
+              htmlFor="allonsFeePct"
+              className="mb-1.5 block text-xs font-semibold text-white/60"
+            >
               Comisión Allons (%) <span className="text-orange-400">*</span>
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="allonsFeePct"
                 name="allonsFeePct"
                 type="number"
                 min="0"

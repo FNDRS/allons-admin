@@ -37,11 +37,15 @@ export function ProviderPasarelaFeeActions({
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
       <div>
-        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40">
+        <label
+          htmlFor="pasarelaFeePct"
+          className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40"
+        >
           Comisión banco / pasarela (%)
         </label>
         <div className="flex items-center gap-1.5">
           <input
+            id="pasarelaFeePct"
             name="pasarelaFeePct"
             type="number"
             min="0"
@@ -55,11 +59,15 @@ export function ProviderPasarelaFeeActions({
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40">
+        <label
+          htmlFor="allonsFeePct"
+          className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40"
+        >
           Comisión Allons (%)
         </label>
         <div className="flex items-center gap-1.5">
           <input
+            id="allonsFeePct"
             name="allonsFeePct"
             type="number"
             min="0"

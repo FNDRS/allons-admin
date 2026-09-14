@@ -1,3 +1,4 @@
+import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import {
@@ -41,7 +42,7 @@ export default async function EventRegistrationResponsesPage({
   ]);
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Demo Hub"
         title="Respuestas del formulario"

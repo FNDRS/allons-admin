@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -233,7 +234,7 @@ export default async function ProviderDetailPage({
   const revalidatePath = `/providers/${userId}`;
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Comercios"
         title={displayName}
@@ -248,6 +249,7 @@ export default async function ProviderDetailPage({
         }
       />
 
+      <DashboardScroll>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <StatusPill
@@ -604,7 +606,8 @@ export default async function ProviderDetailPage({
           </div>
         )}
       </Section>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }
 

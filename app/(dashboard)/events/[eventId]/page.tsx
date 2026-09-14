@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -121,7 +122,7 @@ export default async function EventDetailPage({
   const revalidatePath = `/events/${eventId}`;
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Catálogo"
         title={event.title}
@@ -144,6 +145,7 @@ export default async function EventDetailPage({
         }
       />
 
+      <DashboardScroll>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           {event.themeColor ? (
@@ -363,7 +365,8 @@ export default async function EventDetailPage({
           </div>
         )}
       </Section>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }
 
