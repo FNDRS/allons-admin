@@ -13,6 +13,8 @@ export type CreateComercioFormValues = {
   phone: string;
   brandName: string;
   brandHandle: string;
+  brandDescription: string;
+  websiteUrl: string;
   businessType: string;
   brandColor: string;
   pasarelaFeePct: string;
@@ -36,6 +38,9 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
       (formData.get("brandHandle") as string | null)
         ?.trim()
         .replace(/^@/, "") ?? "",
+    brandDescription:
+      (formData.get("brandDescription") as string | null)?.trim() ?? "",
+    websiteUrl: (formData.get("websiteUrl") as string | null)?.trim() ?? "",
     businessType:
       (formData.get("businessType") as string | null) ?? "empresa",
     brandColor:
@@ -50,6 +55,23 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
 
 function fail(formData: FormData, error: string): CreateComercioState {
   return { error, values: readFormValues(formData) };
+}
+
+async function uploadBrandLogo(file: File | null): Promise<string | null> {
+  if (!file || file.size === 0) return null;
+  const supabase = createSupabaseServiceRoleClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const filename = `provider-logos/logo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const buffer = await file.arrayBuffer();
+  const { data, error } = await supabase.storage
+    .from("event-images")
+    .upload(filename, buffer, {
+      contentType: file.type || "image/jpeg",
+      upsert: false,
+    });
+  if (error) throw new Error(`Error subiendo logo: ${error.message}`);
+  return supabase.storage.from("event-images").getPublicUrl(data.path).data
+    .publicUrl;
 }
 
 export async function createComercioAction(
@@ -70,11 +92,14 @@ export async function createComercioAction(
     const phone = values.phone || null;
     const brandName = values.brandName;
     const brandHandle = values.brandHandle;
+    const brandDescription = values.brandDescription || null;
+    const websiteUrl = values.websiteUrl || null;
     const businessType = values.businessType;
     const brandColor = values.brandColor;
     const pasarelaFeePct = clampFeePct(values.pasarelaFeePct, 5);
     const allonsFeePct = clampFeePct(values.allonsFeePct, DEFAULT_ALLONS_FEE);
     const contractFile = formData.get("contractFile") as File | null;
+    const logoFile = formData.get("logoFile") as File | null;
 
     if (!fullName || !email || !brandName || !brandHandle) {
       return fail(
@@ -84,6 +109,16 @@ export async function createComercioAction(
     }
 
     finalBrandName = brandName;
+
+    let logoUrl: string | null = null;
+    try {
+      logoUrl = await uploadBrandLogo(logoFile);
+    } catch (error) {
+      return fail(
+        formData,
+        error instanceof Error ? error.message : "No se pudo subir el logo.",
+      );
+    }
 
     // ── Contract upload (optional) ──
     let contractUrl: string | null = null;
@@ -126,6 +161,9 @@ export async function createComercioAction(
       brand_name: brandName,
       brand_handle: brandHandle,
       brand_logo_color: brandColor,
+      brand_description: brandDescription,
+      website_url: websiteUrl,
+      logo_url: logoUrl,
       business_type: businessType,
       // Per-comercio fees, read by allons-api at sale / refund time.
       // Pasarela = bank / Clinpays offer. Allons = relationship %.
@@ -234,7 +272,13 @@ export async function createComercioAction(
       // but make sure name / handle reflect the latest form values.
       const { error: providerUpdateError } = await admin
         .from("providers")
-        .update({ name: brandName, handle: brandHandle })
+        .update({
+          name: brandName,
+          handle: brandHandle,
+          description: brandDescription,
+          website_url: websiteUrl,
+          ...(logoUrl ? { logo_url: logoUrl } : {}),
+        })
         .eq("id", providerId);
       if (providerUpdateError) {
         return fail(formData, providerUpdateError.message);
@@ -242,7 +286,13 @@ export async function createComercioAction(
     } else {
       const { data: provider, error: providerInsertError } = await admin
         .from("providers")
-        .insert({ name: brandName, handle: brandHandle })
+        .insert({
+          name: brandName,
+          handle: brandHandle,
+          description: brandDescription,
+          website_url: websiteUrl,
+          logo_url: logoUrl,
+        })
         .select("id")
         .single();
       if (providerInsertError || !provider) {
@@ -283,6 +333,9 @@ export async function createComercioAction(
         email,
         brandName,
         brandHandle,
+        hasLogo: Boolean(logoUrl),
+        hasDescription: Boolean(brandDescription),
+        hasWebsite: Boolean(websiteUrl),
         businessType,
         pasarelaFeePct,
         allonsFeePct,

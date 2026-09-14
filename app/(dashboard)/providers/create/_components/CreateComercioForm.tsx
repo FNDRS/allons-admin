@@ -20,12 +20,14 @@ const BUSINESS_TYPES = [
 type BusinessType = (typeof BUSINESS_TYPES)[number]["value"];
 
 const COLOR_OPTIONS = [
-  "#F67010",
-  "#3A86FF",
-  "#8338EC",
-  "#138A36",
-  "#FF006E",
-  "#FFBE0B",
+  { value: "#F67010", label: "Allons naranja" },
+  { value: "#3A86FF", label: "Azul" },
+  { value: "#8338EC", label: "Morado" },
+  { value: "#FF006E", label: "Fucsia" },
+  { value: "#138A36", label: "Verde" },
+  { value: "#FFBE0B", label: "Amarillo" },
+  { value: "#350B57", label: "Púrpura oscuro" },
+  { value: "#1C1B20", label: "Grafito" },
 ];
 
 function toHandle(name: string) {
@@ -45,6 +47,8 @@ function applyFormValues(
     setPhone: (v: string) => void;
     setBrandName: (v: string) => void;
     setBrandHandle: (v: string) => void;
+    setBrandDescription: (v: string) => void;
+    setWebsiteUrl: (v: string) => void;
     setHandleEdited: (v: boolean) => void;
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
@@ -57,6 +61,8 @@ function applyFormValues(
   setters.setPhone(values.phone);
   setters.setBrandName(values.brandName);
   setters.setBrandHandle(values.brandHandle);
+  setters.setBrandDescription(values.brandDescription);
+  setters.setWebsiteUrl(values.websiteUrl);
   setters.setHandleEdited(Boolean(values.brandHandle));
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
@@ -75,9 +81,14 @@ export function CreateComercioForm() {
   // ── Business ──
   const [brandName, setBrandName] = useState("");
   const [brandHandle, setBrandHandle] = useState("");
+  const [brandDescription, setBrandDescription] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [handleEdited, setHandleEdited] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>("empresa");
-  const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0]);
+  const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0].value);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Pasarela (Clinpays / banco) & Contrato ──
   const [pasarelaFeePct, setPasarelaFeePct] = useState("5");
@@ -94,6 +105,8 @@ export function CreateComercioForm() {
       setPhone,
       setBrandName,
       setBrandHandle,
+      setBrandDescription,
+      setWebsiteUrl,
       setHandleEdited,
       setBusinessType,
       setBrandColor,
@@ -141,6 +154,15 @@ export function CreateComercioForm() {
       } else {
         setContractPreview(null);
       }
+    },
+    [],
+  );
+
+  const handleLogoChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] ?? null;
+      setLogoFile(file);
+      setLogoPreview(file ? URL.createObjectURL(file) : null);
     },
     [],
   );
@@ -220,18 +242,53 @@ export function CreateComercioForm() {
 
         {/* Preview card */}
         <div className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/[0.02] p-4">
-          <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white"
-            style={{ backgroundColor: brandColor }}
-          >
-            {brandName.trim().charAt(0).toUpperCase() || "?"}
-          </div>
+          {logoPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoPreview}
+              alt="Logo del comercio"
+              className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+            />
+          ) : (
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white"
+              style={{ backgroundColor: brandColor }}
+            >
+              {brandName.trim().charAt(0).toUpperCase() || "?"}
+            </div>
+          )}
           <div>
             <p className="font-semibold text-white">
               {brandName.trim() || "Nombre del negocio"}
             </p>
             <p className="text-sm text-white/40">@{brandHandle || "handle"}</p>
+            {brandDescription ? (
+              <p className="mt-1 line-clamp-2 max-w-xl text-xs text-white/45">
+                {brandDescription}
+              </p>
+            ) : null}
           </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            Logo de marca
+          </label>
+          <input
+            ref={logoInputRef}
+            type="file"
+            name="logoFile"
+            accept="image/*"
+            onChange={handleLogoChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            className="rounded-lg border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-sm text-white/55 transition hover:border-white/30 hover:text-white"
+          >
+            {logoFile ? `Logo: ${logoFile.name}` : "Subir logo del comercio"}
+          </button>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -313,21 +370,65 @@ export function CreateComercioForm() {
             Color de marca
           </label>
           <input type="hidden" name="brandColor" value={brandColor} />
-          <div className="flex gap-3">
+          <div className="mb-3 flex items-center gap-3 rounded-lg border border-white/8 bg-white/[0.02] p-3">
+            <span
+              className="h-12 w-12 rounded-2xl border border-white/20"
+              style={{ backgroundColor: brandColor }}
+            />
+            <div>
+              <p className="text-sm font-semibold text-white">Color seleccionado</p>
+              <p className="text-xs text-white/45">
+                Se usa como avatar/acento cuando no hay logo.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-4">
             {COLOR_OPTIONS.map((c) => (
               <button
-                key={c}
+                key={c.value}
                 type="button"
-                onClick={() => setBrandColor(c)}
-                className={`h-8 w-8 rounded-full transition-transform ${
-                  brandColor === c
-                    ? "scale-125 ring-2 ring-white ring-offset-2 ring-offset-black"
-                    : "hover:scale-110"
+                onClick={() => setBrandColor(c.value)}
+                className={`flex items-center gap-2 rounded-lg border p-2 text-left text-xs transition ${
+                  brandColor === c.value
+                    ? "border-white bg-white/10 text-white"
+                    : "border-white/10 bg-white/[0.02] text-white/55 hover:border-white/25"
                 }`}
-                style={{ backgroundColor: c }}
-              />
+              >
+                <span
+                  className="h-6 w-6 shrink-0 rounded-full border border-white/20"
+                  style={{ backgroundColor: c.value }}
+                />
+                {c.label}
+              </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            Descripción pública
+          </label>
+          <textarea
+            name="brandDescription"
+            value={brandDescription}
+            onChange={(e) => setBrandDescription(e.target.value.slice(0, 500))}
+            placeholder="Cuéntale a tus clientes qué hace este comercio"
+            className={`${inputCls} min-h-28 resize-none`}
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            Sitio web
+          </label>
+          <input
+            name="websiteUrl"
+            type="url"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="https://tucomercio.com"
+            className={inputCls}
+          />
         </div>
       </section>
 
