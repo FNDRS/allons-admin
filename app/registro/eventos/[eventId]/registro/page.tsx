@@ -1,5 +1,5 @@
 import { submitDemoRegistration } from "@/app/(dashboard)/events/[eventId]/formulario/actions";
-import { getAdminEvent } from "@/lib/admin/eventsApi";
+import { getAdminEvent, isFreeWebRegistration } from "@/lib/admin/eventsApi";
 import type { DemoEventFormField } from "@/lib/demoEventForms";
 import { getDemoEventForm } from "@/lib/demoEventForms";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export default async function DemoEventRegistrationPage({
 
   const form = await getDemoEventForm(eventId);
   const action = submitDemoRegistration.bind(null, eventId);
+  const canRegister = isFreeWebRegistration(event);
 
   return (
     <main className="min-h-screen bg-[#050505] px-5 py-8 text-white sm:px-8">
@@ -60,6 +61,7 @@ export default async function DemoEventRegistrationPage({
             </div>
           ) : null}
 
+          {canRegister ? (
           <form action={action} className="mt-7 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -101,6 +103,11 @@ export default async function DemoEventRegistrationPage({
               Confirmar registro
             </Button>
           </form>
+          ) : (
+            <div className="mt-7 border border-white/12 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-white/70">
+              Este evento requiere pago. Completa la compra desde la app Allons.
+            </div>
+          )}
         </section>
       </div>
     </main>

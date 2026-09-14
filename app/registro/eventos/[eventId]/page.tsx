@@ -1,4 +1,4 @@
-import { getAdminEvent } from "@/lib/admin/eventsApi";
+import { getAdminEvent, isFreeWebRegistration } from "@/lib/admin/eventsApi";
 import { getDemoEventForm } from "@/lib/demoEventForms";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, MapPin } from "lucide-react";
@@ -110,14 +110,22 @@ export default async function DemoEventPage({
                   Nombre, correo y {form.fields.length} campo{form.fields.length === 1 ? "" : "s"} personalizado{form.fields.length === 1 ? "" : "s"}.
                 </div>
               </div>
-              <Button asChild className="w-full">
-                <Link href={`/registro/eventos/${eventId}/registro` as never}>
-                  Registrarme
-                </Link>
-              </Button>
-              <p className="text-xs leading-5 text-white/45">
-                Registro web de Allons para el formulario de este evento.
-              </p>
+              {isFreeWebRegistration(event) ? (
+                <>
+                  <Button asChild className="w-full">
+                    <Link href={`/registro/eventos/${eventId}/registro` as never}>
+                      Registrarme
+                    </Link>
+                  </Button>
+                  <p className="text-xs leading-5 text-white/45">
+                    Registro web de Allons para el formulario de este evento.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm leading-6 text-white/70">
+                  Este evento requiere pago. Completa la compra desde la app Allons.
+                </p>
+              )}
             </div>
           </aside>
         </section>
