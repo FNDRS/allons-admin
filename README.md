@@ -8,13 +8,6 @@ Panel interno: cuentas, comercios, eventos, pagos y waitlist.
 - TypeScript + Tailwind CSS
 - Supabase (auth + admin), el mismo proyecto que `allons-mobile`
 - Lucide icons
-- shadcn/Radix in `components/ui/` (Button, Input, Select, Checkbox, DatePicker, TimePicker, …)
-
-## UI
-
-Nothing the user can see may be a native control. No `<input type="date|time|checkbox|radio">`, no `<select>`, no unstyled `<button>`. Use a shadcn component from `components/ui/`. If it does not exist, add it there first — modern, minimal, same dark admin look — then use it.
-
-Exceptions: `type="hidden"` for form POST, and `type="file"` with `className="hidden"` whose visible trigger is a `Button`.
 
 ## Getting started
 
