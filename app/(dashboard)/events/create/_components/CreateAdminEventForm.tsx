@@ -1,5 +1,6 @@
 "use client";
 
+import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
 import type { ProviderOption } from "@/lib/admin/providerOptions";
 import { useActionState, useMemo, useState } from "react";
 import { createAdminEventAction } from "../actions";
@@ -195,7 +196,19 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
           </div>
         </div>
 
-        <div className="futuristic-panel p-5">
+      </section>
+
+      <div className="lg:col-span-2">
+          <EventFormFieldsEditor
+            initialFields={[]}
+            eyebrow="Formulario"
+            title="Campos personalizados"
+            description="Opcional. Agrega aquí las preguntas que se pedirán en el registro web antes de publicar el evento. Nombre y correo siempre se solicitan."
+            emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
+          />
+      </div>
+
+      <section className="futuristic-panel p-5 lg:col-span-2">
           <div className="eyebrow">Publicación</div>
           <div className="mt-5 space-y-4">
             <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
@@ -234,10 +247,9 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
             </button>
 
             <p className="text-xs leading-5 text-white/45">
-              Al crear, el evento queda asociado al comercio real y aparecerá en la app cliente si está publicado.
+              Al crear, el evento y su formulario quedan asociados al comercio real. Si está publicado, aparecerá en la app cliente.
             </p>
           </div>
-        </div>
       </section>
     </form>
   );

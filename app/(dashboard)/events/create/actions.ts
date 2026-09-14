@@ -1,5 +1,10 @@
 "use server";
 
+import {
+  normalizeDemoFormFields,
+  saveDemoEventForm,
+  type DemoEventFormField,
+} from "@/lib/demoEventForms";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,6 +34,17 @@ function addHours(iso: string, hours: number) {
 
 function fail(message: string): CreateAdminEventState {
   return { error: message };
+}
+
+function parseFormFields(formData: FormData): DemoEventFormField[] | null {
+  const rawFields = formString(formData, "fields");
+  if (!rawFields) return [];
+
+  try {
+    return normalizeDemoFormFields(JSON.parse(rawFields));
+  } catch {
+    return null;
+  }
 }
 
 export async function createAdminEventAction(
@@ -66,6 +82,11 @@ export async function createAdminEventAction(
   const saleEndsAt = startsAt;
   const ticketMode = ticketPrice > 0 ? "single_access" : "free";
   const themeColor = formString(formData, "themeColor") || "#F67010";
+  const formFields = parseFormFields(formData);
+
+  if (formFields === null) {
+    return fail("El formulario personalizado no tiene un formato válido.");
+  }
 
   const { data: event, error: eventError } = await admin
     .from("events")
@@ -113,6 +134,23 @@ export async function createAdminEventAction(
     return fail(ticketError.message);
   }
 
+  if (formFields.length > 0) {
+    try {
+      await saveDemoEventForm(event.id, formFields);
+    } catch (error) {
+      await admin
+        .from("provider_event_ticket_types")
+        .delete()
+        .eq("event_id", event.id);
+      await admin.from("events").delete().eq("id", event.id);
+      return fail(
+        error instanceof Error
+          ? `No se pudo guardar el formulario: ${error.message}`
+          : "No se pudo guardar el formulario.",
+      );
+    }
+  }
+
   await admin.from("provider_activity_log").insert({
     provider_id: providerId,
     type: "event",
@@ -122,5 +160,6 @@ export async function createAdminEventAction(
 
   revalidatePath("/events");
   revalidatePath(`/events/${event.id}`);
+  revalidatePath(`/events/${event.id}/formulario`);
   redirect(`/events/${event.id}/formulario?created=1` as unknown as never);
 }

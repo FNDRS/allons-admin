@@ -1,6 +1,9 @@
 import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import {
   listAllUsers,
@@ -123,12 +126,9 @@ export default async function ProvidersPage({
         title="Proveedores"
         description={`${counts.total} cuentas · ${counts.pending} esperando aprobación · ${counts.approved} activas · ${counts.suspended} suspendidas`}
         action={
-          <a
-            href="/providers/create"
-            className="inline-flex items-center gap-1.5 bg-[#F67010] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#e06510]"
-          >
-            + Nuevo Comercio
-          </a>
+          <Button asChild variant="brand" size="sm">
+            <a href="/providers/create">+ Nuevo Comercio</a>
+          </Button>
         }
       />
 
@@ -167,30 +167,23 @@ export default async function ProvidersPage({
       ) : null}
 
       <form className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
-        <input
+        <Input
           name="q"
           type="search"
           defaultValue={params.q ?? ""}
           placeholder="Buscar comercio, email o handle"
-          className="w-80 max-w-full border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-80 max-w-full"
         />
-        <select
-          name="status"
-          defaultValue={statusFilter}
-          className="border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
-        >
+        <NativeSelect name="status" defaultValue={statusFilter} className="w-44">
           <option value="all">Todos los estados</option>
           <option value="pending">Pendiente</option>
           <option value="approved">Aprobado</option>
           <option value="paused">Pausado</option>
           <option value="suspended">Suspendido</option>
-        </select>
-        <button
-          type="submit"
-          className="border border-white/30 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black hover:bg-white/90"
-        >
+        </NativeSelect>
+        <Button type="submit" size="sm">
           Filtrar
-        </button>
+        </Button>
       </form>
 
       <DashboardList

@@ -7,6 +7,9 @@ import {
   type AdminEventListResponse,
 } from "@/lib/admin/eventsApi";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Plug } from "lucide-react";
 import Link from "next/link";
 
@@ -122,17 +125,17 @@ export default async function EventsPage({
       ) : (
         <>
           <form className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
-            <input
+            <Input
               name="q"
               type="search"
               defaultValue={params.q ?? ""}
               placeholder="Buscar por título"
-              className="w-72 max-w-full border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+              className="w-72 max-w-full"
             />
-            <select
+            <NativeSelect
               name="status"
               defaultValue={params.status ?? ""}
-              className="border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+              className="w-44"
             >
               <option value="">Todos los estados</option>
               <option value="draft">Borrador</option>
@@ -140,19 +143,16 @@ export default async function EventsPage({
               <option value="sold_out">Agotado</option>
               <option value="ended">Finalizado</option>
               <option value="suspended">Suspendido</option>
-            </select>
-            <input
+            </NativeSelect>
+            <Input
               name="city"
               defaultValue={params.city ?? ""}
               placeholder="Ciudad"
-              className="w-40 border border-white/15 bg-white/[0.04] px-3 py-2 text-sm focus:border-white focus:outline-none"
+              className="w-40"
             />
-            <button
-              type="submit"
-              className="border border-white/30 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black hover:bg-white/90"
-            >
+            <Button type="submit" size="sm">
               Filtrar
-            </button>
+            </Button>
           </form>
 
           <DashboardList

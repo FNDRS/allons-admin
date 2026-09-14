@@ -2,6 +2,11 @@
 
 import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   broadcastNotification,
   type AdminNotificationAudience,
@@ -52,71 +57,63 @@ export default function NotificationsPage() {
       <DashboardScroll>
       <section className="futuristic-panel p-5 space-y-4 max-w-3xl">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-1">
-            <div className="eyebrow">Audiencia</div>
-            <select
+          <div>
+            <Label>Audiencia</Label>
+            <NativeSelect
               value={audience}
-              onChange={(e) => setAudience(e.target.value as AdminNotificationAudience)}
-              className="w-full bg-surfaceMuted/40 border border-white/10 px-3 py-2 text-sm"
+              onChange={(e) =>
+                setAudience(e.target.value as AdminNotificationAudience)
+              }
             >
               <option value="clients">Clientes</option>
               <option value="providers">Proveedores</option>
-            </select>
-          </label>
+            </NativeSelect>
+          </div>
 
-          <label className="space-y-1">
-            <div className="eyebrow">Categoría</div>
-            <input
+          <div>
+            <Label>Categoría</Label>
+            <Input
               value={categoryLabel}
               onChange={(e) => setCategoryLabel(e.target.value)}
-              className="w-full bg-surfaceMuted/40 border border-white/10 px-3 py-2 text-sm"
               placeholder="Novedades"
             />
-          </label>
+          </div>
         </div>
 
-        <label className="space-y-1 block">
-          <div className="eyebrow">Título</div>
-          <input
+        <div>
+          <Label>Título</Label>
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-surfaceMuted/40 border border-white/10 px-3 py-2 text-sm"
             placeholder="Nuevo evento publicado"
           />
-        </label>
+        </div>
 
-        <label className="space-y-1 block">
-          <div className="eyebrow">Descripción</div>
-          <textarea
+        <div>
+          <Label>Descripción</Label>
+          <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-surfaceMuted/40 border border-white/10 px-3 py-2 text-sm min-h-[96px]"
             placeholder="Texto opcional"
           />
-        </label>
+        </div>
 
-        <label className="space-y-1 block">
-          <div className="eyebrow">Dedupe key (opcional)</div>
-          <input
+        <div>
+          <Label>Dedupe key (opcional)</Label>
+          <Input
             value={dedupeKey}
             onChange={(e) => setDedupeKey(e.target.value)}
-            className="w-full bg-surfaceMuted/40 border border-white/10 px-3 py-2 text-sm"
             placeholder="promo:2026-05"
           />
-          <div className="text-xs text-muted">
+          <p className="mt-1.5 text-xs text-muted">
             Si mandas la misma clave a la misma audiencia, no se duplica.
-          </div>
-        </label>
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={submitting}
-            className="rounded-lg bg-white text-black px-4 py-2 text-sm font-semibold disabled:opacity-60"
-          >
+          <Button type="button" onClick={onSubmit} disabled={submitting}>
             {submitting ? "Enviando…" : "Enviar"}
-          </button>
+          </Button>
           {result ? <div className="text-sm text-muted">{result}</div> : null}
         </div>
       </section>

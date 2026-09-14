@@ -1,6 +1,9 @@
 import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { setUserSuspended } from "@/lib/admin/actions";
 import { listAllUsers, type AdminUserRecord } from "@/lib/admin/users";
 
@@ -71,27 +74,24 @@ export default async function UsersPage({
       />
 
       <form className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
-        <input
+        <Input
           name="q"
           type="search"
           defaultValue={params.q ?? ""}
           placeholder="Buscar email o nombre"
-          className="w-72 max-w-full border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-72 max-w-full"
         />
-        <select
+        <NativeSelect
           name="status"
           defaultValue={statusFilter}
-          className="border border-white/15 bg-white/4 px-3 py-2 text-sm focus:border-white focus:outline-none"
+          className="w-40"
         >
           <option value="all">Todos</option>
           <option value="suspended">Suspendidos</option>
-        </select>
-        <button
-          type="submit"
-          className="border border-white/30 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black hover:bg-white/90"
-        >
+        </NativeSelect>
+        <Button type="submit" size="sm">
           Filtrar
-        </button>
+        </Button>
       </form>
 
       <DashboardList
@@ -146,16 +146,15 @@ export default async function UsersPage({
                     value={u.status === "suspended" ? "false" : "true"}
                   />
                   <input type="hidden" name="revalidate" value="/users" />
-                  <button
+                  <Button
                     type="submit"
-                    className={`border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-                      u.status === "suspended"
-                        ? "border-success/40 text-success hover:bg-success/10"
-                        : "border-danger/40 text-danger hover:bg-danger/10"
-                    }`}
+                    size="sm"
+                    variant={
+                      u.status === "suspended" ? "success" : "destructive"
+                    }
                   >
                     {u.status === "suspended" ? "Reactivar" : "Suspender"}
-                  </button>
+                  </Button>
                 </form>
               </div>
             </div>
