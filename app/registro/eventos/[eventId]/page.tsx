@@ -43,18 +43,11 @@ export default async function DemoEventPage({
   return (
     <main className="min-h-screen bg-[#050505] px-5 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div>
-            <div className="eyebrow">Allons registro web</div>
-            <div className="mt-1 text-sm text-white/55">
-              Registro personalizado para eventos únicos
-            </div>
+        <div className="mb-8">
+          <div className="eyebrow">Allons registro web</div>
+          <div className="mt-1 text-sm text-white/55">
+            Registro personalizado para eventos únicos
           </div>
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href={`/registro/eventos/${eventId}/registro` as never}>
-              Registrarme
-            </Link>
-          </Button>
         </div>
 
         {query.registered ? (
