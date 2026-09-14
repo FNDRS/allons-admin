@@ -38,6 +38,9 @@ type Props = {
   className?: string;
 };
 
+/** Debe coincidir con la duración de la transición de la tarjeta. */
+const REMOVE_ANIMATION_MS = 220;
+
 const JSON_PLACEHOLDER = `{
   "fields": [
     { "label": "¿Cómo te enteraste?", "kind": "select", "required": true,
@@ -95,6 +98,8 @@ export function EventFormFieldsEditor({
   className,
 }: Props) {
   const [fields, setFields] = useState<DemoEventFormField[]>(initialFields);
+  /** Campos en plena animación de salida; siguen en el DOM hasta terminarla. */
+  const [removingIds, setRemovingIds] = useState<string[]>([]);
   /** Campo recién agregado, para llevarle el cursor a su input de pregunta. */
   const [fieldToFocus, setFieldToFocus] = useState<string | null>(null);
   /** Lo que `normalizeDemoFormFields` va a conservar al guardar. */
@@ -173,7 +178,17 @@ export function EventFormFieldsEditor({
   };
 
   const removeField = (fieldId: string) => {
-    setFields((current) => current.filter((field) => field.id !== fieldId));
+    if (removingIds.includes(fieldId)) return;
+    setRemovingIds((current) => [...current, fieldId]);
+    window.setTimeout(() => {
+      setFields((current) => current.filter((field) => field.id !== fieldId));
+      setRemovingIds((current) => current.filter((id) => id !== fieldId));
+      setOptionsDrafts((current) => {
+        const next = { ...current };
+        delete next[fieldId];
+        return next;
+      });
+    }, REMOVE_ANIMATION_MS);
   };
 
   const moveField = (fieldId: string, direction: -1 | 1) => {
@@ -283,21 +298,30 @@ export function EventFormFieldsEditor({
                   variant="outline"
                   onClick={() => setJsonDraft(toFormFieldsJson(fields))}
                 >
-                  <Copy size={14} /> Cargar campos actuales
+                  <Copy size={14} /> Descartar cambios del JSON
                 </Button>
               </div>
             </div>
           ) : null}
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-5">
           {fields.length === 0 ? (
             <div className="border border-dashed border-white/20 p-8 text-center text-sm text-muted">
               {emptyMessage}
             </div>
           ) : (
             fields.map((field, index) => (
-              <div key={field.id} className="border border-white/12 bg-white/[0.03] p-4">
+              <div
+                key={field.id}
+                className={`grid transition-all duration-200 ease-out ${
+                  removingIds.includes(field.id)
+                    ? "grid-rows-[0fr] opacity-0"
+                    : "grid-rows-[1fr] opacity-100"
+                }`}
+              >
+                <div className="overflow-hidden">
+              <div className="mb-3 border border-white/12 bg-white/[0.03] p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="text-xs font-bold uppercase tracking-wide text-white/45">
                     Campo {index + 1} · {FIELD_KIND_LABEL[field.kind]}
@@ -353,11 +377,14 @@ export function EventFormFieldsEditor({
                         updateField(field.id, { label: event.target.value })
                       }
                     />
-                    {!field.label.trim() ? (
-                      <p className="mt-1.5 text-xs text-amber-300">
-                        Sin pregunta, este campo no se guarda.
-                      </p>
-                    ) : null}
+                    <p
+                      className={`mt-1.5 h-4 text-xs text-amber-300 transition-opacity ${
+                        field.label.trim() ? "opacity-0" : "opacity-100"
+                      }`}
+                      aria-hidden={Boolean(field.label.trim())}
+                    >
+                      Sin pregunta, este campo no se guarda.
+                    </p>
                   </div>
 
                   <div>
@@ -410,6 +437,8 @@ export function EventFormFieldsEditor({
                     />
                   </div>
                 ) : null}
+              </div>
+                </div>
               </div>
             ))
           )}

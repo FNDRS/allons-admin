@@ -1,5 +1,6 @@
 "use server";
 
+import { adminApiErrorMessage } from "@/lib/admin/eventsApi";
 import {
   createDemoEventRegistration,
   getDemoEventForm,
@@ -86,12 +87,19 @@ export async function submitDemoRegistration(
     };
   });
 
-  await createDemoEventRegistration({
-    eventId,
-    attendeeName,
-    attendeeEmail,
-    answers,
-  });
+  try {
+    await createDemoEventRegistration({
+      eventId,
+      attendeeName,
+      attendeeEmail,
+      answers,
+    });
+  } catch (error) {
+    redirectRegistrationError(
+      eventId,
+      adminApiErrorMessage(error, "No se pudo completar el registro."),
+    );
+  }
   revalidatePath(`/events/${eventId}/formulario/respuestas`);
   redirect(`/registro/eventos/${encodeURIComponent(eventId)}?registered=1` as unknown as never);
 }

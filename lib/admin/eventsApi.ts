@@ -196,6 +196,97 @@ export function getAdminEvent(id: string) {
   );
 }
 
+export interface AdminEventFormField {
+  id: string;
+  label: string;
+  kind: string;
+  options: string[];
+  required: boolean;
+  sortOrder: number;
+}
+
+export interface AdminEventForm {
+  eventId: string;
+  fields: AdminEventFormField[];
+}
+
+export interface AdminEventRegistrationAnswer {
+  questionId: string;
+  label: string;
+  answer: string;
+}
+
+export interface AdminEventRegistration {
+  id: string;
+  eventId: string;
+  attendeeName: string;
+  attendeeEmail: string;
+  answers: AdminEventRegistrationAnswer[];
+  createdAt: string;
+}
+
+export function isFreeWebRegistration(event: Pick<AdminEventListItem, "ticketMode">) {
+  return event.ticketMode === "free";
+}
+
+export function getAdminEventForm(eventId: string) {
+  return adminFetch<AdminEventForm>(
+    `/admin/events/${encodeURIComponent(eventId)}/form`,
+    { method: "GET" },
+  );
+}
+
+export function saveAdminEventForm(
+  eventId: string,
+  fields: AdminEventFormField[],
+) {
+  return adminFetch<AdminEventForm>(
+    `/admin/events/${encodeURIComponent(eventId)}/form`,
+    { method: "PUT", body: JSON.stringify({ fields }) },
+  );
+}
+
+export function listAdminEventRegistrations(eventId: string) {
+  return adminFetch<{ items: AdminEventRegistration[] }>(
+    `/admin/events/${encodeURIComponent(eventId)}/registrations`,
+    { method: "GET" },
+  );
+}
+
+export function createAdminEventRegistration(
+  eventId: string,
+  body: {
+    attendeeName: string;
+    attendeeEmail: string;
+    answers: AdminEventRegistrationAnswer[];
+  },
+) {
+  return adminFetch<AdminEventRegistration>(
+    `/admin/events/${encodeURIComponent(eventId)}/registrations`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+/** Nest JSON `{ message }` when present; otherwise the raw Error text. */
+export function adminApiErrorMessage(error: unknown, fallback: string) {
+  if (!(error instanceof Error) || !error.message) return fallback;
+  const jsonMatch = error.message.match(/failed \(\d+\):\s*(\{[\s\S]*\})$/);
+  if (jsonMatch) {
+    try {
+      const body = JSON.parse(jsonMatch[1]) as { message?: unknown };
+      if (typeof body.message === "string" && body.message.trim()) {
+        return body.message;
+      }
+      if (Array.isArray(body.message) && body.message.length) {
+        return String(body.message[0]);
+      }
+    } catch {
+      // Keep the raw fetch error below.
+    }
+  }
+  return error.message;
+}
+
 export function updateAdminEventStatus(id: string, status: AdminEventStatus) {
   return adminFetch<{ ok: true; id: string; status: string }>(
     `/admin/events/${encodeURIComponent(id)}/status`,
