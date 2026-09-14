@@ -1,5 +1,4 @@
 import { DashboardList, DashboardPage, DashboardScroll } from "@/components/DashboardPage";
-import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import {
@@ -8,7 +7,7 @@ import {
   type AdminEventListResponse,
 } from "@/lib/admin/eventsApi";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
-import { Calendar, Plug, Ticket, Users } from "lucide-react";
+import { Plug } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -92,11 +91,9 @@ export default async function EventsPage({
     (acc, ev) => {
       if (ev.status === "published") acc.published += 1;
       if (ev.status === "sold_out") acc.soldOut += 1;
-      if (ev.status === "draft") acc.draft += 1;
-      acc.capacity += ev.capacity;
       return acc;
     },
-    { published: 0, soldOut: 0, draft: 0, capacity: 0 },
+    { published: 0, soldOut: 0 },
   );
 
   return (
@@ -108,6 +105,14 @@ export default async function EventsPage({
             ? "No se pudieron cargar los eventos."
             : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados`
         }
+        action={
+          <Link
+            href="/events/create"
+            className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
+          >
+            + Nuevo evento
+          </Link>
+        }
       />
 
       {error ? (
@@ -116,38 +121,7 @@ export default async function EventsPage({
         </DashboardScroll>
       ) : (
         <>
-          <section className="grid shrink-0 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard
-              compact
-              label="Eventos visibles"
-              value={items.length.toLocaleString()}
-              hint={`${total.toLocaleString()} totales`}
-              icon={Calendar}
-            />
-            <KpiCard
-              compact
-              label="Publicados"
-              value={summary.published.toLocaleString()}
-              hint="En el feed"
-              icon={Calendar}
-            />
-            <KpiCard
-              compact
-              label="Agotados"
-              value={summary.soldOut.toLocaleString()}
-              hint="Sin cupos"
-              icon={Ticket}
-            />
-            <KpiCard
-              compact
-              label="Aforo total"
-              value={summary.capacity.toLocaleString()}
-              hint="Suma de cupos"
-              icon={Users}
-            />
-          </section>
-
-          <form className="mt-3 mb-3 flex shrink-0 flex-wrap items-center gap-2">
+          <form className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
             <input
               name="q"
               type="search"

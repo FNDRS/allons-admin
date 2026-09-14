@@ -132,7 +132,7 @@ export default async function EventDetailPage({
               href={`/events/${eventId}/formulario` as never}
               className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
             >
-              Formulario demo
+              Formulario
             </Link>
             <Link
               href="/events"

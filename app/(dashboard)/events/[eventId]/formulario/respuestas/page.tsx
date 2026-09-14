@@ -46,7 +46,7 @@ export default async function EventRegistrationResponsesPage({
     <DashboardPage>
       <PageHeader
         title="Respuestas del formulario"
-        description={`${event.title} · ${registrations.length.toLocaleString()} registros demo`}
+        description={`${event.title} · ${registrations.length.toLocaleString()} registros web`}
         action={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -69,7 +69,7 @@ export default async function EventRegistrationResponsesPage({
       <div className="futuristic-panel min-h-0 flex-1 overflow-auto">
         {registrations.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted">
-            Todavía no hay registros en la demo web.
+            Todavía no hay registros desde el formulario web.
           </div>
         ) : (
           <table className="w-full min-w-[860px] text-left text-sm">

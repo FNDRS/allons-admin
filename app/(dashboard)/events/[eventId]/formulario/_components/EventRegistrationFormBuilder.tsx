@@ -229,7 +229,7 @@ export function EventRegistrationFormBuilder({
           <PreviewInput label="Correo electrónico" required />
           {fields.length === 0 ? (
             <p className="border border-dashed border-white/15 p-4 text-sm text-muted">
-              La demo pública solo pedirá nombre y correo hasta que agregues campos.
+              El registro web solo pedirá nombre y correo hasta que agregues campos.
             </p>
           ) : (
             fields.map((field) => (

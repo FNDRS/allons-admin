@@ -40,12 +40,12 @@ export default async function DemoEventRegistrationPage({
         </Link>
 
         <section className="futuristic-panel p-6 sm:p-8">
-          <div className="eyebrow">Registro demo</div>
+          <div className="eyebrow">Registro web</div>
           <h1 className="mt-2 text-3xl leading-tight sm:text-4xl">
             {event.title}
           </h1>
           <p className="mt-3 text-sm leading-6 text-white/60">
-            Completa la información solicitada para esta demostración web. No se emite ticket real.
+            Completa la información solicitada por el comercio. Allons guardará este registro para el evento.
           </p>
 
           {query.error ? (

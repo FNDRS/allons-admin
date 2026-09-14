@@ -44,7 +44,7 @@ export default async function DemoEventPage({
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
-            <div className="eyebrow">Allons demo web</div>
+            <div className="eyebrow">Allons registro web</div>
             <div className="mt-1 text-sm text-white/55">
               Registro personalizado para eventos únicos
             </div>
@@ -59,7 +59,7 @@ export default async function DemoEventPage({
 
         {query.registered ? (
           <div className="mb-6 flex items-center gap-3 border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-            <CheckCircle2 size={18} /> Registro recibido. Tus respuestas quedaron guardadas para la demo.
+            <CheckCircle2 size={18} /> Registro recibido. Tus respuestas quedaron guardadas para el evento.
           </div>
         ) : null}
 
@@ -124,7 +124,7 @@ export default async function DemoEventPage({
                 Registrarme
               </Link>
               <p className="text-xs leading-5 text-white/45">
-                Demo web local. No cobra, no emite ticket real y no toca el flujo móvil.
+                Registro web operado por Allons para formularios especiales solicitados por el comercio.
               </p>
             </div>
           </aside>

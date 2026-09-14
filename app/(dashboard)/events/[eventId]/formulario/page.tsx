@@ -32,7 +32,7 @@ export default async function EventRegistrationFormPage({
   searchParams,
 }: {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ created?: string; saved?: string }>;
 }) {
   const { eventId } = await params;
   const query = await searchParams;
@@ -75,6 +75,12 @@ export default async function EventRegistrationFormPage({
         </div>
       ) : null}
 
+      {query.created ? (
+        <div className="mb-5 border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          Evento creado en las tablas reales. Si quedó publicado, ya aparece en la app cliente.
+        </div>
+      ) : null}
+
       <section className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="futuristic-panel p-5">
           <div className="eyebrow mb-2">Evento</div>
@@ -90,7 +96,7 @@ export default async function EventRegistrationFormPage({
               {form.fields.length} campos
             </span>
             <span className="border border-white/10 px-2 py-1">
-              {registrations.length} registros demo
+              {registrations.length} registros web
             </span>
           </div>
         </div>
@@ -98,7 +104,7 @@ export default async function EventRegistrationFormPage({
         <div className="futuristic-panel p-5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <div className="eyebrow">Salida demo</div>
+              <div className="eyebrow">Registro web</div>
               <h2 className="mt-1 text-xl font-semibold">Registro público</h2>
             </div>
             <StatusPill
@@ -108,7 +114,7 @@ export default async function EventRegistrationFormPage({
           </div>
           {!isSingleEvent ? (
             <p className="mb-4 text-sm text-amber-100">
-              Esta demo está pensada solo para eventos únicos. Puedes verla, pero no la uses para clases recurrentes.
+              Este formulario está pensado solo para eventos únicos. Puedes verlo, pero no lo uses para clases recurrentes.
             </p>
           ) : null}
           <div className="break-all border border-white/10 bg-white/[0.03] p-3 text-xs text-white/70">
@@ -120,7 +126,7 @@ export default async function EventRegistrationFormPage({
               target="_blank"
               className="inline-flex items-center gap-2 border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
             >
-              Abrir demo <ExternalLink size={14} />
+              Abrir registro <ExternalLink size={14} />
             </Link>
             <Link
               href={`/events/${eventId}/formulario/respuestas` as never}
