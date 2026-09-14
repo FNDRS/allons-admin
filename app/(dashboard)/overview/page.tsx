@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -129,13 +130,14 @@ async function loadOverviewMetrics(): Promise<OverviewMetrics> {
 
 export default function OverviewPage() {
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Inicio"
         title="Resumen"
         description="Cuentas, eventos y ventas de los últimos 30 días."
       />
 
+      <DashboardScroll>
       <Suspense fallback={<CountsSkeleton />}>
         <CountsSection />
       </Suspense>
@@ -143,7 +145,8 @@ export default function OverviewPage() {
       <Suspense fallback={<MetricsSkeleton />}>
         <MetricsSection />
       </Suspense>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }
 

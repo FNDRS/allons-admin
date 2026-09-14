@@ -76,7 +76,7 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
   };
 
   return (
-    <aside className="futuristic-panel relative z-10 hidden shrink-0 flex-col border-r md:flex md:w-72">
+    <aside className="futuristic-panel relative z-10 hidden h-full shrink-0 flex-col overflow-hidden border-r md:flex md:w-72">
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/15">
         <Image
           src="/apple-touch-icon.png"
@@ -94,7 +94,7 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
         </div>
       </div>
 
-      <nav className="flex-1 px-0 py-0">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-0 py-0">
         {NAV_ITEMS.map((item) => {
           const active =
             pathname === item.href ||

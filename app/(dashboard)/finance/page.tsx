@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { OrdersSection } from "@/components/OrdersSection";
@@ -180,12 +181,13 @@ async function RecentPayoutsPanel() {
 
 export default function FinancePage() {
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         title="Finanzas"
         description="GMV, comisión y retiros."
       />
 
+      <DashboardScroll>
       <Suspense
         fallback={
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -216,6 +218,7 @@ export default function FinancePage() {
           </Suspense>
         </div>
       </section>
-    </div>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }

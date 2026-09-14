@@ -1,3 +1,4 @@
+import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { setUserSuspended } from "@/lib/admin/actions";
@@ -63,14 +64,14 @@ export default async function UsersPage({
   const suspendedCount = all.length - activeCount;
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Cuentas"
         title="Usuarios"
         description={`${all.length.toLocaleString()} clientes registrados · ${suspendedCount} suspendidos`}
       />
 
-      <form className="mb-4 flex flex-wrap items-center gap-2">
+      <form className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
         <input
           name="q"
           type="search"
@@ -94,17 +95,19 @@ export default async function UsersPage({
         </button>
       </form>
 
-      <div className="futuristic-panel overflow-hidden">
-        <div
-          className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
-        >
-          <div>Cliente</div>
-          <div>Estado</div>
-          <div>Alta</div>
-          <div className="text-right">Acciones</div>
-        </div>
-
+      <DashboardList
+        header={
+          <div
+            className="grid shrink-0 border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+            style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
+          >
+            <div>Cliente</div>
+            <div>Estado</div>
+            <div>Alta</div>
+            <div className="text-right">Acciones</div>
+          </div>
+        }
+      >
         {filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted">
             {all.length === 0
@@ -112,54 +115,54 @@ export default async function UsersPage({
               : "Sin coincidencias."}
           </div>
         ) : (
-          filtered.map((u) => (
-            <div
-              key={u.id}
-              className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
-              style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
-            >
-              <div className="min-w-0">
-                <div className="truncate font-semibold">
-                  {u.fullName ?? u.email.split("@")[0]}
+            {filtered.map((u) => (
+              <div
+                key={u.id}
+                className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
+                style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">
+                    {u.fullName ?? u.email.split("@")[0]}
+                  </div>
+                  <div className="truncate text-xs text-muted">{u.email}</div>
+                  <div className="mt-1 inline-flex border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
+                    {roleLabel(u.role)}
+                  </div>
                 </div>
-                <div className="truncate text-xs text-muted">{u.email}</div>
-                <div className="mt-1 inline-flex border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
-                  {roleLabel(u.role)}
+                <div>
+                  {u.status === "suspended" ? (
+                    <StatusPill label="Suspendido" variant="danger" />
+                  ) : (
+                    <StatusPill label="Activo" variant="success" />
+                  )}
+                </div>
+                <div className="text-xs text-muted">{formatDate(u.createdAt)}</div>
+                <div className="flex justify-end">
+                  <form action={setUserSuspended}>
+                    <input type="hidden" name="userId" value={u.id} />
+                    <input
+                      type="hidden"
+                      name="suspend"
+                      value={u.status === "suspended" ? "false" : "true"}
+                    />
+                    <input type="hidden" name="revalidate" value="/users" />
+                    <button
+                      type="submit"
+                      className={`border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
+                        u.status === "suspended"
+                          ? "border-success/40 text-success hover:bg-success/10"
+                          : "border-danger/40 text-danger hover:bg-danger/10"
+                      }`}
+                    >
+                      {u.status === "suspended" ? "Reactivar" : "Suspender"}
+                    </button>
+                  </form>
                 </div>
               </div>
-              <div>
-                {u.status === "suspended" ? (
-                  <StatusPill label="Suspendido" variant="danger" />
-                ) : (
-                  <StatusPill label="Activo" variant="success" />
-                )}
-              </div>
-              <div className="text-xs text-muted">{formatDate(u.createdAt)}</div>
-              <div className="flex justify-end">
-                <form action={setUserSuspended}>
-                  <input type="hidden" name="userId" value={u.id} />
-                  <input
-                    type="hidden"
-                    name="suspend"
-                    value={u.status === "suspended" ? "false" : "true"}
-                  />
-                  <input type="hidden" name="revalidate" value="/users" />
-                  <button
-                    type="submit"
-                    className={`border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-                      u.status === "suspended"
-                        ? "border-success/40 text-success hover:bg-success/10"
-                        : "border-danger/40 text-danger hover:bg-danger/10"
-                    }`}
-                  >
-                    {u.status === "suspended" ? "Reactivar" : "Suspender"}
-                  </button>
-                </form>
-              </div>
-            </div>
-          ))
+            ))}
         )}
-      </div>
-    </div>
+      </DashboardList>
+    </DashboardPage>
   );
 }

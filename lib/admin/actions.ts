@@ -5,6 +5,11 @@ import { requireRootActor } from "@/lib/admin/getRootActor";
 import type { ProviderStatus } from "@/lib/admin/users";
 import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import {
+  clampFeePct,
+  DEFAULT_ALLONS_FEE,
+  DEFAULT_PASARELA_FEE,
+} from "@/lib/commissionTiers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -240,21 +245,24 @@ export async function cancelProviderSubscriptionAction(formData: FormData) {
 }
 
 /**
- * Sets a comercio's pasarela (Clinpays + bank) fee %. Negotiated by business
- * type and typically finalized after the bank contract, so it's editable here
- * post-creation. Stored on the owner's `paygate_fee_pct` metadata, read by
- * allons-api and added to the volume-based Allons base commission per ticket.
+ * Sets a comercio's per-ticket fees: pasarela (bank / Clinpays offer) and
+ * Allons (relationship %). Stored on the owner's metadata and read by
+ * allons-api at sale / refund time.
  */
-export async function setProviderPasarelaFeeAction(formData: FormData) {
+export async function setProviderCommissionFeesAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
   const revalidate = String(formData.get("revalidate") ?? "/providers");
-  const pct = Math.max(
-    0,
-    Math.min(100, parseFloat(String(formData.get("pasarelaFeePct") ?? ""))),
+  const pasarelaPct = clampFeePct(
+    formData.get("pasarelaFeePct") as string | null,
+    DEFAULT_PASARELA_FEE,
+  );
+  const allonsPct = clampFeePct(
+    formData.get("allonsFeePct") as string | null,
+    DEFAULT_ALLONS_FEE,
   );
 
-  if (!userId || !Number.isFinite(pct)) {
+  if (!userId) {
     throw new Error("Parámetros inválidos");
   }
 
@@ -265,12 +273,15 @@ export async function setProviderPasarelaFeeAction(formData: FormData) {
   if (!existing.user) throw new Error("Usuario no encontrado");
 
   const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
-  const previousPct =
+  const previousPasarela =
     typeof meta.paygate_fee_pct === "number" ? meta.paygate_fee_pct : null;
+  const previousAllons =
+    typeof meta.allons_fee_pct === "number" ? meta.allons_fee_pct : null;
 
   const merged = {
     ...meta,
-    paygate_fee_pct: pct,
+    paygate_fee_pct: pasarelaPct,
+    allons_fee_pct: allonsPct,
     pasarelaFeeUpdatedBy: caller.userId,
     pasarelaFeeUpdatedAt: new Date().toISOString(),
   };
@@ -282,12 +293,18 @@ export async function setProviderPasarelaFeeAction(formData: FormData) {
     actor_user_id: caller.userId,
     actor_email: caller.email,
     source: "server_action",
-    action: "provider.pasarela_fee_change",
+    action: "provider.commission_fees_change",
     resource_type: "provider_user",
     resource_id: userId,
     outcome: updateError ? "failure" : "success",
-    state_before: { paygate_fee_pct: previousPct },
-    state_after: { paygate_fee_pct: pct },
+    state_before: {
+      paygate_fee_pct: previousPasarela,
+      allons_fee_pct: previousAllons,
+    },
+    state_after: {
+      paygate_fee_pct: pasarelaPct,
+      allons_fee_pct: allonsPct,
+    },
     error_message: updateError?.message ?? null,
   });
 

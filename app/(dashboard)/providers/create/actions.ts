@@ -4,6 +4,7 @@ import { logAdminAudit } from "@/lib/admin/auditLog";
 import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { clampFeePct, DEFAULT_ALLONS_FEE } from "@/lib/commissionTiers";
 import { redirect } from "next/navigation";
 
 export type CreateComercioFormValues = {
@@ -15,6 +16,7 @@ export type CreateComercioFormValues = {
   businessType: string;
   brandColor: string;
   pasarelaFeePct: string;
+  allonsFeePct: string;
 };
 
 export type CreateComercioState = {
@@ -40,6 +42,9 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
       (formData.get("brandColor") as string | null)?.trim() || "#F67010",
     pasarelaFeePct:
       (formData.get("pasarelaFeePct") as string | null)?.trim() || "5",
+    allonsFeePct:
+      (formData.get("allonsFeePct") as string | null)?.trim() ||
+      String(DEFAULT_ALLONS_FEE),
   };
 }
 
@@ -67,10 +72,8 @@ export async function createComercioAction(
     const brandHandle = values.brandHandle;
     const businessType = values.businessType;
     const brandColor = values.brandColor;
-    const pasarelaFeePct = Math.max(
-      0,
-      Math.min(100, parseFloat(values.pasarelaFeePct) || 0),
-    );
+    const pasarelaFeePct = clampFeePct(values.pasarelaFeePct, 5);
+    const allonsFeePct = clampFeePct(values.allonsFeePct, DEFAULT_ALLONS_FEE);
     const contractFile = formData.get("contractFile") as File | null;
 
     if (!fullName || !email || !brandName || !brandHandle) {
@@ -124,10 +127,10 @@ export async function createComercioAction(
       brand_handle: brandHandle,
       brand_logo_color: brandColor,
       business_type: businessType,
-      // Per-comercio pasarela (Clinpays + bank) fee, read by allons-api and
-      // added to the volume-based Allons base commission. Editable later from
-      // the provider detail page once the bank contract sets the final rate.
+      // Per-comercio fees, read by allons-api at sale / refund time.
+      // Pasarela = bank / Clinpays offer. Allons = relationship %.
       paygate_fee_pct: pasarelaFeePct,
+      allons_fee_pct: allonsFeePct,
       contract_url: contractUrl,
       subscription_plan: "pendiente",
       free_trial_start: freeTrialStart,
@@ -282,6 +285,7 @@ export async function createComercioAction(
         brandHandle,
         businessType,
         pasarelaFeePct,
+        allonsFeePct,
         subscriptionPlan: "pendiente",
         hasContract: Boolean(contractUrl),
         invite: inviteStatus,

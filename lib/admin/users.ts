@@ -29,8 +29,10 @@ export interface AdminUserRecord {
   subscriptionPeriodEnd?: string | null;
   /** Business type (drives the suggested pasarela rate). */
   businessType?: string | null;
-  /** Per-comercio pasarela (Clinpays + bank) fee %, added to the base commission. */
+  /** Per-comercio pasarela (Clinpays + bank) fee %, added to the Allons fee. */
   pasarelaFeePct?: number | null;
+  /** Per-comercio Allons commission %, set from the relationship. */
+  allonsFeePct?: number | null;
   // Staff-specific:
   staffRole?: "scanner" | "admin" | "finance" | null;
   brandRef?: string | null;
@@ -58,6 +60,21 @@ function isBanned(bannedUntil: string | null | undefined): boolean {
   const ts = new Date(bannedUntil).getTime();
   if (Number.isNaN(ts)) return false;
   return ts > Date.now();
+}
+
+function metadataFee(
+  metadata: Record<string, unknown> | null,
+  key: string,
+): number | null {
+  if (!metadata) return null;
+  const raw = metadata[key];
+  const n =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? parseFloat(raw)
+        : NaN;
+  return Number.isFinite(n) ? n : null;
 }
 
 function toRecord(user: {
@@ -111,11 +128,9 @@ function toRecord(user: {
         ? ((metadata?.business_type as string | undefined) ?? null)
         : null,
     pasarelaFeePct:
-      role === "provider"
-        ? (typeof metadata?.paygate_fee_pct === "number"
-            ? (metadata.paygate_fee_pct as number)
-            : null)
-        : null,
+      role === "provider" ? metadataFee(metadata, "paygate_fee_pct") : null,
+    allonsFeePct:
+      role === "provider" ? metadataFee(metadata, "allons_fee_pct") : null,
     staffRole:
       role === "staff"
         ? ((metadata?.staff_role as AdminUserRecord["staffRole"]) ?? null)

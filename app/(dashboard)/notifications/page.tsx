@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import {
   broadcastNotification,

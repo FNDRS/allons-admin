@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { RefundsSection } from "@/components/RefundsSection";
@@ -117,12 +118,13 @@ function DisputesPanel() {
 
 export default function RefundsPage() {
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         title="Reembolsos y disputas"
         description="Pedidos desde la app y disputas con el banco."
       />
 
+      <DashboardScroll>
       <Suspense
         fallback={
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

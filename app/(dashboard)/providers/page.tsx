@@ -1,3 +1,4 @@
+import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
@@ -117,7 +118,7 @@ export default async function ProvidersPage({
   };
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Comercios"
         title="Proveedores"
@@ -133,7 +134,7 @@ export default async function ProvidersPage({
       />
 
       {params.created ? (
-        <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+        <div className="mb-4 shrink-0 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
           Comercio <strong>{params.created}</strong> creado. Apruébalo cuando
           hayas revisado los datos.
           {params.invite === "invited" ? (
@@ -149,24 +150,24 @@ export default async function ProvidersPage({
       ) : null}
 
       {params.resent === "ok" ? (
-        <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+        <div className="mb-4 shrink-0 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
           Invitación reenviada a <strong>{params.email}</strong>.
         </div>
       ) : params.resent === "already_confirmed" ? (
-        <div className="mb-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
+        <div className="mb-4 shrink-0 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
           Ya aceptó la invitación anterior, así que no se reenvió. Si perdió el acceso, usa recuperar contraseña.
         </div>
       ) : params.resent === "failed" ? (
-        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-4 shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           No se pudo reenviar la invitación{params.reason ? `: ${params.reason}` : "."}
         </div>
       ) : params.resent === "missing_email" ? (
-        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-4 shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           El usuario no tiene correo registrado.
         </div>
       ) : null}
 
-      <form className="mb-4 flex flex-wrap items-center gap-2">
+      <form className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
         <input
           name="q"
           type="search"
@@ -193,17 +194,19 @@ export default async function ProvidersPage({
         </button>
       </form>
 
-      <div className="futuristic-panel overflow-hidden">
-        <div
-          className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
-        >
-          <div>Proveedor</div>
-          <div>Estado</div>
-          <div>Alta</div>
-          <div className="text-right">Acciones</div>
-        </div>
-
+      <DashboardList
+        header={
+          <div
+            className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+            style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
+          >
+            <div>Proveedor</div>
+            <div>Estado</div>
+            <div>Alta</div>
+            <div className="text-right">Acciones</div>
+          </div>
+        }
+      >
         {filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted">
             {all.length === 0
@@ -257,7 +260,7 @@ export default async function ProvidersPage({
             );
           })
         )}
-      </div>
-    </div>
+      </DashboardList>
+    </DashboardPage>
   );
 }

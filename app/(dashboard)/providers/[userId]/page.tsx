@@ -6,9 +6,7 @@ import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/P
 import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
 import { ProviderPasarelaFeeActions } from "@/app/(dashboard)/providers/_components/ProviderPasarelaFeeActions";
 import {
-  PLAN_COMMISSIONS,
-  getBaseFeeByPlan,
-  planLabel,
+  DEFAULT_ALLONS_FEE,
   totalFee,
 } from "@/lib/commissionTiers";
 import {
@@ -352,7 +350,7 @@ export default async function ProviderDetailPage({
             value={BUSINESS_TYPE_LABEL[providerUser.businessType ?? ""] ?? "-"}
           />
           <InfoItem
-            label="Pasarela (Clinpays / banco)"
+            label="Banco / pasarela"
             value={
               providerUser.pasarelaFeePct != null
                 ? `${providerUser.pasarelaFeePct}%`
@@ -360,28 +358,27 @@ export default async function ProviderDetailPage({
             }
           />
           <InfoItem
-            label="Comisión base (plan)"
-            value={`${planLabel(providerUser.subscriptionPlan)} · ${getBaseFeeByPlan(
-              providerUser.subscriptionPlan,
-            )}%`}
+            label="Comisión Allons"
+            value={
+              providerUser.allonsFeePct != null
+                ? `${providerUser.allonsFeePct}%`
+                : `${DEFAULT_ALLONS_FEE}% (por defecto)`
+            }
           />
         </dl>
         <p className="mb-4 text-xs leading-relaxed text-white/45">
-          El total por ticket = comisión base de Allons (según el plan) + la
-          pasarela de este comercio. Ej. con la pasarela actual (
-          {providerUser.pasarelaFeePct ?? 0}%):{" "}
-          {PLAN_COMMISSIONS.map(
-            (p) =>
-              `${p.name} ${totalFee(
-                p.baseFee,
-                providerUser.pasarelaFeePct ?? 0,
-              )}%`,
-          ).join(" · ")}
-          .
+          Total por ticket = oferta del banco + porcentaje Allons según la
+          relación. Ahora:{" "}
+          {totalFee(
+            providerUser.allonsFeePct ?? DEFAULT_ALLONS_FEE,
+            providerUser.pasarelaFeePct ?? 0,
+          )}
+          %.
         </p>
         <ProviderPasarelaFeeActions
           userId={userId}
           pasarelaFeePct={providerUser.pasarelaFeePct ?? null}
+          allonsFeePct={providerUser.allonsFeePct ?? null}
           revalidatePath={revalidatePath}
         />
       </Section>

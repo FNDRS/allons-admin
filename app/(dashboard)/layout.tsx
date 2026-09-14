@@ -20,9 +20,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="futuristic-shell min-h-screen bg-background md:flex">
+    <div className="futuristic-shell h-screen overflow-hidden bg-background md:flex">
       <Sidebar adminEmail={root.email} />
-      <main className="relative z-10 flex-1 p-4 md:p-8">{children}</main>
+      <main className="relative z-10 flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-8">
+        {children}
+      </main>
     </div>
   );
 }

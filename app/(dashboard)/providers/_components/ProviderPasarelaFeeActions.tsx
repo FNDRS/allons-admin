@@ -1,37 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { setProviderPasarelaFeeAction } from "@/lib/admin/actions";
-import { DEFAULT_PASARELA_FEE } from "@/lib/commissionTiers";
+import { setProviderCommissionFeesAction } from "@/lib/admin/actions";
+import {
+  DEFAULT_ALLONS_FEE,
+  DEFAULT_PASARELA_FEE,
+} from "@/lib/commissionTiers";
 
 /**
- * Edits a comercio's pasarela (Clinpays + bank) fee %. This is the rate the
- * bank contract sets per business type; it's added to the volume-based Allons
- * base commission and charged automatically per ticket by allons-api.
+ * Edits a comercio's two per-ticket fees: bank/pasarela offer and Allons
+ * relationship %. Both are stored on the owner metadata and read by allons-api.
  */
 export function ProviderPasarelaFeeActions({
   userId,
   pasarelaFeePct,
+  allonsFeePct,
   revalidatePath,
 }: {
   userId: string;
   pasarelaFeePct: number | null;
+  allonsFeePct: number | null;
   revalidatePath: string;
 }) {
-  const [value, setValue] = useState(
+  const [pasarela, setPasarela] = useState(
     String(pasarelaFeePct ?? DEFAULT_PASARELA_FEE),
+  );
+  const [allons, setAllons] = useState(
+    String(allonsFeePct ?? DEFAULT_ALLONS_FEE),
   );
 
   return (
     <form
-      action={setProviderPasarelaFeeAction}
-      className="flex flex-wrap items-end gap-2"
+      action={setProviderCommissionFeesAction}
+      className="flex flex-wrap items-end gap-3"
     >
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
       <div>
         <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40">
-          Comisión pasarela (%)
+          Comisión banco / pasarela (%)
         </label>
         <div className="flex items-center gap-1.5">
           <input
@@ -40,8 +47,26 @@ export function ProviderPasarelaFeeActions({
             min="0"
             max="100"
             step="0.1"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
+            value={pasarela}
+            onChange={(e) => setPasarela(e.target.value)}
+            className="w-24 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white focus:border-white/30 focus:outline-none"
+          />
+          <span className="text-sm text-white/50">%</span>
+        </div>
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40">
+          Comisión Allons (%)
+        </label>
+        <div className="flex items-center gap-1.5">
+          <input
+            name="allonsFeePct"
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            value={allons}
+            onChange={(e) => setAllons(e.target.value)}
             className="w-24 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white focus:border-white/30 focus:outline-none"
           />
           <span className="text-sm text-white/50">%</span>

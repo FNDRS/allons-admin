@@ -1,3 +1,4 @@
+import { DashboardList, DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -99,7 +100,7 @@ export default async function EventsPage({
   );
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Catálogo"
         title="Eventos"
@@ -111,10 +112,12 @@ export default async function EventsPage({
       />
 
       {error ? (
-        <ConnectionWarning message={error} />
+        <DashboardScroll>
+          <ConnectionWarning message={error} />
+        </DashboardScroll>
       ) : (
         <>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid shrink-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               label="Eventos visibles"
               value={items.length.toLocaleString()}
@@ -141,7 +144,7 @@ export default async function EventsPage({
             />
           </section>
 
-          <form className="mt-6 mb-4 flex flex-wrap items-center gap-2">
+          <form className="mt-6 mb-4 flex shrink-0 flex-wrap items-center gap-2">
             <input
               name="q"
               type="search"
@@ -175,20 +178,22 @@ export default async function EventsPage({
             </button>
           </form>
 
-          <div className="futuristic-panel overflow-hidden">
-            <div
-              className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-              style={{
-                gridTemplateColumns: "2fr 1.4fr 1fr 1fr 1.4fr",
-              }}
-            >
-              <div>Evento</div>
-              <div>Proveedor</div>
-              <div>Estado</div>
-              <div>Inicio</div>
-              <div className="text-right">Acciones</div>
-            </div>
-
+          <DashboardList
+            header={
+              <div
+                className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+                style={{
+                  gridTemplateColumns: "2fr 1.4fr 1fr 1fr 1.4fr",
+                }}
+              >
+                <div>Evento</div>
+                <div>Proveedor</div>
+                <div>Estado</div>
+                <div>Inicio</div>
+                <div className="text-right">Acciones</div>
+              </div>
+            }
+          >
             {items.length === 0 ? (
               <div className="px-4 py-12 text-center text-sm text-muted">
                 Sin coincidencias.
@@ -196,10 +201,10 @@ export default async function EventsPage({
             ) : (
               items.map((ev) => <EventRow key={ev.id} event={ev} />)
             )}
-          </div>
+          </DashboardList>
         </>
       )}
-    </div>
+    </DashboardPage>
   );
 }
 

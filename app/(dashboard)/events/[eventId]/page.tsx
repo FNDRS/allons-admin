@@ -127,12 +127,20 @@ export default async function EventDetailPage({
         title={event.title}
         description={[event.city, event.venue].filter(Boolean).join(" · ") || "Sin ubicación"}
         action={
-          <Link
-            href="/events"
-            className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-          >
-            ← Volver
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/events/${eventId}/formulario` as never}
+              className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
+            >
+              Formulario demo
+            </Link>
+            <Link
+              href="/events"
+              className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+            >
+              ← Volver
+            </Link>
+          </div>
         }
       />
 

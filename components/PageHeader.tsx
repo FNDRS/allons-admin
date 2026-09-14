@@ -7,7 +7,7 @@ interface Props {
 
 export function PageHeader({ eyebrow, title, description, action }: Props) {
   return (
-    <header className="mb-8 flex items-end justify-between gap-4 border-b border-white/12 pb-6">
+    <header className="mb-8 flex shrink-0 items-end justify-between gap-4 border-b border-white/12 pb-6">
       <div>
         {eyebrow ? <div className="eyebrow mb-2">{eyebrow}</div> : null}
         <h1 className="text-2xl font-bold uppercase tracking-tight">{title}</h1>

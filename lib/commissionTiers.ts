@@ -1,19 +1,16 @@
 // ---------------------------------------------------------------------
-// Commission by plan
+// Commission
 //
-// Allons charges providers a base app commission per ticket sold, tied to
-// their subscription plan: the higher-volume plans pay a lower base
-// (Pro 8% < Básico 12% < Evento Único 15%; trial 12%). On top of it sits a
-// per-comercio payment-gateway ("pasarela") fee negotiated with Clinpays +
-// the bank by business type, set here in admin and passed through to the
-// gateway (not Allons revenue). Percentages are whole numbers (e.g. 8 = 8%).
-//
-// Mirrors `commission-tiers.ts` in allons-api and `lib/commissionTiers.ts`
-// in allons-mobile. The effective fee withheld from a sale is
-// `getBaseFeeByPlan(plan) + pasarelaFee`, computed by the API at runtime.
+// Per ticket: Allons % (set per comercio from the relationship) + pasarela
+// % (the bank / Clinpays offer). Neither comes from the subscription plan.
+// Stored on the owner's auth metadata (`allons_fee_pct`, `paygate_fee_pct`)
+// and read by allons-api at sale / refund time.
 // ---------------------------------------------------------------------
 
 export type ProviderPlanId = "single_event" | "basico" | "pro";
+
+/** Fallback Allons commission (%) when a comercio has no negotiated rate. */
+export const DEFAULT_ALLONS_FEE = 8;
 
 /** Fallback pasarela fee (%) when a comercio has no negotiated rate set. */
 export const DEFAULT_PASARELA_FEE = 5;
@@ -41,14 +38,22 @@ export const PLAN_COMMISSIONS: readonly PlanCommission[] = [
   { plan: "single_event", name: "Evento Único", baseFee: 15 },
 ];
 
-/** Base app commission (%) during the free trial (no plan chosen yet). */
-export const TRIAL_BASE_FEE = 12;
+/** @deprecated Allons fee is per-comercio (`allons_fee_pct`), not by plan. */
+export const TRIAL_BASE_FEE = DEFAULT_ALLONS_FEE;
 
-/** Base app commission % for a subscription plan. Trial/unknown → trial rate. */
-export function getBaseFeeByPlan(plan: string | null | undefined): number {
-  return (
-    PLAN_COMMISSIONS.find((p) => p.plan === plan)?.baseFee ?? TRIAL_BASE_FEE
-  );
+/** Clamp a fee % from form/metadata. Invalid → fallback. */
+export function clampFeePct(
+  raw: string | number | null | undefined,
+  fallback: number,
+): number {
+  const n = typeof raw === "number" ? raw : parseFloat(String(raw ?? ""));
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, n));
+}
+
+/** @deprecated Use the stored `allons_fee_pct`. Kept for older rows. */
+export function getBaseFeeByPlan(_plan?: string | null): number {
+  return DEFAULT_ALLONS_FEE;
 }
 
 /** Human label for a plan id (trial/unknown → "Prueba"). */

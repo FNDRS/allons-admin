@@ -1,3 +1,4 @@
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { CreateComercioForm } from "./_components/CreateComercioForm";
 

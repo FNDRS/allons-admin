@@ -1,3 +1,4 @@
+import { DashboardList, DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import {
@@ -93,14 +94,14 @@ export default async function PaymentsPage({
   };
 
   return (
-    <div>
+    <DashboardPage>
       <PageHeader
         eyebrow="Contabilidad"
         title="Pagos de suscripción"
         description={`${money(totals.paidCents)} cobrado · ${totals.pendingCount} pendientes`}
       />
 
-      <div className="mb-5 border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-white/55">
+      <div className="mb-5 shrink-0 border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-white/55">
         Solo lectura. El comercio paga su plan en la app (Paygate) y se activa
         solo. Estos registros son de control interno:{" "}
         <strong className="text-white/80">no son comprobante fiscal</strong>{" "}
@@ -108,7 +109,7 @@ export default async function PaymentsPage({
       </div>
 
       {/* KPIs */}
-      <div className="mb-5 grid gap-4 sm:grid-cols-2">
+      <div className="mb-5 grid shrink-0 gap-4 sm:grid-cols-2">
         <div className="futuristic-panel p-5">
           <p className="text-xs uppercase tracking-wide text-muted">Cobrado</p>
           <p className="mt-1 text-2xl font-bold text-green-400">
@@ -128,7 +129,7 @@ export default async function PaymentsPage({
       </div>
 
       {/* Filter */}
-      <form className="mb-4 flex items-center gap-2">
+      <form className="mb-4 flex shrink-0 items-center gap-2">
         <select
           name="status"
           defaultValue={params.status ?? "all"}
@@ -150,19 +151,21 @@ export default async function PaymentsPage({
       </form>
 
       {/* Table */}
-      <div className="futuristic-panel overflow-hidden">
-        <div
-          className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-          style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr 1fr 0.6fr" }}
-        >
-          <div>Comercio</div>
-          <div>Plan</div>
-          <div>Monto</div>
-          <div>Estado</div>
-          <div>Fecha</div>
-          <div className="text-right" />
-        </div>
-
+      <DashboardList
+        header={
+          <div
+            className="grid border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+            style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr 1fr 0.6fr" }}
+          >
+            <div>Comercio</div>
+            <div>Plan</div>
+            <div>Monto</div>
+            <div>Estado</div>
+            <div>Fecha</div>
+            <div className="text-right" />
+          </div>
+        }
+      >
         {loadError ? (
           <div className="px-4 py-12 text-center text-sm text-red-300">
             {loadError}
@@ -182,8 +185,8 @@ export default async function PaymentsPage({
             />
           ))
         )}
-      </div>
-    </div>
+      </DashboardList>
+    </DashboardPage>
   );
 }
 

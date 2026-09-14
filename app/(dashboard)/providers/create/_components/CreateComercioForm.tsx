@@ -3,7 +3,7 @@
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
 import {
-  PLAN_COMMISSIONS,
+  DEFAULT_ALLONS_FEE,
   PASARELA_FEE_BY_BUSINESS_TYPE,
   totalFee,
 } from "@/lib/commissionTiers";
@@ -49,6 +49,7 @@ function applyFormValues(
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
     setPasarelaFeePct: (v: string) => void;
+    setAllonsFeePct: (v: string) => void;
   },
 ) {
   setters.setFullName(values.fullName);
@@ -60,6 +61,7 @@ function applyFormValues(
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
   setters.setPasarelaFeePct(values.pasarelaFeePct);
+  setters.setAllonsFeePct(values.allonsFeePct);
 }
 
 export function CreateComercioForm() {
@@ -79,6 +81,7 @@ export function CreateComercioForm() {
 
   // ── Pasarela (Clinpays / banco) & Contrato ──
   const [pasarelaFeePct, setPasarelaFeePct] = useState("5");
+  const [allonsFeePct, setAllonsFeePct] = useState(String(DEFAULT_ALLONS_FEE));
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [contractPreview, setContractPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +98,7 @@ export function CreateComercioForm() {
       setBusinessType,
       setBrandColor,
       setPasarelaFeePct,
+      setAllonsFeePct,
     });
   }, [state]);
 
@@ -119,6 +123,13 @@ export function CreateComercioForm() {
     const n = parseFloat(pasarelaFeePct);
     return isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
   }, [pasarelaFeePct]);
+
+  const parsedAllons = useMemo(() => {
+    const n = parseFloat(allonsFeePct);
+    return isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+  }, [allonsFeePct]);
+
+  const parsedTotal = totalFee(parsedAllons, parsedPasarela);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -343,9 +354,8 @@ export function CreateComercioForm() {
               <span className="text-sm text-white/50">%</span>
             </div>
             <p className="mt-1.5 text-xs text-white/35">
-              Tasa que Clinpays y el banco acuerdan por contrato según el tipo
-              de negocio. ONGs ~2% · Tecnología ~7% · Empresas ~5%. Se cobra
-              automáticamente por ticket, sumada a la comisión base de Allons.
+              Oferta de Clinpays y el banco para este comercio. ONGs ~2% ·
+              Tecnología ~7% · Empresas ~5%. Se suma al porcentaje de Allons.
             </p>
           </div>
 
@@ -400,51 +410,55 @@ export function CreateComercioForm() {
         </div>
       </section>
 
-      {/* ── COMISIÓN POR PLAN ── */}
+      {/* ── COMISIÓN ── */}
       <section className="futuristic-panel p-6">
-        <p className="eyebrow mb-4">Comisión por plan</p>
-        <p className="mb-4 text-xs leading-relaxed text-white/45">
-          La comisión es la base de Allons (según el plan: más volumen, menos %)
-          más la pasarela de este comercio ({parsedPasarela}%). Total = base +
-          pasarela. Se cobra por ticket.
+        <p className="eyebrow mb-4">Comisión</p>
+        <p className="mb-5 text-xs leading-relaxed text-white/45">
+          El total por ticket es la oferta del banco (arriba) más el porcentaje
+          de Allons según la relación con este negocio. Se cobra
+          automáticamente.
         </p>
 
-        <div className="overflow-x-auto rounded-lg border border-white/8 bg-white/[0.02]">
-          <div
-            className="grid min-w-[420px] border-b border-white/8 bg-white/[0.03] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white/40"
-            style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr" }}
-          >
-            <div>Plan</div>
-            <div className="text-right">Base app</div>
-            <div className="text-right">Pasarela</div>
-            <div className="text-right">Total</div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+              Comisión Allons (%) <span className="text-orange-400">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                name="allonsFeePct"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={allonsFeePct}
+                onChange={(e) => setAllonsFeePct(e.target.value)}
+                className={`${inputCls} w-32`}
+              />
+              <span className="text-sm text-white/50">%</span>
+            </div>
+            <p className="mt-1.5 text-xs text-white/35">
+              Lo seteamos nosotros según la relación con el comercio. No
+              depende de un plan.
+            </p>
           </div>
-          <div className="divide-y divide-white/6 text-sm">
-            {PLAN_COMMISSIONS.map((p) => (
-              <div
-                key={p.plan}
-                className="grid min-w-[420px] items-center px-4 py-3"
-                style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr" }}
-              >
-                <span className="font-semibold text-white">{p.name}</span>
-                <span className="text-right text-white/70">{p.baseFee}%</span>
-                <span className="text-right text-white/70">{parsedPasarela}%</span>
-                <span className="text-right font-semibold text-orange-400">
-                  {totalFee(p.baseFee, parsedPasarela)}%
-                </span>
-              </div>
-            ))}
+
+          <div className="rounded-lg border border-white/8 bg-white/[0.02] p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">
+              Total por ticket
+            </p>
+            <p className="mt-1 text-2xl font-bold text-orange-400">
+              {parsedTotal}%
+            </p>
+            <p className="mt-1 text-xs text-white/50">
+              Banco {parsedPasarela}% + Allons {parsedAllons}%
+            </p>
+            <p className="mt-2 text-xs text-white/35">
+              Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()}: se
+              retiene L. {(EXAMPLE_TICKET * (parsedTotal / 100)).toFixed(2)}.
+            </p>
           </div>
         </div>
-
-        <p className="mt-3 text-xs text-white/35">
-          Ejemplo en un ticket de L. {EXAMPLE_TICKET.toLocaleString()} con
-          pasarela {parsedPasarela}%: Pro retiene L.{" "}
-          {(EXAMPLE_TICKET * (totalFee(8, parsedPasarela) / 100)).toFixed(2)} (
-          {totalFee(8, parsedPasarela)}%); Evento Único retiene L.{" "}
-          {(EXAMPLE_TICKET * (totalFee(15, parsedPasarela) / 100)).toFixed(2)} (
-          {totalFee(15, parsedPasarela)}%).
-        </p>
 
         <div className="mt-4 space-y-1.5 rounded-lg border border-white/6 bg-white/[0.02] p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/35">
