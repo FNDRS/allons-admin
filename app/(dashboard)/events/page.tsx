@@ -101,15 +101,7 @@ export default async function EventsPage({
 
   return (
     <DashboardPage>
-      <PageHeader
-        eyebrow="Catálogo"
-        title="Eventos"
-        description={
-          error
-            ? "No se pudieron cargar los eventos."
-            : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados`
-        }
-      />
+      <PageHeader title="Eventos" />
 
       {error ? (
         <DashboardScroll>
@@ -117,26 +109,30 @@ export default async function EventsPage({
         </DashboardScroll>
       ) : (
         <>
-          <section className="grid shrink-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid shrink-0 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
+              compact
               label="Eventos visibles"
               value={items.length.toLocaleString()}
               hint={`${total.toLocaleString()} totales`}
               icon={Calendar}
             />
             <KpiCard
+              compact
               label="Publicados"
               value={summary.published.toLocaleString()}
               hint="En el feed"
               icon={Calendar}
             />
             <KpiCard
+              compact
               label="Agotados"
               value={summary.soldOut.toLocaleString()}
               hint="Sin cupos"
               icon={Ticket}
             />
             <KpiCard
+              compact
               label="Aforo total"
               value={summary.capacity.toLocaleString()}
               hint="Suma de cupos"
@@ -144,7 +140,7 @@ export default async function EventsPage({
             />
           </section>
 
-          <form className="mt-6 mb-4 flex shrink-0 flex-wrap items-center gap-2">
+          <form className="mt-3 mb-3 flex shrink-0 flex-wrap items-center gap-2">
             <input
               name="q"
               type="search"
@@ -215,9 +211,14 @@ function EventRow({ event }: { event: AdminEventListItem }) {
 
   return (
     <div
-      className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
+      className="group relative grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 transition-[background-color,transform] duration-150 ease-out hover:translate-x-0.5 hover:bg-white/5"
       style={{ gridTemplateColumns: "2fr 1.4fr 1fr 1fr 1.4fr" }}
     >
+      <Link
+        href={`/events/${event.id}` as never}
+        className="absolute inset-0 z-0"
+        aria-label={`Ver ${event.title}`}
+      />
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           {event.themeColor ? (
@@ -226,7 +227,9 @@ function EventRow({ event }: { event: AdminEventListItem }) {
               style={{ backgroundColor: event.themeColor }}
             />
           ) : null}
-          <div className="truncate font-semibold">{event.title}</div>
+          <div className="truncate font-semibold transition-colors duration-150 group-hover:text-white">
+            {event.title}
+          </div>
         </div>
         <div className="truncate text-xs text-muted">
           {event.eventType === "recurring_class" ? "Clase recurrente · " : ""}
@@ -248,13 +251,7 @@ function EventRow({ event }: { event: AdminEventListItem }) {
         <StatusPill label={label} variant={variant} />
       </div>
       <div className="text-xs text-muted">{formatDate(event.startsAt)}</div>
-      <div className="flex flex-wrap justify-end gap-1.5">
-        <Link
-          href={`/events/${event.id}` as never}
-          className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-        >
-          Ver
-        </Link>
+      <div className="relative z-10 flex flex-wrap justify-end gap-1.5">
         <EventStatusActions
           eventId={event.id}
           status={status}

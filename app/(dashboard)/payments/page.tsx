@@ -95,11 +95,7 @@ export default async function PaymentsPage({
 
   return (
     <DashboardPage>
-      <PageHeader
-        eyebrow="Contabilidad"
-        title="Pagos de suscripción"
-        description={`${money(totals.paidCents)} cobrado · ${totals.pendingCount} pendientes`}
-      />
+      <PageHeader title="Pagos de suscripción" />
 
       <div className="mb-5 shrink-0 border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-white/55">
         Solo lectura. El comercio paga su plan en la app (Paygate) y se activa

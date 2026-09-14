@@ -8,7 +8,7 @@ import {
   getDemoEventForm,
   listDemoEventRegistrations,
 } from "@/lib/demoEventForms";
-import { ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -55,15 +55,14 @@ export default async function EventRegistrationFormPage({
   return (
     <DashboardPage>
       <PageHeader
-        eyebrow="Demo Hub"
         title="Formulario personalizado"
-        description="Crea los campos que se pedirán en el registro web de este evento único."
         action={
           <Link
             href={`/events/${eventId}` as never}
-            className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+            className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
           >
-            ← Volver
+            <ArrowLeft size={14} />
+            Volver
           </Link>
         }
       />

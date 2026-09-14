@@ -182,10 +182,7 @@ async function RecentPayoutsPanel() {
 export default function FinancePage() {
   return (
     <DashboardPage>
-      <PageHeader
-        title="Finanzas"
-        description="GMV, comisión y retiros."
-      />
+      <PageHeader title="Finanzas" />
 
       <DashboardScroll>
       <Suspense

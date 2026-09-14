@@ -5,6 +5,7 @@ import {
   getDemoEventForm,
   listDemoEventRegistrations,
 } from "@/lib/demoEventForms";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -44,9 +45,7 @@ export default async function EventRegistrationResponsesPage({
   return (
     <DashboardPage>
       <PageHeader
-        eyebrow="Demo Hub"
         title="Respuestas del formulario"
-        description={`${event.title} · ${registrations.length.toLocaleString()} registros demo`}
         action={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -57,9 +56,10 @@ export default async function EventRegistrationResponsesPage({
             </Link>
             <Link
               href={`/events/${eventId}/formulario` as never}
-              className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+              className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
             >
-              ← Formulario
+              <ArrowLeft size={14} />
+              Formulario
             </Link>
           </div>
         }

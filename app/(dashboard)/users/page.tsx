@@ -60,16 +60,9 @@ export default async function UsersPage({
     return true;
   });
 
-  const activeCount = all.filter((u) => u.status === "active").length;
-  const suspendedCount = all.length - activeCount;
-
   return (
     <DashboardPage>
-      <PageHeader
-        eyebrow="Cuentas"
-        title="Usuarios"
-        description={`${all.length.toLocaleString()} clientes registrados · ${suspendedCount} suspendidos`}
-      />
+      <PageHeader title="Usuarios" />
 
       <form className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
         <input

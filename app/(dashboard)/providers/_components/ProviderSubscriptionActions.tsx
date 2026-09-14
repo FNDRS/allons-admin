@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowDown } from "lucide-react";
 import { cancelProviderSubscriptionAction } from "@/lib/admin/actions";
 
 /**
@@ -23,9 +24,10 @@ export function ProviderSubscriptionActions({
       <a
         href={`/providers/${userId}/export`}
         download
-        className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+        className="inline-flex items-center gap-1.5 border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
       >
-        ↧ Exportar datos
+        <ArrowDown size={12} />
+        Exportar datos
       </a>
       {alreadyCanceled ? null : (
         <form

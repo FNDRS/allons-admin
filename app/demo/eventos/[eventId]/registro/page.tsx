@@ -2,6 +2,7 @@ import { submitDemoRegistration } from "@/app/(dashboard)/events/[eventId]/formu
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import type { DemoEventFormField } from "@/lib/demoEventForms";
 import { getDemoEventForm } from "@/lib/demoEventForms";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,9 +33,10 @@ export default async function DemoEventRegistrationPage({
       <div className="mx-auto max-w-3xl">
         <Link
           href={`/demo/eventos/${eventId}` as never}
-          className="mb-6 inline-block text-sm text-white/60 transition hover:text-white"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white"
         >
-          ← Volver al evento
+          <ArrowLeft size={14} />
+          Volver al evento
         </Link>
 
         <section className="futuristic-panel p-6 sm:p-8">

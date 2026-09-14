@@ -131,11 +131,7 @@ async function loadOverviewMetrics(): Promise<OverviewMetrics> {
 export default function OverviewPage() {
   return (
     <DashboardPage>
-      <PageHeader
-        eyebrow="Inicio"
-        title="Resumen"
-        description="Cuentas, eventos y ventas de los últimos 30 días."
-      />
+      <PageHeader title="Resumen" />
 
       <DashboardScroll>
       <Suspense fallback={<CountsSkeleton />}>

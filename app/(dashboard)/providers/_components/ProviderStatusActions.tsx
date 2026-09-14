@@ -5,7 +5,7 @@ import {
   setProviderStatusAction,
 } from "@/lib/admin/actions";
 import type { ProviderStatus } from "@/lib/admin/users";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -29,9 +29,10 @@ export function ProviderStatusActions({
           <button
             type="submit"
             title="Reenviar enlace de invitación por correo"
-            className="border border-[#3A86FF]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3A86FF] transition hover:bg-[#3A86FF]/10"
+            className="inline-flex items-center gap-1.5 border border-[#3A86FF]/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3A86FF] transition hover:bg-[#3A86FF]/10"
           >
-            ↻ Reenviar invitación
+            <RefreshCw size={12} />
+            Reenviar invitación
           </button>
         </form>
       ) : null}

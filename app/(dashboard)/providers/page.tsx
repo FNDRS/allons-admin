@@ -109,20 +109,10 @@ export default async function ProvidersPage({
     return true;
   });
 
-  const counts = {
-    total: all.length,
-    pending: all.filter((p) => p.providerStatus === "pending").length,
-    approved: all.filter((p) => p.providerStatus === "approved").length,
-    paused: all.filter((p) => p.providerStatus === "paused").length,
-    suspended: all.filter((p) => p.providerStatus === "suspended").length,
-  };
-
   return (
     <DashboardPage>
       <PageHeader
-        eyebrow="Comercios"
         title="Proveedores"
-        description={`${counts.total} cuentas · ${counts.pending} esperando aprobación · ${counts.approved} activas · ${counts.suspended} suspendidas`}
         action={
           <a
             href="/providers/create"

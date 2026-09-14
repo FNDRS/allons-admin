@@ -6,6 +6,7 @@ import {
   type AdminRefundRow,
   type AdminRefundStatus,
 } from "@/lib/admin/refundsApi";
+import { ArrowDown, RefreshCw } from "lucide-react";
 import { StatusPill } from "@/components/StatusPill";
 
 function formatCurrency(value: number, currency: string) {
@@ -120,16 +121,18 @@ export function RefundsSection() {
         <div className="flex gap-2">
           <button
             onClick={handleRefresh}
-            className="rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white"
           >
-            ↻ Refrescar
+            <RefreshCw size={12} />
+            Refrescar
           </button>
           <button
             onClick={exportCsv}
             disabled={items.length === 0}
-            className="rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white disabled:opacity-40"
           >
-            ⬇ CSV
+            <ArrowDown size={12} />
+            CSV
           </button>
         </div>
       </div>

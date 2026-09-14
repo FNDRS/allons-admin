@@ -23,7 +23,7 @@ import {
   type AdminUserRecord,
   type ProviderStatus,
 } from "@/lib/admin/users";
-import { Calendar, Receipt, Ticket, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Receipt, Ticket, Wallet } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -236,15 +236,14 @@ export default async function ProviderDetailPage({
   return (
     <DashboardPage>
       <PageHeader
-        eyebrow="Comercios"
         title={displayName}
-        description={`${providerUser.email}${providerUser.brandHandle ? ` · ${providerUser.brandHandle}` : ""}`}
         action={
           <Link
             href="/providers"
-            className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+            className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
           >
-            ← Volver
+            <ArrowLeft size={14} />
+            Volver
           </Link>
         }
       />
@@ -426,9 +425,10 @@ export default async function ProviderDetailPage({
           providerId ? (
             <Link
               href={`/events?providerId=${encodeURIComponent(providerId)}` as never}
-              className="text-[10px] font-bold uppercase tracking-wide text-[#F67010] hover:underline"
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#F67010] hover:underline"
             >
-              Ver en catálogo →
+              Ver en catálogo
+              <ArrowRight size={12} />
             </Link>
           ) : null
         }

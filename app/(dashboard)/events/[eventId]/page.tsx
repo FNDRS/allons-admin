@@ -11,7 +11,7 @@ import {
   resolveProviderOwnerUserId,
 } from "@/lib/admin/eventDetail";
 import { getAdminEvent } from "@/lib/admin/eventsApi";
-import { CircleDollarSign, Ticket, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleDollarSign, Ticket, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -124,9 +124,7 @@ export default async function EventDetailPage({
   return (
     <DashboardPage>
       <PageHeader
-        eyebrow="Catálogo"
         title={event.title}
-        description={[event.city, event.venue].filter(Boolean).join(" · ") || "Sin ubicación"}
         action={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -137,9 +135,10 @@ export default async function EventDetailPage({
             </Link>
             <Link
               href="/events"
-              className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
+              className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
             >
-              ← Volver
+              <ArrowLeft size={14} />
+              Volver
             </Link>
           </div>
         }
@@ -235,9 +234,10 @@ export default async function EventDetailPage({
           <p className="mt-4 text-sm">
             <Link
               href={`/providers/${providerOwnerId}` as never}
-              className="font-bold text-[#F67010] hover:underline"
+              className="inline-flex items-center gap-1.5 font-bold text-[#F67010] hover:underline"
             >
-              Ver comercio →
+              Ver comercio
+              <ArrowRight size={14} />
             </Link>
           </p>
         ) : null}
