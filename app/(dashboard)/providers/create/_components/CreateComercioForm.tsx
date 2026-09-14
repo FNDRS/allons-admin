@@ -1,6 +1,11 @@
 "use client";
 
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
+import {
+  UPLOAD_CONFIGS,
+  type UploadedFile,
+  type UploadKind,
+} from "@/lib/admin/uploads";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +80,53 @@ function applyFormValues(
   setters.setAllonsFeePct(values.allonsFeePct);
 }
 
+/** Archivo ya subido; conserva nombre y tipo para la vista previa. */
+type UploadedAsset = UploadedFile & { name: string; type: string };
+
+/**
+ * Sube un archivo por `/api/admin/uploads`.
+ *
+ * No puede ir por el Server Action: Next corta ese body a 1 MB y cualquier
+ * logo o contrato lo supera ("Body exceeded 1 MB limit").
+ */
+async function uploadAdminFile(
+  file: File,
+  kind: UploadKind,
+): Promise<{ ok: true; asset: UploadedAsset } | { ok: false; error: string }> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("kind", kind);
+  try {
+    const response = await fetch("/api/admin/uploads", { method: "POST", body });
+    const payload = (await response.json()) as UploadedFile | { error: string };
+    if (!response.ok || !("url" in payload)) {
+      return {
+        ok: false,
+        error: "error" in payload ? payload.error : `No se pudo subir ${file.name}.`,
+      };
+    }
+    return {
+      ok: true,
+      asset: { ...payload, name: file.name, type: file.type },
+    };
+  } catch {
+    return { ok: false, error: `No se pudo subir ${file.name}. Revisá la conexión.` };
+  }
+}
+
+/** Borra del storage un archivo que se quitó antes de crear el comercio. */
+async function deleteAdminFile(path: string, kind: UploadKind) {
+  try {
+    await fetch("/api/admin/uploads", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path, kind }),
+    });
+  } catch {
+    // Un huérfano en storage no debe bloquear la creación del comercio.
+  }
+}
+
 export function CreateComercioForm() {
   const [state, action, isPending] = useActionState(createComercioAction, null);
 
@@ -91,16 +143,19 @@ export function CreateComercioForm() {
   const [handleEdited, setHandleEdited] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>("empresa");
   const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0].value);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<UploadedAsset | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // ── Pasarela (Clinpays / banco) & Contrato ──
   const [pasarelaFeePct, setPasarelaFeePct] = useState("5");
   const [allonsFeePct, setAllonsFeePct] = useState(String(DEFAULT_ALLONS_FEE));
-  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [contractFile, setContractFile] = useState<UploadedAsset | null>(null);
   const [contractPreview, setContractPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingContract, setIsUploadingContract] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!state?.values) return;
@@ -150,31 +205,51 @@ export function CreateComercioForm() {
   const parsedTotal = totalFee(parsedAllons, parsedPasarela);
 
   const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] ?? null;
-      setContractFile(file);
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setContractPreview(url);
-      } else {
-        setContractPreview(null);
+      if (!file) return;
+      setIsUploadingContract(true);
+      setUploadError(null);
+      const uploaded = await uploadAdminFile(file, "comercio-contract");
+      setIsUploadingContract(false);
+      if (!uploaded.ok) {
+        setUploadError(uploaded.error);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
       }
+      setContractFile(uploaded.asset);
+      setContractPreview(uploaded.asset.url);
     },
     [],
   );
 
   const handleLogoChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] ?? null;
-      setLogoFile(file);
-      setLogoPreview(file ? URL.createObjectURL(file) : null);
+      if (!file) return;
+      setIsUploadingLogo(true);
+      setUploadError(null);
+      const uploaded = await uploadAdminFile(file, "provider-logo");
+      setIsUploadingLogo(false);
+      if (!uploaded.ok) {
+        setUploadError(uploaded.error);
+        if (logoInputRef.current) logoInputRef.current.value = "";
+        return;
+      }
+      setLogoFile(uploaded.asset);
+      setLogoPreview(uploaded.asset.url);
     },
     [],
   );
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-8">
+    <form action={action} className="space-y-8">
       {/* Error banner */}
+      {uploadError ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {uploadError}
+        </div>
+      ) : null}
       {state?.error ? (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {state.error}
@@ -272,18 +347,23 @@ export function CreateComercioForm() {
           <input
             ref={logoInputRef}
             type="file"
-            name="logoFile"
-            accept="image/*"
-            onChange={handleLogoChange}
+            accept={UPLOAD_CONFIGS["provider-logo"].accept}
+            onChange={(event) => void handleLogoChange(event)}
             className="hidden"
           />
+          {/* Al action sólo viaja la URL: el archivo ya está en storage. */}
+          <input type="hidden" name="logoUrl" value={logoFile?.url ?? ""} />
           <Button
             type="button"
             variant="outline"
             onClick={() => logoInputRef.current?.click()}
             className="h-auto border-dashed py-3"
           >
-            {logoFile ? `Logo: ${logoFile.name}` : "Subir logo del comercio"}
+            {isUploadingLogo
+              ? "Subiendo logo…"
+              : logoFile
+                ? `Logo: ${logoFile.name}`
+                : "Subir logo del comercio"}
           </Button>
         </div>
 
@@ -467,11 +547,11 @@ export function CreateComercioForm() {
             <input
               ref={fileInputRef}
               type="file"
-              name="contractFile"
-              accept="image/*,application/pdf"
-              onChange={handleFileChange}
+              accept={UPLOAD_CONFIGS["comercio-contract"].accept}
+              onChange={(event) => void handleFileChange(event)}
               className="hidden"
             />
+            <input type="hidden" name="contractUrl" value={contractFile?.url ?? ""} />
             {contractPreview ? (
               <div className="relative h-32 w-full overflow-hidden rounded-lg border border-white/10">
                 {contractFile?.type === "application/pdf" ? (
@@ -492,6 +572,9 @@ export function CreateComercioForm() {
                   variant="destructive"
                   className="absolute right-2 top-2"
                   onClick={() => {
+                    if (contractFile) {
+                      void deleteAdminFile(contractFile.path, "comercio-contract");
+                    }
                     setContractFile(null);
                     setContractPreview(null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -507,7 +590,9 @@ export function CreateComercioForm() {
                 onClick={() => fileInputRef.current?.click()}
                 className="h-auto w-full border-dashed py-6 text-white/40 hover:text-white/60"
               >
-                📎 Adjuntar contrato (imagen o PDF)
+                {isUploadingContract
+                  ? "Subiendo contrato…"
+                  : "📎 Adjuntar contrato (imagen o PDF)"}
               </Button>
             )}
           </div>

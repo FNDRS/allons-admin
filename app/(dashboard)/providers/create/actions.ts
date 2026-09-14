@@ -57,23 +57,6 @@ function fail(formData: FormData, error: string): CreateComercioState {
   return { error, values: readFormValues(formData) };
 }
 
-async function uploadBrandLogo(file: File | null): Promise<string | null> {
-  if (!file || file.size === 0) return null;
-  const supabase = createSupabaseServiceRoleClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const filename = `provider-logos/logo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const buffer = await file.arrayBuffer();
-  const { data, error } = await supabase.storage
-    .from("event-images")
-    .upload(filename, buffer, {
-      contentType: file.type || "image/jpeg",
-      upsert: false,
-    });
-  if (error) throw new Error(`Error subiendo logo: ${error.message}`);
-  return supabase.storage.from("event-images").getPublicUrl(data.path).data
-    .publicUrl;
-}
-
 export async function createComercioAction(
   _prevState: CreateComercioState,
   formData: FormData,
@@ -98,8 +81,11 @@ export async function createComercioAction(
     const brandColor = values.brandColor;
     const pasarelaFeePct = clampFeePct(values.pasarelaFeePct, 5);
     const allonsFeePct = clampFeePct(values.allonsFeePct, DEFAULT_ALLONS_FEE);
-    const contractFile = formData.get("contractFile") as File | null;
-    const logoFile = formData.get("logoFile") as File | null;
+    // El navegador ya subió logo y contrato por `/api/admin/uploads`: por el
+    // Server Action sólo viajan sus URLs, porque Next corta ese body a 1 MB.
+    const logoUrl = (formData.get("logoUrl") as string | null)?.trim() || null;
+    const contractUrl =
+      (formData.get("contractUrl") as string | null)?.trim() || null;
 
     if (!fullName || !email || !brandName || !brandHandle) {
       return fail(
@@ -109,41 +95,6 @@ export async function createComercioAction(
     }
 
     finalBrandName = brandName;
-
-    let logoUrl: string | null = null;
-    try {
-      logoUrl = await uploadBrandLogo(logoFile);
-    } catch (error) {
-      return fail(
-        formData,
-        error instanceof Error ? error.message : "No se pudo subir el logo.",
-      );
-    }
-
-    // ── Contract upload (optional) ──
-    let contractUrl: string | null = null;
-    if (contractFile && contractFile.size > 0) {
-      const supabase = createSupabaseServiceRoleClient();
-      const ext = contractFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const filename = `contract_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const buffer = await contractFile.arrayBuffer();
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("comercio-contracts")
-        .upload(filename, buffer, {
-          contentType: contractFile.type || "image/jpeg",
-          upsert: true,
-        });
-      if (uploadError) {
-        return fail(
-          formData,
-          `Error subiendo contrato: ${uploadError.message}`,
-        );
-      }
-      const { data: urlData } = supabase.storage
-        .from("comercio-contracts")
-        .getPublicUrl(uploadData.path);
-      contractUrl = urlData.publicUrl;
-    }
 
     // ── Build user metadata ──
     const now = new Date();
