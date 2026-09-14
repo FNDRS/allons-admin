@@ -1,6 +1,7 @@
 import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
 import { EventRegistrationFormBuilder } from "@/app/(dashboard)/events/[eventId]/formulario/_components/EventRegistrationFormBuilder";
 import { saveDemoRegistrationForm } from "@/app/(dashboard)/events/[eventId]/formulario/actions";
 import { getAdminEvent } from "@/lib/admin/eventsApi";
@@ -58,13 +59,12 @@ export default async function EventRegistrationFormPage({
         title="Formulario personalizado"
         description="Crea los campos que se pedirán en el registro web de este evento único."
         action={
-          <Link
-            href={`/events/${eventId}` as never}
-            className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-          >
-            <ArrowLeft size={14} />
-            Volver
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/events/${eventId}` as never}>
+              <ArrowLeft size={14} />
+              Volver
+            </Link>
+          </Button>
         }
       />
 
@@ -121,19 +121,16 @@ export default async function EventRegistrationFormPage({
             {demoUrl}
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href={demoUrl as never}
-              target="_blank"
-              className="inline-flex items-center gap-2 border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-            >
-              Abrir registro <ExternalLink size={14} />
-            </Link>
-            <Link
-              href={`/events/${eventId}/formulario/respuestas` as never}
-              className="border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-            >
-              Ver respuestas
-            </Link>
+            <Button asChild size="sm">
+              <Link href={demoUrl as never} target="_blank">
+                Abrir registro <ExternalLink size={14} />
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/events/${eventId}/formulario/respuestas` as never}>
+                Ver respuestas
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

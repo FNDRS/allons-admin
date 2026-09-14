@@ -1,6 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   FileText,
@@ -112,12 +113,14 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
           </div>
           <div className="text-xs font-semibold truncate">{adminEmail}</div>
         </div>
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           onClick={signOut}
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted hover:bg-white/5 hover:text-danger"
+          className="w-full justify-start text-xs text-muted hover:text-danger"
         >
           <LogOut size={14} /> Cerrar sesión
-        </button>
+        </Button>
       </div>
     </aside>
   );

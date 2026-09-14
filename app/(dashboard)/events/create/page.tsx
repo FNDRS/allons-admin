@@ -1,5 +1,6 @@
 import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { CreateAdminEventForm } from "@/app/(dashboard)/events/create/_components/CreateAdminEventForm";
 import { listProviderOptions } from "@/lib/admin/providerOptions";
 import { ArrowLeft } from "lucide-react";
@@ -16,13 +17,12 @@ export default async function CreateAdminEventPage() {
         title="Nuevo evento"
         description="Backoffice interno: crea un evento real para un comercio y luego configura su formulario especial."
         action={
-          <Link
-            href="/events"
-            className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-          >
-            <ArrowLeft size={14} />
-            Eventos
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/events">
+              <ArrowLeft size={14} />
+              Eventos
+            </Link>
+          </Button>
         }
       />
       <DashboardScroll>

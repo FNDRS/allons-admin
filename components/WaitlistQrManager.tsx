@@ -1,6 +1,9 @@
 "use client";
 
 import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { WAITLIST_SOURCE_RE, normalizeSourceSlug } from "@/lib/waitlist-qr";
 import Link from "next/link";
 import QRCode from "qrcode";
@@ -176,39 +179,31 @@ function SourceQrCard({
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => void copyUrl()}
-          className="border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
-        >
+        <Button type="button" size="sm" variant="secondary" onClick={() => void copyUrl()}>
           {copied ? "Copiado" : "Copiar URL"}
-        </button>
-        <Link
-          href={`/waitlist-qr/${source.slug}` as never}
-          className="border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
+        </Button>
+        <Button asChild size="sm" variant="secondary">
+          <Link href={`/waitlist-qr/${source.slug}` as never}>Ver detalle</Link>
+        </Button>
+        <Button
+          asChild
+          size="sm"
+          variant={qrDataUrl ? "default" : "secondary"}
+          className={qrDataUrl ? undefined : "pointer-events-none"}
         >
-          Ver detalle
-        </Link>
-        <a
-          href={qrDataUrl ?? "#"}
-          download={`${source.slug}.png`}
-          className={
-            "border px-3 py-2 text-xs font-medium " +
-            (qrDataUrl
-              ? "border-white bg-white text-black hover:bg-white/90"
-              : "border-white/20 bg-white/10 text-muted pointer-events-none")
-          }
-        >
-          Descargar QR
-        </a>
-        <button
+          <a href={qrDataUrl ?? "#"} download={`${source.slug}.png`}>
+            Descargar QR
+          </a>
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant="destructive"
           disabled={deleting}
           onClick={() => setConfirmOpen(true)}
-          className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20 disabled:opacity-60"
         >
           {deleting ? "Eliminando..." : "Eliminar QR"}
-        </button>
+        </Button>
       </div>
 
       <div className="mt-3 flex justify-center border border-white/20 bg-white p-3">
@@ -460,52 +455,44 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
           URL base actual: <span className="text-white">{waitlistBaseUrl}</span>
         </p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <label className="text-sm">
-            <span className="mb-1 block text-xs text-muted">Slug (src)</span>
-            <input
+          <div>
+            <Label>Slug (src)</Label>
+            <Input
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="diunsa"
-              className="w-full border border-white/20 bg-surfaceMuted px-3 py-2 text-sm outline-none focus:border-primary"
               required
             />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-xs text-muted">Etiqueta</span>
-            <input
+          </div>
+          <div>
+            <Label>Etiqueta</Label>
+            <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Diunsa"
-              className="w-full border border-white/20 bg-surfaceMuted px-3 py-2 text-sm outline-none focus:border-primary"
               required
             />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-xs text-muted">Ubicación</span>
-            <input
+          </div>
+          <div>
+            <Label>Ubicación</Label>
+            <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Sucursal Kennedy"
-              className="w-full border border-white/20 bg-surfaceMuted px-3 py-2 text-sm outline-none focus:border-primary"
             />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block text-xs text-muted">Notas</span>
-            <input
+          </div>
+          <div>
+            <Label>Notas</Label>
+            <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Sticker caja principal"
-              className="w-full border border-white/20 bg-surfaceMuted px-3 py-2 text-sm outline-none focus:border-primary"
             />
-          </label>
+          </div>
         </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="mt-4 border border-white bg-white px-4 py-2 text-sm font-medium text-black disabled:opacity-60"
-        >
+        <Button type="submit" disabled={saving} className="mt-4">
           {saving ? "Guardando..." : "Guardar y generar"}
-        </button>
+        </Button>
       </form>
 
       {loading ? (

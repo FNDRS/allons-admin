@@ -235,12 +235,9 @@ export default async function ProvidersPage({
                   {formatDate(p.createdAt)}
                 </div>
                 <div className="flex flex-wrap justify-end gap-1.5">
-                  <Link
-                    href={`/providers/${p.id}` as never}
-                    className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-                  >
-                    Ver
-                  </Link>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/providers/${p.id}` as never}>Ver</Link>
+                  </Button>
                   <ProviderStatusActions
                     userId={p.id}
                     status={status}

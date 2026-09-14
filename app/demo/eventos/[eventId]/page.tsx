@@ -1,5 +1,6 @@
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import { getDemoEventForm } from "@/lib/demoEventForms";
+import { Button } from "@/components/ui/button";
 import { CheckCircle2, MapPin } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -49,12 +50,11 @@ export default async function DemoEventPage({
               Registro personalizado para eventos únicos
             </div>
           </div>
-          <Link
-            href={`/demo/eventos/${eventId}/registro` as never}
-            className="hidden border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90 sm:inline-block"
-          >
-            Registrarme
-          </Link>
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Link href={`/demo/eventos/${eventId}/registro` as never}>
+              Registrarme
+            </Link>
+          </Button>
         </div>
 
         {query.registered ? (
@@ -117,12 +117,11 @@ export default async function DemoEventPage({
                   Nombre, correo y {form.fields.length} campo{form.fields.length === 1 ? "" : "s"} personalizado{form.fields.length === 1 ? "" : "s"}.
                 </div>
               </div>
-              <Link
-                href={`/demo/eventos/${eventId}/registro` as never}
-                className="block w-full border border-white bg-white px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-              >
-                Registrarme
-              </Link>
+              <Button asChild className="w-full">
+                <Link href={`/demo/eventos/${eventId}/registro` as never}>
+                  Registrarme
+                </Link>
+              </Button>
               <p className="text-xs leading-5 text-white/45">
                 Registro web operado por Allons para formularios especiales solicitados por el comercio.
               </p>

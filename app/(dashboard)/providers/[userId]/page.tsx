@@ -2,6 +2,7 @@ import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
 import { PaymentDetailButton } from "@/app/(dashboard)/payments/_components/PaymentDetailButton";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
 import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
@@ -239,13 +240,12 @@ export default async function ProviderDetailPage({
         title={displayName}
         description={`${providerUser.email}${providerUser.brandHandle ? ` · ${providerUser.brandHandle}` : ""}`}
         action={
-          <Link
-            href="/providers"
-            className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-          >
-            <ArrowLeft size={14} />
-            Volver
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/providers">
+              <ArrowLeft size={14} />
+              Volver
+            </Link>
+          </Button>
         }
       />
 

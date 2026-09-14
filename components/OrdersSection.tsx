@@ -3,6 +3,7 @@
 import { ArrowDown, RefreshCw } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { listPaymentOrders, type AdminPaymentOrder } from "@/lib/admin/paymentsApi";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/StatusPill";
 import { OverrideButton } from "@/components/OverrideButton";
 
@@ -85,35 +86,37 @@ export function OrdersSection() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((f) => (
-            <button
+            <Button
               key={f}
+              type="button"
+              size="sm"
+              variant={statusFilter === f ? "brand" : "secondary"}
               onClick={() => handleStatusFilter(f)}
-              className={`rounded px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                statusFilter === f
-                  ? "bg-orange-600 text-white"
-                  : "bg-white/10 text-muted hover:text-white"
-              }`}
             >
               {ORDER_STATUS_LABEL[f] ?? f}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
             onClick={handleRefresh}
-            className="inline-flex items-center gap-1.5 rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white"
           >
             <RefreshCw size={12} />
             Refrescar
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
             onClick={exportCsv}
             disabled={orders.length === 0}
-            className="inline-flex items-center gap-1.5 rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted hover:text-white disabled:opacity-40"
           >
             <ArrowDown size={12} />
             CSV
-          </button>
+          </Button>
         </div>
       </div>
 

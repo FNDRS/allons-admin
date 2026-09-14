@@ -1,5 +1,6 @@
 import { DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import {
   getDemoEventForm,
@@ -49,19 +50,17 @@ export default async function EventRegistrationResponsesPage({
         description={`${event.title} · ${registrations.length.toLocaleString()} registros web`}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/events/${eventId}/formulario/respuestas/export` as never}
-              className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-            >
-              Descargar CSV
-            </Link>
-            <Link
-              href={`/events/${eventId}/formulario` as never}
-              className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-            >
-              <ArrowLeft size={14} />
-              Formulario
-            </Link>
+            <Button asChild size="sm">
+              <Link href={`/events/${eventId}/formulario/respuestas/export` as never}>
+                Descargar CSV
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/events/${eventId}/formulario` as never}>
+                <ArrowLeft size={14} />
+                Formulario
+              </Link>
+            </Button>
           </div>
         }
       />

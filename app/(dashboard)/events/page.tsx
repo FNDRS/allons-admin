@@ -109,12 +109,9 @@ export default async function EventsPage({
             : `${total.toLocaleString()} eventos totales · ${summary.published} publicados · ${summary.soldOut} agotados`
         }
         action={
-          <Link
-            href="/events/create"
-            className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-          >
-            + Nuevo evento
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/events/create">+ Nuevo evento</Link>
+          </Button>
         }
       />
 

@@ -2,6 +2,7 @@ import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { Button } from "@/components/ui/button";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
 import {
   countEventTickets,
@@ -128,19 +129,17 @@ export default async function EventDetailPage({
         description={[event.city, event.venue].filter(Boolean).join(" · ") || "Sin ubicación"}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/events/${eventId}/formulario` as never}
-              className="border border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-            >
-              Formulario
-            </Link>
-            <Link
-              href="/events"
-              className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-            >
-              <ArrowLeft size={14} />
-              Volver
-            </Link>
+            <Button asChild size="sm">
+              <Link href={`/events/${eventId}/formulario` as never}>
+                Formulario
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/events">
+                <ArrowLeft size={14} />
+                Volver
+              </Link>
+            </Button>
           </div>
         }
       />

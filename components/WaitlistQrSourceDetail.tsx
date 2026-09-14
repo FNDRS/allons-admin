@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -99,23 +100,21 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
             ) : null}
           </p>
         </div>
-        <Link
-          href="/waitlist-qr"
-          className="border border-white/20 px-3 py-2 text-xs text-muted hover:text-white"
-        >
-          Volver a listado
-        </Link>
+        <Button asChild size="sm" variant="outline">
+          <Link href="/waitlist-qr">Volver a listado</Link>
+        </Button>
       </div>
 
       <div className="flex justify-end">
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant="destructive"
           disabled={deleting}
           onClick={() => setConfirmOpen(true)}
-          className="border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/20 disabled:opacity-60"
         >
           {deleting ? "Eliminando..." : "Eliminar QR"}
-        </button>
+        </Button>
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
