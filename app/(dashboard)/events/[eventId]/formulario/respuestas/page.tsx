@@ -1,4 +1,4 @@
-import { DashboardList, DashboardPage } from "@/components/DashboardPage";
+import { DashboardPage } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import {
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 function formatDateTime(iso: string) {
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -65,14 +65,14 @@ export default async function EventRegistrationResponsesPage({
         }
       />
 
-      <div className="futuristic-panel overflow-x-auto">
+      <div className="futuristic-panel min-h-0 flex-1 overflow-auto">
         {registrations.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted">
             Todavía no hay registros en la demo web.
           </div>
         ) : (
           <table className="w-full min-w-[860px] text-left text-sm">
-            <thead>
+            <thead className="sticky top-0 bg-[#0a0a0a]">
               <tr className="border-b border-white/10 text-[10px] font-bold uppercase tracking-wide text-muted">
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3">Nombre</th>
@@ -108,7 +108,7 @@ export default async function EventRegistrationResponsesPage({
                     </td>
                     {form.fields.map((field) => (
                       <td key={field.id} className="px-4 py-3 text-white/70">
-                        {answers.get(field.id) || "—"}
+                        {answers.get(field.id) || "-"}
                       </td>
                     ))}
                   </tr>
@@ -118,6 +118,6 @@ export default async function EventRegistrationResponsesPage({
           </table>
         )}
       </div>
-    </div>
+    </DashboardPage>
   );
 }

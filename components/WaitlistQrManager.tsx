@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { WAITLIST_SOURCE_RE, normalizeSourceSlug } from "@/lib/waitlist-qr";
 import Link from "next/link";
 import QRCode from "qrcode";
@@ -402,13 +403,15 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
   };
 
   return (
-    <section className="space-y-6">
-      <header>
+    <DashboardPage>
+      <header className="shrink-0">
         <h1 className="text-2xl font-semibold">Waitlist QR</h1>
         <p className="mt-1 text-sm text-muted">
           Un QR por lugar. Acá ves cuántos se registran desde cada uno.
         </p>
       </header>
+
+      <DashboardScroll className="space-y-6 pt-6">
 
       {setupHints ? (
         <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
@@ -527,6 +530,7 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
           ))}
         </div>
       )}
-    </section>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }

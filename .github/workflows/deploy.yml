@@ -135,7 +135,7 @@ jobs:
                 ImageRepositoryType: "ECR",
                 ImageConfiguration: { Port: "3001", RuntimeEnvironmentVariables: $env }
               },
-              AuthenticationConfiguration: { AccessRoleArn: "arn:aws:iam::851725556357:role/AppRunnerECRAccessRole-allons-admin" },
+              AuthenticationConfiguration: { AccessRoleArn: "arn:aws:iam::851725556357:role/AppRunnerECRAccessRole-allons-api" },
               AutoDeploymentsEnabled: false
             }')
           for i in $(seq 1 8); do

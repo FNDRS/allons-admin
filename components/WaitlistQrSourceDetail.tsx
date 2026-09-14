@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -82,8 +83,8 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
   }, [slug]);
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+    <DashboardPage>
+      <div className="flex shrink-0 items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">
             Detalle QR {source?.label ?? slug}
@@ -167,6 +168,7 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
         </AlertDialogContent>
       </AlertDialog>
 
+      <DashboardScroll className="pt-4">
       <section className="futuristic-panel p-5">
         <h2 className="text-base font-semibold">Personas registradas</h2>
 
@@ -204,6 +206,7 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
           </div>
         )}
       </section>
-    </section>
+      </DashboardScroll>
+    </DashboardPage>
   );
 }
