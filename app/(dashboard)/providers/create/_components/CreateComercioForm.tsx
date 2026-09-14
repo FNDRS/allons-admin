@@ -2,6 +2,11 @@
 
 import { useActionState, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createComercioAction, type CreateComercioFormValues } from "../actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   DEFAULT_ALLONS_FEE,
   PASARELA_FEE_BY_BUSINESS_TYPE,
@@ -167,9 +172,6 @@ export function CreateComercioForm() {
     [],
   );
 
-  const inputCls =
-    "w-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none rounded-lg";
-
   return (
     <form action={action} encType="multipart/form-data" className="space-y-8">
       {/* Error banner */}
@@ -185,25 +187,24 @@ export function CreateComercioForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <Label>
               Nombre completo <span className="text-orange-400">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               name="fullName"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Ej. María García"
               autoComplete="off"
-              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <Label>
               Correo electrónico <span className="text-orange-400">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               name="email"
               type="email"
               required
@@ -211,21 +212,17 @@ export function CreateComercioForm() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="correo@ejemplo.com"
               autoComplete="off"
-              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
-              Teléfono
-            </label>
-            <input
+            <Label>Teléfono</Label>
+            <Input
               name="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+504 9999-9999"
-              className={inputCls}
             />
           </div>
 
@@ -271,9 +268,7 @@ export function CreateComercioForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60">
-            Logo de marca
-          </label>
+          <Label>Logo de marca</Label>
           <input
             ref={logoInputRef}
             type="file"
@@ -282,37 +277,37 @@ export function CreateComercioForm() {
             onChange={handleLogoChange}
             className="hidden"
           />
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => logoInputRef.current?.click()}
-            className="rounded-lg border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-sm text-white/55 transition hover:border-white/30 hover:text-white"
+            className="h-auto border-dashed py-3"
           >
             {logoFile ? `Logo: ${logoFile.name}` : "Subir logo del comercio"}
-          </button>
+          </Button>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <Label>
               Nombre del negocio <span className="text-orange-400">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               name="brandName"
               required
               value={brandName}
               onChange={(e) => handleBrandNameChange(e.target.value)}
               placeholder="Ej. TechFest Honduras"
-              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <Label>
               Handle (@) <span className="text-orange-400">*</span>
-            </label>
-            <div className="flex items-center border border-white/10 bg-white/[0.04] rounded-lg overflow-hidden focus-within:border-white/30">
-              <span className="pl-4 text-sm text-white/40">@</span>
-              <input
+            </Label>
+            <div className="flex h-9 items-center overflow-hidden rounded-md border border-white/15 bg-white/4 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10">
+              <span className="pl-3 text-sm text-white/40">@</span>
+              <Input
                 name="brandHandle"
                 required
                 value={brandHandle}
@@ -326,25 +321,26 @@ export function CreateComercioForm() {
                   );
                 }}
                 placeholder="techfesthonduras"
-                className="flex-1 bg-transparent px-2 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                className="h-auto border-0 bg-transparent focus-visible:ring-0"
               />
             </div>
           </div>
         </div>
 
         <div>
-          <label className="mb-3 block text-xs font-semibold text-white/60">
+          <Label className="mb-3">
             Tipo de negocio <span className="text-orange-400">*</span>
-          </label>
+          </Label>
           <div className="grid gap-2 sm:grid-cols-2">
             {BUSINESS_TYPES.map((t) => (
               <label
                 key={t.value}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3.5 transition ${
+                className={cn(
+                  "flex cursor-pointer items-center gap-3 rounded-md border p-3.5 transition",
                   businessType === t.value
                     ? "border-orange-500/50 bg-orange-500/10"
-                    : "border-white/10 bg-white/[0.02] hover:border-white/20"
-                }`}
+                    : "border-white/10 bg-white/[0.02] hover:border-white/20",
+                )}
               >
                 <input
                   type="radio"
@@ -352,7 +348,16 @@ export function CreateComercioForm() {
                   value={t.value}
                   checked={businessType === t.value}
                   onChange={() => handleBusinessTypeChange(t.value)}
-                  className="accent-orange-500"
+                  className="sr-only"
+                />
+                <span
+                  className={cn(
+                    "size-4 shrink-0 rounded-full border",
+                    businessType === t.value
+                      ? "border-orange-400 bg-orange-500"
+                      : "border-white/30",
+                  )}
+                  aria-hidden
                 />
                 <div>
                   <p className="text-sm font-semibold text-white">{t.label}</p>
@@ -366,9 +371,7 @@ export function CreateComercioForm() {
         </div>
 
         <div>
-          <label className="mb-3 block text-xs font-semibold text-white/60">
-            Color de marca
-          </label>
+          <Label className="mb-3">Color de marca</Label>
           <input type="hidden" name="brandColor" value={brandColor} />
           <div className="mb-3 flex items-center gap-3 rounded-lg border border-white/8 bg-white/[0.02] p-3">
             <span
@@ -384,50 +387,47 @@ export function CreateComercioForm() {
           </div>
           <div className="grid gap-2 sm:grid-cols-4">
             {COLOR_OPTIONS.map((c) => (
-              <button
+              <Button
                 key={c.value}
                 type="button"
+                variant="outline"
                 onClick={() => setBrandColor(c.value)}
-                className={`flex items-center gap-2 rounded-lg border p-2 text-left text-xs transition ${
+                className={cn(
+                  "h-auto justify-start gap-2 py-2 text-xs font-medium normal-case tracking-normal",
                   brandColor === c.value
                     ? "border-white bg-white/10 text-white"
-                    : "border-white/10 bg-white/[0.02] text-white/55 hover:border-white/25"
-                }`}
+                    : "text-white/55",
+                )}
               >
                 <span
                   className="h-6 w-6 shrink-0 rounded-full border border-white/20"
                   style={{ backgroundColor: c.value }}
                 />
                 {c.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60">
-            Descripción pública
-          </label>
-          <textarea
+          <Label>Descripción pública</Label>
+          <Textarea
             name="brandDescription"
             value={brandDescription}
             onChange={(e) => setBrandDescription(e.target.value.slice(0, 500))}
             placeholder="Cuéntale a tus clientes qué hace este comercio"
-            className={`${inputCls} min-h-28 resize-none`}
+            className="min-h-28 resize-none"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60">
-            Sitio web
-          </label>
-          <input
+          <Label>Sitio web</Label>
+          <Input
             name="websiteUrl"
             type="url"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             placeholder="https://tucomercio.com"
-            className={inputCls}
           />
         </div>
       </section>
@@ -438,11 +438,11 @@ export function CreateComercioForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
+            <Label>
               Comisión Pasarela (%) <span className="text-orange-400">*</span>
-            </label>
+            </Label>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 name="pasarelaFeePct"
                 type="number"
                 min="0"
@@ -450,7 +450,7 @@ export function CreateComercioForm() {
                 step="0.1"
                 value={pasarelaFeePct}
                 onChange={(e) => setPasarelaFeePct(e.target.value)}
-                className={`${inputCls} w-32`}
+                className="w-32"
               />
               <span className="text-sm text-white/50">%</span>
             </div>
@@ -461,9 +461,7 @@ export function CreateComercioForm() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-white/60">
-              Contrato Paygate
-            </label>
+            <Label>Contrato Paygate</Label>
             <input
               ref={fileInputRef}
               type="file"
@@ -486,26 +484,29 @@ export function CreateComercioForm() {
                     className="h-full w-full object-cover"
                   />
                 )}
-                <button
+                <Button
                   type="button"
+                  size="sm"
+                  variant="destructive"
+                  className="absolute right-2 top-2"
                   onClick={() => {
                     setContractFile(null);
                     setContractPreview(null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
-                  className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs text-red-400 hover:bg-black/90"
                 >
                   Quitar
-                </button>
+                </Button>
               </div>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/15 bg-white/[0.02] py-6 text-sm text-white/40 transition hover:border-white/30 hover:text-white/60"
+                className="h-auto w-full border-dashed py-6 text-white/40 hover:text-white/60"
               >
                 📎 Adjuntar contrato (imagen o PDF)
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -522,14 +523,11 @@ export function CreateComercioForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label
-              htmlFor="allonsFeePct"
-              className="mb-1.5 block text-xs font-semibold text-white/60"
-            >
+            <Label htmlFor="allonsFeePct">
               Comisión Allons (%) <span className="text-orange-400">*</span>
-            </label>
+            </Label>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 id="allonsFeePct"
                 name="allonsFeePct"
                 type="number"
@@ -538,7 +536,7 @@ export function CreateComercioForm() {
                 step="0.1"
                 value={allonsFeePct}
                 onChange={(e) => setAllonsFeePct(e.target.value)}
-                className={`${inputCls} w-32`}
+                className="w-32"
               />
               <span className="text-sm text-white/50">%</span>
             </div>
@@ -585,17 +583,10 @@ export function CreateComercioForm() {
 
       {/* ── SUBMIT ── */}
       <div className="flex items-center justify-end gap-4 pb-8">
-        <a
-          href="/providers"
-          className="border border-white/15 px-5 py-2.5 text-sm text-white/60 transition hover:border-white/30 hover:text-white"
-        >
-          Cancelar
-        </a>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="flex items-center gap-2 bg-[#F67010] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#e06510] disabled:opacity-50"
-        >
+        <Button asChild variant="outline">
+          <a href="/providers">Cancelar</a>
+        </Button>
+        <Button type="submit" variant="brand" disabled={isPending}>
           {isPending ? (
             <>
               <span className="animate-spin">⟳</span> Creando…
@@ -603,7 +594,7 @@ export function CreateComercioForm() {
           ) : (
             "Crear Comercio"
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );

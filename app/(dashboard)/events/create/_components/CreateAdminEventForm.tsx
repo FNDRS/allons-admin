@@ -1,6 +1,13 @@
 "use client";
 
+import { EventImagesUploadField } from "@/components/admin/EventImagesUploadField";
 import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
+import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import type { ProviderOption } from "@/lib/admin/providerOptions";
 import { useActionState, useMemo, useState } from "react";
 import { createAdminEventAction } from "../actions";
@@ -26,7 +33,11 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
   }, [price]);
 
   return (
-    <form action={action} className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+    <form
+      action={action}
+      encType="multipart/form-data"
+      className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]"
+    >
       <section className="futuristic-panel p-5">
         <div className="eyebrow">Evento</div>
         <h2 className="mt-1 text-xl font-semibold">Datos públicos</h2>
@@ -38,14 +49,9 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         ) : null}
 
         <div className="mt-5 space-y-4">
-          <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-            Comercio *
-            <select
-              name="providerId"
-              required
-              className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              defaultValue=""
-            >
+          <div>
+            <Label>Comercio *</Label>
+            <NativeSelect name="providerId" required defaultValue="">
               <option value="" disabled>
                 Selecciona comercio
               </option>
@@ -54,90 +60,48 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
                   {provider.name}{provider.handle ? ` · ${provider.handle}` : ""}
                 </option>
               ))}
-            </select>
-          </label>
+            </NativeSelect>
+          </div>
 
-          <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-            Título *
-            <input
+          <div>
+            <Label>Título *</Label>
+            <Input
               name="title"
               required
               placeholder="Networking Night · The Hub"
-              className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-base font-medium text-white outline-none focus:border-white/60"
             />
-          </label>
+          </div>
 
-          <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-            Descripción
-            <textarea
+          <div>
+            <Label>Descripción</Label>
+            <Textarea
               name="description"
               rows={5}
               placeholder="Cuenta qué recibirá el cliente al abrir el evento en la app."
-              className="mt-1 w-full resize-none border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
+              className="resize-none"
             />
-          </label>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Fecha *
-              <input
+            <div>
+              <Label>Fecha *</Label>
+              <Input
                 name="date"
                 type="date"
                 required
                 defaultValue={tomorrowDate()}
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
               />
-            </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Hora *
-              <input
-                name="time"
-                type="time"
-                required
-                defaultValue="19:00"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              />
-            </label>
+            </div>
+            <div>
+              <Label>Hora *</Label>
+              <Input name="time" type="time" required defaultValue="19:00" />
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Ciudad *
-              <input
-                name="city"
-                required
-                placeholder="Tegucigalpa"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              />
-            </label>
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Lugar
-              <input
-                name="venue"
-                placeholder="The Hub"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              />
-            </label>
+          <div>
+            <Label>Lugar</Label>
+            <Input name="venue" placeholder="The Hub" />
           </div>
-
-          <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-            Dirección
-            <input
-              name="address"
-              placeholder="Dirección visible para el cliente"
-              className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-            />
-          </label>
-
-          <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-            Imagen de portada URL
-            <input
-              name="coverImageUrl"
-              type="url"
-              placeholder="https://..."
-              className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-            />
-          </label>
         </div>
       </section>
 
@@ -147,48 +111,45 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
           <h2 className="mt-1 text-xl font-semibold">Primer tipo de entrada</h2>
           <div className="mt-5 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                Capacidad *
-                <input
+              <div>
+                <Label>Capacidad *</Label>
+                <Input
                   name="capacity"
                   value={capacity}
-                  onChange={(event) => setCapacity(event.target.value.replace(/\D/g, ""))}
+                  onChange={(event) =>
+                    setCapacity(event.target.value.replace(/\D/g, ""))
+                  }
                   inputMode="numeric"
                   required
-                  className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
                 />
-              </label>
-              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                Cantidad tickets *
-                <input
+              </div>
+              <div>
+                <Label>Cantidad tickets *</Label>
+                <Input
                   name="ticketTotal"
                   defaultValue={capacity || "100"}
                   inputMode="numeric"
                   required
-                  className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
                 />
-              </label>
+              </div>
             </div>
 
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Nombre entrada
-              <input
-                name="ticketName"
-                defaultValue="General"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              />
-            </label>
+            <div>
+              <Label>Nombre entrada</Label>
+              <Input name="ticketName" defaultValue="General" />
+            </div>
 
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Precio HNL
-              <input
+            <div>
+              <Label>Precio HNL</Label>
+              <Input
                 name="ticketPrice"
                 value={price}
-                onChange={(event) => setPrice(event.target.value.replace(/[^\d.]/g, ""))}
+                onChange={(event) =>
+                  setPrice(event.target.value.replace(/[^\d.]/g, ""))
+                }
                 inputMode="decimal"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
               />
-            </label>
+            </div>
 
             <div className="border border-white/10 bg-white/[0.03] p-3 text-sm text-white/65">
               {ticketModeLabel}. Si el precio es 0, el evento se publica como gratuito.
@@ -197,6 +158,14 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
         </div>
 
       </section>
+
+      <div className="lg:col-span-2">
+        <EventLocationPickerField />
+      </div>
+
+      <div className="lg:col-span-2">
+        <EventImagesUploadField />
+      </div>
 
       <div className="lg:col-span-2">
           <EventFormFieldsEditor
@@ -211,40 +180,33 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
       <section className="futuristic-panel p-5 lg:col-span-2">
           <div className="eyebrow">Publicación</div>
           <div className="mt-5 space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Estado
-              <select
-                name="status"
-                defaultValue="published"
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              >
+            <div>
+              <Label>Estado</Label>
+              <NativeSelect name="status" defaultValue="published">
                 <option value="published">Publicar en la app</option>
                 <option value="draft">Guardar borrador</option>
-              </select>
-            </label>
+              </NativeSelect>
+            </div>
 
-            <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-              Color
-              <select
-                name="themeColor"
-                defaultValue={COLOR_OPTIONS[0]}
-                className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-sm text-white outline-none focus:border-white/60"
-              >
+            <div>
+              <Label>Color</Label>
+              <NativeSelect name="themeColor" defaultValue={COLOR_OPTIONS[0]}>
                 {COLOR_OPTIONS.map((color) => (
                   <option key={color} value={color}>
                     {color}
                   </option>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isPending || providers.length === 0}
-              className="w-full border border-white bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90 disabled:opacity-50"
+              className="w-full"
+              size="lg"
             >
               {isPending ? "Creando..." : "Crear evento y formulario"}
-            </button>
+            </Button>
 
             <p className="text-xs leading-5 text-white/45">
               Al crear, el evento y su formulario quedan asociados al comercio real. Si está publicado, aparecerá en la app cliente.

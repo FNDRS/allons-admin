@@ -2,6 +2,11 @@ import { submitDemoRegistration } from "@/app/(dashboard)/events/[eventId]/formu
 import { getAdminEvent } from "@/lib/admin/eventsApi";
 import type { DemoEventFormField } from "@/lib/demoEventForms";
 import { getDemoEventForm } from "@/lib/demoEventForms";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -56,25 +61,23 @@ export default async function DemoEventRegistrationPage({
 
           <form action={action} className="mt-7 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                Nombre completo *
-                <input
+              <div>
+                <Label>Nombre completo *</Label>
+                <Input
                   name="attendeeName"
                   required
-                  className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-base font-medium text-white outline-none transition focus:border-white/60"
                   placeholder="Tu nombre"
                 />
-              </label>
-              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                Correo electrónico *
-                <input
+              </div>
+              <div>
+                <Label>Correo electrónico *</Label>
+                <Input
                   name="attendeeEmail"
                   type="email"
                   required
-                  className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-base font-medium text-white outline-none transition focus:border-white/60"
                   placeholder="tu@correo.com"
                 />
-              </label>
+              </div>
             </div>
 
             <div className="border-t border-white/10 pt-6">
@@ -93,12 +96,9 @@ export default async function DemoEventRegistrationPage({
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full border border-white bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
-            >
+            <Button type="submit" className="w-full" size="lg">
               Confirmar registro
-            </button>
+            </Button>
           </form>
         </section>
       </div>
@@ -112,14 +112,9 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
 
   if (field.kind === "select") {
     return (
-      <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-        {label}
-        <select
-          name={name}
-          required={field.required}
-          className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-base text-white outline-none transition focus:border-white/60"
-          defaultValue=""
-        >
+      <div>
+        <Label>{label}</Label>
+        <NativeSelect name={name} required={field.required} defaultValue="">
           <option value="" disabled>
             Selecciona una opción
           </option>
@@ -128,19 +123,18 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
               {option}
             </option>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </div>
     );
   }
 
   if (field.kind === "boolean") {
     return (
       <label className="flex items-start gap-3 border border-white/12 bg-white/[0.03] p-4 text-sm text-white/75">
-        <input
+        <Checkbox
           name={name}
-          type="checkbox"
           required={field.required}
-          className="mt-0.5 size-4 accent-white"
+          className="mt-0.5"
         />
         <span>{label}</span>
       </label>
@@ -148,14 +142,13 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
   }
 
   return (
-    <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-      {label}
-      <input
+    <div>
+      <Label>{label}</Label>
+      <Input
         name={name}
         type={field.kind === "number" ? "number" : "text"}
         required={field.required}
-        className="mt-1 w-full border border-white/15 bg-black px-3 py-3 text-base font-medium text-white outline-none transition focus:border-white/60"
       />
-    </label>
+    </div>
   );
 }

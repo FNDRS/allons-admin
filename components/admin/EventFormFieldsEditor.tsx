@@ -7,6 +7,11 @@ import type {
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 
 type Props = {
   initialFields: DemoEventFormField[];
@@ -109,14 +114,15 @@ export function EventFormFieldsEditor({
 
         <div className="mt-4 grid gap-2 sm:grid-cols-4">
           {(["text", "number", "select", "boolean"] as const).map((kind) => (
-            <button
+            <Button
               key={kind}
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => addField(kind)}
-              className="flex items-center justify-center gap-2 border border-white/15 bg-white/[0.03] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/8"
             >
               <Plus size={14} /> {FIELD_KIND_LABEL[kind]}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -133,50 +139,55 @@ export function EventFormFieldsEditor({
                     Campo {index + 1} · {FIELD_KIND_LABEL[field.kind]}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => moveField(field.id, -1)}
                       disabled={index === 0}
-                      className="border border-white/15 p-2 text-white/70 transition hover:bg-white/5 disabled:opacity-30"
                       aria-label="Subir campo"
                     >
                       <ArrowUp size={14} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => moveField(field.id, 1)}
                       disabled={index === fields.length - 1}
-                      className="border border-white/15 p-2 text-white/70 transition hover:bg-white/5 disabled:opacity-30"
                       aria-label="Bajar campo"
                     >
                       <ArrowDown size={14} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => removeField(field.id)}
-                      className="border border-red-500/30 p-2 text-red-300 transition hover:bg-red-500/10"
                       aria-label="Eliminar campo"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-[1fr_160px_140px]">
-                  <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                    Pregunta
-                    <input
+                  <div>
+                    <Label>Pregunta</Label>
+                    <Input
                       value={field.label}
                       onChange={(event) =>
                         updateField(field.id, { label: event.target.value })
                       }
-                      className="mt-1 w-full border border-white/15 bg-black px-3 py-2 text-sm font-medium text-white outline-none transition focus:border-white/60"
                     />
-                  </label>
+                  </div>
 
-                  <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
-                    Tipo
-                    <select
+                  <div>
+                    <Label>Tipo</Label>
+                    <NativeSelect
                       value={field.kind}
                       onChange={(event) => {
                         const kind = event.target.value as DemoFormFieldKind;
@@ -190,32 +201,29 @@ export function EventFormFieldsEditor({
                                 : [],
                         });
                       }}
-                      className="mt-1 w-full border border-white/15 bg-black px-3 py-2 text-sm text-white outline-none transition focus:border-white/60"
                     >
                       <option value="text">Texto</option>
                       <option value="number">Número</option>
                       <option value="select">Selección</option>
                       <option value="boolean">Sí / No</option>
-                    </select>
-                  </label>
+                    </NativeSelect>
+                  </div>
 
                   <label className="flex items-end gap-2 pb-2 text-sm text-white/75">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={field.required}
                       onChange={(event) =>
                         updateField(field.id, { required: event.target.checked })
                       }
-                      className="size-4 accent-white"
                     />
                     Obligatorio
                   </label>
                 </div>
 
                 {field.kind === "select" ? (
-                  <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-white/45">
-                    Opciones separadas por coma
-                    <input
+                  <div className="mt-3">
+                    <Label>Opciones separadas por coma</Label>
+                    <Input
                       value={field.options.join(", ")}
                       onChange={(event) =>
                         updateField(field.id, {
@@ -226,9 +234,8 @@ export function EventFormFieldsEditor({
                         })
                       }
                       placeholder="S, M, L, XL"
-                      className="mt-1 w-full border border-white/15 bg-black px-3 py-2 text-sm text-white outline-none transition focus:border-white/60"
                     />
-                  </label>
+                  </div>
                 ) : null}
               </div>
             ))
