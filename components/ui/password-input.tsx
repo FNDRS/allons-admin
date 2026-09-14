@@ -2,6 +2,8 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { forwardRef, useId, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type PasswordInputProps = {
   id?: string;
@@ -10,9 +12,6 @@ type PasswordInputProps = {
   className?: string;
   defaultValue?: string;
 };
-
-const fieldClassName =
-  "w-full rounded-lg border border-white/15 bg-white/[0.04] px-3.5 py-2.5 pr-11 text-base text-white placeholder:text-white/30 transition-colors focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/10";
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput(
@@ -31,7 +30,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 
     return (
       <div className="relative">
-        <input
+        <Input
           ref={ref}
           id={id}
           type={visible ? "text" : "password"}
@@ -41,12 +40,14 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           spellCheck={false}
           placeholder={placeholder}
           defaultValue={defaultValue}
-          className={`${fieldClassName} ${visible ? "" : "password-input-mask"} ${className}`}
+          className={`h-11 pr-11 text-base ${visible ? "" : "password-input-mask"} ${className}`}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setVisible((current) => !current)}
-          className="absolute inset-y-0 right-0 flex items-center rounded-r-lg px-3 text-white/40 transition-colors hover:text-white/80 focus-visible:text-white focus-visible:outline-none"
+          className="absolute inset-y-0 right-0 h-full w-10 text-white/40 hover:text-white/80"
           aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
           aria-pressed={visible}
           aria-controls={id}
@@ -56,7 +57,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ) : (
             <Eye aria-hidden size={18} strokeWidth={1.75} />
           )}
-        </button>
+        </Button>
       </div>
     );
   },

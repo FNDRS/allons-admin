@@ -1,6 +1,9 @@
 "use client";
 
 import { PasswordInput } from "@/components/ui/password-input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -131,34 +134,30 @@ function LoginPageContent() {
           }}
         >
           <div>
-            <label className="eyebrow block mb-1.5" htmlFor="login-email">
-              Email
-            </label>
-            <input
+            <Label htmlFor="login-email">Email</Label>
+            <Input
               ref={emailRef}
               id="login-email"
               type="email"
               autoComplete="email"
-              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-base text-white placeholder:text-white/30 transition-colors focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/10"
               placeholder="tucorreo@allons.app"
+              className="h-11 text-base"
             />
           </div>
 
           <div>
-            <label className="eyebrow block mb-1.5" htmlFor="login-password">
-              Contraseña
-            </label>
+            <Label htmlFor="login-password">Contraseña</Label>
             <PasswordInput ref={passwordRef} id="login-password" />
           </div>
 
-          <button
+          <Button
             type="button"
             disabled={submitting}
             onClick={() => void handleLogin()}
-            className="w-full border border-white bg-white py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
+            className="w-full h-11"
           >
             {submitting ? "Entrando..." : "Iniciar sesión"}
-          </button>
+          </Button>
         </div>
       </div>
     </main>

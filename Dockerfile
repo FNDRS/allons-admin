@@ -43,6 +43,6 @@ COPY --from=builder /app/public ./public
 USER nextjs
 EXPOSE 3001
 # Healthcheck que App Runner usa (TCP en 3001) — además validamos HTTP
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3001/login || exit 1
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 PORT=3001 node server.js"]
