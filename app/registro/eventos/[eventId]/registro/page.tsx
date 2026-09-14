@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -86,7 +87,7 @@ export default async function DemoEventRegistrationPage({
                 <p className="mt-1 text-sm text-white/55">
                   {form.fields.length === 0
                     ? "Este evento todavía no tiene campos personalizados."
-                    : "Estos campos fueron configurados desde Allons Admin."}
+                    : "Completa los datos que pide el organizador."}
                 </p>
               </div>
               <div className="space-y-4">
@@ -129,27 +130,89 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
     );
   }
 
+  // Radios y casillas comparten el `name`: el primero manda un valor, el
+  // segundo manda uno por casilla marcada y la acción los une con `getAll`.
+  if (field.kind === "radio" || field.kind === "checkbox") {
+    const type = field.kind === "radio" ? "radio" : "checkbox";
+    return (
+      <fieldset>
+        <legend className="mb-1.5 block text-xs font-medium text-white/60">
+          {label}
+        </legend>
+        <div className="space-y-2">
+          {field.options.map((option) => (
+            <label
+              key={option}
+              className="flex items-center gap-3 border border-white/12 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80"
+            >
+              <input
+                type={type}
+                name={name}
+                value={option}
+                // En un grupo de radios `required` en uno alcanza para el grupo;
+                // en casillas obligaría a marcar cada una, así que se valida en
+                // el servidor.
+                required={field.required && type === "radio"}
+                className="size-4 accent-[#F67010]"
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+
   if (field.kind === "boolean") {
     return (
       <label className="flex items-start gap-3 border border-white/12 bg-white/[0.03] p-4 text-sm text-white/75">
-        <Checkbox
-          name={name}
-          required={field.required}
-          className="mt-0.5"
-        />
+        <Checkbox name={name} required={field.required} className="mt-0.5" />
         <span>{label}</span>
       </label>
+    );
+  }
+
+  if (field.kind === "textarea") {
+    return (
+      <div>
+        <Label>{label}</Label>
+        <Textarea name={name} rows={4} required={field.required} />
+      </div>
+    );
+  }
+
+  if (field.kind === "date") {
+    return (
+      <div>
+        <Label>{label}</Label>
+        <Input name={name} type="date" required={field.required} />
+      </div>
+    );
+  }
+
+  if (field.kind === "number") {
+    // `type="number"` acepta "e", "+" y "-" como notación científica, así que
+    // un campo de año deja escribir "2e5". Texto con patrón e `inputMode`
+    // numérico bloquea eso y abre el teclado numérico en móvil.
+    return (
+      <div>
+        <Label>{label}</Label>
+        <Input
+          name={name}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]+([.,][0-9]+)?"
+          title="Sólo números"
+          required={field.required}
+        />
+      </div>
     );
   }
 
   return (
     <div>
       <Label>{label}</Label>
-      <Input
-        name={name}
-        type={field.kind === "number" ? "number" : "text"}
-        required={field.required}
-      />
+      <Input name={name} type="text" required={field.required} />
     </div>
   );
 }

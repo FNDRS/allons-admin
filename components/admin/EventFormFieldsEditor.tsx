@@ -1,12 +1,23 @@
 "use client";
 
 import {
+  DEMO_FORM_FIELD_KINDS,
+  needsOptions,
   parseFormFieldsJson,
   toFormFieldsJson,
   type DemoEventFormField,
   type DemoFormFieldKind,
 } from "@/lib/eventFormFields";
-import { ArrowDown, ArrowUp, Braces, Copy, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Braces,
+  CalendarDays,
+  ChevronDown,
+  Copy,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -36,10 +47,26 @@ const JSON_PLACEHOLDER = `{
 }`;
 
 const FIELD_KIND_LABEL: Record<DemoFormFieldKind, string> = {
-  text: "Texto",
+  text: "Texto corto",
+  textarea: "Párrafo",
   number: "Número",
-  select: "Selección",
-  boolean: "Sí / No",
+  date: "Fecha",
+  select: "Desplegable",
+  radio: "Opción única",
+  checkbox: "Varias opciones",
+  boolean: "Casilla de aceptación",
+};
+
+/** Ayuda del botón: qué elige el asistente con cada tipo. */
+const FIELD_KIND_HINT: Record<DemoFormFieldKind, string> = {
+  text: "Una línea",
+  textarea: "Texto largo",
+  number: "Sólo dígitos",
+  date: "Calendario",
+  select: "Elige una de la lista",
+  radio: "Elige una, todas visibles",
+  checkbox: "Puede elegir varias",
+  boolean: "Acepta o no acepta",
 };
 
 /**
@@ -52,7 +79,7 @@ function newField(kind: DemoFormFieldKind): DemoEventFormField {
     label: "",
     kind,
     required: true,
-    options: kind === "select" ? ["Opción 1", "Opción 2"] : [],
+    options: needsOptions(kind) ? ["Opción 1", "Opción 2"] : [],
     sortOrder: 0,
   };
 }
@@ -183,17 +210,21 @@ export function EventFormFieldsEditor({
           {submitButton}
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-4">
-          {(["text", "number", "select", "boolean"] as const).map((kind) => (
-            <Button
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {DEMO_FORM_FIELD_KINDS.map((kind) => (
+            <button
               key={kind}
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => addField(kind)}
+              className="flex flex-col items-start gap-0.5 rounded-md border border-white/20 px-3 py-2 text-left transition hover:bg-white/5"
             >
-              <Plus size={14} /> {FIELD_KIND_LABEL[kind]}
-            </Button>
+              <span className="flex items-center gap-1.5 text-xs font-medium text-white">
+                <Plus size={13} /> {FIELD_KIND_LABEL[kind]}
+              </span>
+              <span className="text-[11px] text-white/40">
+                {FIELD_KIND_HINT[kind]}
+              </span>
+            </button>
           ))}
         </div>
 
@@ -369,7 +400,7 @@ export function EventFormFieldsEditor({
                   </div>
                 </div>
 
-                {field.kind === "select" ? (
+                {needsOptions(field.kind) ? (
                   <div className="mt-3">
                     <Label>Opciones separadas por coma</Label>
                     <Input
@@ -431,12 +462,45 @@ function PreviewInput({
         {label} {required ? "*" : ""}
       </div>
       {kind === "select" ? (
-        <div className="border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-white/60">
-          {options[0] ?? "Selecciona"}
+        // Un desplegable se ve cerrado, pero listamos lo que contiene: la vista
+        // previa existe para revisar las opciones cargadas.
+        <div className="space-y-1">
+          <div className="flex items-center justify-between border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-white/60">
+            <span>{options[0] ?? "Selecciona"}</span>
+            <ChevronDown size={14} className="text-white/35" />
+          </div>
+          {options.length > 1 ? (
+            <p className="text-[11px] text-white/35">
+              {options.length} opciones: {options.join(" · ")}
+            </p>
+          ) : null}
+        </div>
+      ) : kind === "radio" || kind === "checkbox" ? (
+        <div className="space-y-1.5">
+          {options.map((option) => (
+            <div key={option} className="flex items-center gap-2 text-sm text-white/70">
+              <span
+                className={`size-4 shrink-0 border border-white/30 ${
+                  kind === "radio" ? "rounded-full" : "rounded-[4px]"
+                }`}
+              />
+              {option}
+            </div>
+          ))}
+          {options.length === 0 ? (
+            <p className="text-[11px] text-amber-300">Agrega al menos una opción.</p>
+          ) : null}
         </div>
       ) : kind === "boolean" ? (
         <div className="flex items-center gap-2 text-sm text-white/70">
-          <Checkbox disabled /> Sí
+          <Checkbox disabled /> {label || "Acepto"}
+        </div>
+      ) : kind === "textarea" ? (
+        <div className="h-20 border border-white/15 bg-white/[0.03]" />
+      ) : kind === "date" ? (
+        <div className="flex items-center justify-between border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-white/40">
+          <span>dd / mm / aaaa</span>
+          <CalendarDays size={14} className="text-white/35" />
         </div>
       ) : (
         <div className="h-10 border border-white/15 bg-white/[0.03]" />

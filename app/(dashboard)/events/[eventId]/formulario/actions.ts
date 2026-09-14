@@ -56,13 +56,21 @@ export async function submitDemoRegistration(
   const form = await getDemoEventForm(eventId);
   const answers = form.fields.map((field) => {
     const key = `field_${field.id}`;
-    const raw = formData.get(key);
-    const answer =
-      field.kind === "boolean"
-        ? raw === "on"
-          ? "Sí"
-          : "No"
-        : String(raw ?? "").trim();
+    let answer: string;
+
+    if (field.kind === "boolean") {
+      answer = formData.get(key) === "on" ? "Sí" : "No";
+    } else if (field.kind === "checkbox") {
+      // Una casilla por opción marcada; se guardan como un solo texto para que
+      // `ticket_answers.answer` siga siendo una columna de texto plano.
+      answer = formData
+        .getAll(key)
+        .map((value) => String(value).trim())
+        .filter(Boolean)
+        .join(", ");
+    } else {
+      answer = String(formData.get(key) ?? "").trim();
+    }
 
     if (field.required) {
       const missing = field.kind === "boolean" ? answer !== "Sí" : !answer;
