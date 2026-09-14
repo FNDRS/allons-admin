@@ -166,8 +166,8 @@ export function EventTicketsField({
       <div className="eyebrow">Tickets</div>
       <h2 className="mt-1 text-xl font-semibold">Tipos de entrada</h2>
       <p className="mt-2 text-sm leading-6 text-white/50">
-        Agrega tantos tipos como en la app (General, VIP, Preventa…). Si el
-        precio es 0, el evento se publica como registro gratuito.
+        Agrega los tipos que necesites (General, VIP, Preventa…). Si el precio
+        es 0, el evento se publica como registro gratuito.
       </p>
 
       {drafts.length > 0 ? (
@@ -318,19 +318,17 @@ export function EventTicketsField({
             {REFUND_OPTIONS.map((option) => {
               const active = option.key === refundPolicy;
               return (
-                <button
+                <Button
                   key={option.key}
                   type="button"
+                  size="sm"
+                  variant={active ? "brand" : "secondary"}
                   aria-pressed={active}
                   onClick={() => setRefundPolicy(option.key)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    active
-                      ? "bg-[#F67010] text-white"
-                      : "bg-white/[0.06] text-white/65 hover:bg-white/10 hover:text-white"
-                  }`}
+                  className="normal-case tracking-normal"
                 >
                   {option.label}
-                </button>
+                </Button>
               );
             })}
           </div>

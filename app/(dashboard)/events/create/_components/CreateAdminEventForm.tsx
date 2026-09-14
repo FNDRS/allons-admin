@@ -63,9 +63,9 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
             <Select
               name="providerId"
               required
-              defaultValue=""
               placeholder="Selecciona comercio"
             >
+              <SelectItem value="">Selecciona comercio</SelectItem>
               {providers.map((provider) => (
                 <SelectItem key={provider.id} value={provider.id}>
                   {provider.name}

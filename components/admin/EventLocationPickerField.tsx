@@ -132,7 +132,6 @@ export function EventLocationPickerField() {
     let cancelled = false;
     (async () => {
       const L = await import("leaflet");
-      await import("leaflet/dist/leaflet.css");
 
       if (cancelled || !mapElRef.current || mapRef.current) return;
 
@@ -239,24 +238,29 @@ export function EventLocationPickerField() {
           className="h-[360px] w-full"
           style={{ background: "#0a0a0a" }}
         />
-        {/* center pin overlay - same UX as mobile event-location-picker */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="-translate-y-4 drop-shadow-lg">
-            {/* pin */}
-            <svg width="36" height="42" viewBox="0 0 36 42" fill="none" aria-hidden>
+        {/*
+          Leaflet numera sus panes desde z-index 400 y sus controles llegan a
+          800, así que todo lo que va encima del mapa necesita z-index propio o
+          queda tapado por los tiles.
+        */}
+        <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center">
+          <div className="-translate-y-5 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+            <svg width="36" height="46" viewBox="0 0 36 46" fill="none" aria-hidden>
               <path
                 d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 24 18 24s18-10.5 18-24C36 8.06 27.94 0 18 0Z"
                 fill="#F67010"
+                stroke="white"
+                strokeWidth="2"
               />
-              <circle cx="18" cy="18" r="7" fill="white" />
+              <circle cx="18" cy="18" r="6.5" fill="white" />
             </svg>
           </div>
         </div>
-        {/* tiny center dot */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow" />
+        {/* Punto exacto que el pin señala: la punta del alfiler. */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[900] size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/40 bg-white" />
 
         {!mapReady ? (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 text-sm text-white/60">
+          <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center bg-black/40 text-sm text-white/60">
             Cargando mapa…
           </div>
         ) : null}
@@ -266,7 +270,7 @@ export function EventLocationPickerField() {
           size="sm"
           variant="secondary"
           onClick={centerToMyLocation}
-          className="absolute bottom-3 right-3 rounded-full bg-black/70 backdrop-blur hover:bg-black/90"
+          className="absolute bottom-3 right-3 z-[1000] rounded-full bg-black/70 backdrop-blur hover:bg-black/90"
         >
           Mi ubicación
         </Button>
@@ -303,7 +307,8 @@ export function EventLocationPickerField() {
       </div>
 
       <p className="mt-3 text-xs leading-5 text-white/35">
-        Igual que en la app: no hay campo de ciudad. Al guardar, la ciudad se guarda desde el pin y es lo que ven tus clientes al filtrar/buscar.
+        No hay campo de ciudad: se toma del pin al guardar, y es la que ven tus
+        clientes al filtrar o buscar.
       </p>
     </div>
   );

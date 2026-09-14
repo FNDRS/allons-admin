@@ -1,6 +1,7 @@
 "use client";
 
 import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY, INTEREST_OPTIONS } from "@/lib/eventCategories";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -23,27 +24,25 @@ export function EventCategoryField() {
       <div className="eyebrow">Categoría</div>
       <h2 className="mt-1 text-xl font-semibold">Cómo se descubre el evento</h2>
       <p className="mt-2 text-sm leading-6 text-white/50">
-        Se guarda como interés del evento, igual que en la app: es lo que filtra
-        el cliente al explorar.
+        Se guarda como interés del evento: es lo que filtra el cliente al
+        explorar.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {EVENT_CATEGORIES.map((category) => {
           const active = category === selected;
           return (
-            <button
+            <Button
               key={category}
               type="button"
+              size="sm"
+              variant={active ? "brand" : "secondary"}
               aria-pressed={active}
               onClick={() => setSelected(category)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                active
-                  ? "bg-[#F67010] text-white"
-                  : "bg-white/[0.06] text-white/65 hover:bg-white/10 hover:text-white"
-              }`}
+              className="normal-case tracking-normal"
             >
               {category}
-            </button>
+            </Button>
           );
         })}
       </div>

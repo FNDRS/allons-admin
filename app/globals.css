@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* El mapa del picker de ubicación necesita el CSS de Leaflet cargado siempre:
+   un import dinámico dentro del componente deja los tiles y el pin sin estilo. */
+@import "leaflet/dist/leaflet.css";
 
 :root {
   color-scheme: dark;

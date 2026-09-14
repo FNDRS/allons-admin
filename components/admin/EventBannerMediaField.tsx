@@ -87,7 +87,7 @@ export function EventBannerMediaField({ title }: { title: string }) {
           </>
         ) : null}
         <span className="relative text-[10px] font-bold uppercase tracking-wide text-white/70">
-          Banner · así se ve en la app
+          Banner · vista previa
         </span>
         <span className="relative line-clamp-2 text-lg font-semibold text-white">
           {title.trim() || "Título del evento"}
@@ -96,17 +96,18 @@ export function EventBannerMediaField({ title }: { title: string }) {
 
       <div className="mt-3 flex flex-wrap gap-2">
         {EVENT_THEME_COLORS.map((option) => (
-          <button
+          <Button
             key={option}
             type="button"
+            size="icon"
             aria-label={`Color ${option}`}
             aria-pressed={color === option}
             onClick={() => setColor(option)}
-            className={`size-7 rounded-lg border transition ${
+            className={
               color === option
-                ? "border-white ring-2 ring-white/40"
-                : "border-white/15 hover:border-white/40"
-            }`}
+                ? "size-7 border border-white ring-2 ring-white/40"
+                : "size-7 border border-white/15 hover:border-white/40"
+            }
             style={{ backgroundColor: option }}
           />
         ))}
@@ -154,13 +155,15 @@ export function EventBannerMediaField({ title }: { title: string }) {
                 <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/75">
                   {index === 0 ? "Portada" : `#${index + 1}`}
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="link"
+                  size="sm"
                   onClick={() => removeFile(index)}
-                  className="text-xs text-white/45 underline-offset-2 hover:text-white hover:underline"
+                  className="h-auto px-0"
                 >
                   Quitar
-                </button>
+                </Button>
               </div>
             </div>
           ))}
