@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { completePayout } from "@/lib/admin/payoutsApi";
 
 /**
@@ -17,12 +18,15 @@ export function CompletePayoutButton({ id }: { id: string }) {
 
   if (!confirming) {
     return (
-      <button
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
         onClick={() => setConfirming(true)}
-        className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-muted underline underline-offset-2 hover:text-white"
+        className="h-auto px-0"
       >
         Completar
-      </button>
+      </Button>
     );
   }
 
@@ -43,20 +47,24 @@ export function CompletePayoutButton({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex gap-2">
-        <button
+        <Button
+          type="button"
+          size="sm"
+          variant="brand"
           onClick={handleComplete}
           disabled={loading}
-          className="rounded bg-orange-600 px-3 py-1 text-[10px] font-bold uppercase text-white disabled:opacity-40"
         >
           {loading ? "..." : "Confirmar"}
-        </button>
-        <button
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
           onClick={() => setConfirming(false)}
           disabled={loading}
-          className="rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase text-muted"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
       {error && <span className="text-[10px] text-red-400">{error}</span>}
     </div>

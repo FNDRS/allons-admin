@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cancelProviderSubscriptionAction } from "@/lib/admin/actions";
 
 /**
@@ -21,14 +22,12 @@ export function ProviderSubscriptionActions({
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <a
-        href={`/providers/${userId}/export`}
-        download
-        className="inline-flex items-center gap-1.5 border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-      >
-        <ArrowDown size={12} />
-        Exportar datos
-      </a>
+      <Button asChild size="sm" variant="outline">
+        <a href={`/providers/${userId}/export`} download>
+          <ArrowDown size={12} />
+          Exportar datos
+        </a>
+      </Button>
       {alreadyCanceled ? null : (
         <form
           action={cancelProviderSubscriptionAction}
@@ -44,13 +43,14 @@ export function ProviderSubscriptionActions({
         >
           <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="revalidate" value={revalidatePath} />
-          <button
+          <Button
             type="submit"
+            size="sm"
+            variant="destructive"
             title="Cancela la suscripción de inmediato y bloquea el acceso"
-            className="border border-danger/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-danger transition hover:bg-danger/10"
           >
             Cortar acceso
-          </button>
+          </Button>
         </form>
       )}
     </div>

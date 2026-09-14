@@ -1,6 +1,7 @@
 "use client";
 
 import type { SubscriptionOrder } from "@/lib/admin/subscriptionOrdersApi";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const PLAN_LABEL: Record<string, string> = {
@@ -47,13 +48,9 @@ export function PaymentDetailButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-      >
+      <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
         Ver
-      </button>
+      </Button>
 
       {open ? (
         <div
@@ -143,13 +140,13 @@ export function PaymentDetailButton({
                 interno: no es comprobante fiscal (CAI/SAR). El PDF y la
                 numeración fiscal van aparte.
               </p>
-              <button
+              <Button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="mt-3 w-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-black transition hover:bg-white/90"
+                className="mt-3 w-full"
               >
                 Cerrar
-              </button>
+              </Button>
             </div>
           </div>
         </div>

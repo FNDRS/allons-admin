@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { setProviderCommissionFeesAction } from "@/lib/admin/actions";
 import {
   DEFAULT_ALLONS_FEE,
@@ -37,14 +40,11 @@ export function ProviderPasarelaFeeActions({
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
       <div>
-        <label
-          htmlFor="pasarelaFeePct"
-          className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40"
-        >
+        <Label htmlFor="pasarelaFeePct" className="text-[10px] uppercase tracking-wide">
           Comisión banco / pasarela (%)
-        </label>
+        </Label>
         <div className="flex items-center gap-1.5">
-          <input
+          <Input
             id="pasarelaFeePct"
             name="pasarelaFeePct"
             type="number"
@@ -53,20 +53,17 @@ export function ProviderPasarelaFeeActions({
             step="0.1"
             value={pasarela}
             onChange={(e) => setPasarela(e.target.value)}
-            className="w-24 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white focus:border-white/30 focus:outline-none"
+            className="w-24"
           />
           <span className="text-sm text-white/50">%</span>
         </div>
       </div>
       <div>
-        <label
-          htmlFor="allonsFeePct"
-          className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/40"
-        >
+        <Label htmlFor="allonsFeePct" className="text-[10px] uppercase tracking-wide">
           Comisión Allons (%)
-        </label>
+        </Label>
         <div className="flex items-center gap-1.5">
-          <input
+          <Input
             id="allonsFeePct"
             name="allonsFeePct"
             type="number"
@@ -75,17 +72,14 @@ export function ProviderPasarelaFeeActions({
             step="0.1"
             value={allons}
             onChange={(e) => setAllons(e.target.value)}
-            className="w-24 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white focus:border-white/30 focus:outline-none"
+            className="w-24"
           />
           <span className="text-sm text-white/50">%</span>
         </div>
       </div>
-      <button
-        type="submit"
-        className="border border-white/15 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/80 transition hover:bg-white/5"
-      >
+      <Button type="submit" size="sm" variant="outline">
         Guardar
-      </button>
+      </Button>
     </form>
   );
 }

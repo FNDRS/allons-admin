@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { overridePaymentOrder } from "@/lib/admin/paymentsApi";
 
 export function OverrideButton({
@@ -22,12 +25,15 @@ export function OverrideButton({
 
   if (!open) {
     return (
-      <button
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
         onClick={() => setOpen(true)}
-        className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-muted underline underline-offset-2 hover:text-white"
+        className="h-auto px-0"
       >
         Anular
-      </button>
+      </Button>
     );
   }
 
@@ -48,36 +54,40 @@ export function OverrideButton({
 
   return (
     <div className="flex flex-col gap-2 rounded bg-white/5 p-2">
-      <select
+      <NativeSelect
         value={targetStatus}
         onChange={(e) => setTargetStatus(e.target.value)}
-        className="rounded border border-white/20 bg-black/40 px-2 py-1 text-[11px] text-white"
+        className="h-8 text-[11px]"
       >
         <option value="paid">Marcar como pagado</option>
         <option value="cancelled">Cancelar orden</option>
         <option value="failed">Marcar como fallido</option>
-      </select>
-      <input
+      </NativeSelect>
+      <Input
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder="Por qué (obligatorio)"
-        className="rounded border border-white/20 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-muted"
+        className="h-8 text-[11px]"
       />
       {error && <span className="text-[10px] text-red-400">{error}</span>}
       <div className="flex gap-2">
-        <button
+        <Button
+          type="button"
+          size="sm"
+          variant="brand"
           onClick={handleOverride}
           disabled={loading || !reason.trim()}
-          className="rounded bg-orange-600 px-3 py-1 text-[10px] font-bold uppercase text-white disabled:opacity-40"
         >
           {loading ? "..." : "Confirmar"}
-        </button>
-        <button
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
           onClick={() => setOpen(false)}
-          className="rounded bg-white/10 px-3 py-1 text-[10px] font-bold uppercase text-muted"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
     </div>
   );

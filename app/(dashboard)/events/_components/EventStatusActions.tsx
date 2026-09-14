@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { setEventStatus } from "@/lib/admin/eventActions";
 
 export function EventStatusActions({
@@ -54,24 +55,21 @@ function StatusActionButton({
   tone: "success" | "danger" | "muted";
   revalidatePath: string;
 }) {
-  const styles =
+  const variant =
     tone === "success"
-      ? "border-success/40 text-success hover:bg-success/10"
+      ? "success"
       : tone === "danger"
-        ? "border-danger/40 text-danger hover:bg-danger/10"
-        : "border-white/15 text-muted hover:bg-white/5";
+        ? "destructive"
+        : "outline";
 
   return (
     <form action={setEventStatus}>
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
-      <button
-        type="submit"
-        className={`border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${styles}`}
-      >
+      <Button type="submit" size="sm" variant={variant}>
         {label}
-      </button>
+      </Button>
     </form>
   );
 }
