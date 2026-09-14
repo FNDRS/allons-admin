@@ -115,52 +115,52 @@ export default async function UsersPage({
               : "Sin coincidencias."}
           </div>
         ) : (
-            {filtered.map((u) => (
-              <div
-                key={u.id}
-                className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
-                style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-semibold">
-                    {u.fullName ?? u.email.split("@")[0]}
-                  </div>
-                  <div className="truncate text-xs text-muted">{u.email}</div>
-                  <div className="mt-1 inline-flex border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
-                    {roleLabel(u.role)}
-                  </div>
+          filtered.map((u) => (
+            <div
+              key={u.id}
+              className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
+              style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 0.9fr" }}
+            >
+              <div className="min-w-0">
+                <div className="truncate font-semibold">
+                  {u.fullName ?? u.email.split("@")[0]}
                 </div>
-                <div>
-                  {u.status === "suspended" ? (
-                    <StatusPill label="Suspendido" variant="danger" />
-                  ) : (
-                    <StatusPill label="Activo" variant="success" />
-                  )}
-                </div>
-                <div className="text-xs text-muted">{formatDate(u.createdAt)}</div>
-                <div className="flex justify-end">
-                  <form action={setUserSuspended}>
-                    <input type="hidden" name="userId" value={u.id} />
-                    <input
-                      type="hidden"
-                      name="suspend"
-                      value={u.status === "suspended" ? "false" : "true"}
-                    />
-                    <input type="hidden" name="revalidate" value="/users" />
-                    <button
-                      type="submit"
-                      className={`border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
-                        u.status === "suspended"
-                          ? "border-success/40 text-success hover:bg-success/10"
-                          : "border-danger/40 text-danger hover:bg-danger/10"
-                      }`}
-                    >
-                      {u.status === "suspended" ? "Reactivar" : "Suspender"}
-                    </button>
-                  </form>
+                <div className="truncate text-xs text-muted">{u.email}</div>
+                <div className="mt-1 inline-flex border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/80">
+                  {roleLabel(u.role)}
                 </div>
               </div>
-            ))}
+              <div>
+                {u.status === "suspended" ? (
+                  <StatusPill label="Suspendido" variant="danger" />
+                ) : (
+                  <StatusPill label="Activo" variant="success" />
+                )}
+              </div>
+              <div className="text-xs text-muted">{formatDate(u.createdAt)}</div>
+              <div className="flex justify-end">
+                <form action={setUserSuspended}>
+                  <input type="hidden" name="userId" value={u.id} />
+                  <input
+                    type="hidden"
+                    name="suspend"
+                    value={u.status === "suspended" ? "false" : "true"}
+                  />
+                  <input type="hidden" name="revalidate" value="/users" />
+                  <button
+                    type="submit"
+                    className={`border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition ${
+                      u.status === "suspended"
+                        ? "border-success/40 text-success hover:bg-success/10"
+                        : "border-danger/40 text-danger hover:bg-danger/10"
+                    }`}
+                  >
+                    {u.status === "suspended" ? "Reactivar" : "Suspender"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))
         )}
       </DashboardList>
     </DashboardPage>

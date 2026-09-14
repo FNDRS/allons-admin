@@ -14,6 +14,7 @@ export type AdminAuditAction =
   | "provider.status_change"
   | "provider.plan_change"
   | "provider.pasarela_fee_change"
+  | "provider.commission_fees_change"
   | "provider.comercio_create"
   | "provider.invite_resend"
   | "provider.subscription_cancel"
