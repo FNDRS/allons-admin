@@ -3,7 +3,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 const INVITE_VERIFY_BASE =
   process.env.APP_INVITE_REDIRECT_URL ?? "https://allonsapp.com/verify";
 
-/** Default when MAIL_FROM is unset — must match a domain verified on this RESEND_API_KEY account. */
+/** Default when MAIL_FROM is unset - must match a domain verified on this RESEND_API_KEY account. */
 const DEFAULT_MAIL_FROM = "Allons <no-reply@thefndrs.com>";
 
 function resolveMailFrom(): string {
@@ -46,8 +46,8 @@ function buildComercioInviteHtml(
   const greeting = metadata.comercio_role === "admin" ? brandName : brandName;
   const bodyCopy =
     metadata.comercio_role === "admin"
-      ? "Tu cuenta de comercio fue creada en Allons. Toca el botón desde tu celular para abrir la app y crear tu contraseña."
-      : `${brandName} te invitó a colaborar en Allons. Toca el botón desde tu celular para abrir la app y crear tu contraseña.`;
+      ? "Ya tienes cuenta de comercio en Allons. Abre el enlace desde el celular para crear tu contraseña."
+      : `${brandName} te invitó a Allons. Abre el enlace desde el celular para crear tu contraseña.`;
   const safeUrl = escapeHtml(inviteUrl);
 
   return `<!DOCTYPE html>
@@ -64,7 +64,7 @@ function buildComercioInviteHtml(
           <p style="margin:0 0 16px;font-size:18px;font-weight:700">Hola ${greeting},</p>
           <p style="margin:0 0 16px;font-size:15px;line-height:24px;color:rgba(251,251,251,.82)">${bodyCopy}</p>
           <p style="margin:28px 0;text-align:center">
-            <a href="${safeUrl}" style="display:inline-block;background:#f67010;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px">Abrir app y crear contraseña</a>
+            <a href="${safeUrl}" style="display:inline-block;background:#f67010;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px">Crear contraseña</a>
           </p>
           <p style="margin:0;font-size:13px;line-height:20px;color:rgba(251,251,251,.45)">Si el botón no funciona, abre este enlace en tu celular:</p>
           <p style="margin:8px 0 0;font-size:12px;line-height:18px;word-break:break-all">
@@ -138,7 +138,7 @@ export async function sendComercioInviteEmail(args: {
     body: JSON.stringify({
       from,
       to: [args.email],
-      subject: "Bienvenido a Allons Comercios",
+      subject: "Crea tu contraseña en Allons",
       html: buildComercioInviteHtml(args.metadata, inviteUrl),
     }),
   });

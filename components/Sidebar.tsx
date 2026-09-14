@@ -20,7 +20,7 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/overview", label: "Overview", icon: Gauge },
+  { href: "/overview", label: "Resumen", icon: Gauge },
   { href: "/providers", label: "Proveedores", icon: Store },
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/events", label: "Eventos", icon: Calendar },
@@ -90,9 +90,7 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
           <div className="text-sm font-semibold leading-tight uppercase tracking-[0.08em]">
             Allons Admin
           </div>
-          <div className="eyebrow">
-            Panel root
-          </div>
+          <div className="eyebrow">Interno</div>
         </div>
       </div>
 

@@ -11,9 +11,15 @@ type CookieToSet = { name: string; value: string; options?: CookieOptions };
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY - required to create Supabase server client. Check .env.local (see .env.example) and https://supabase.com/dashboard/project/_/settings/api",
+    );
+  }
+
+  return createServerClient(url, anonKey,
     {
       cookies: {
         getAll() {
@@ -25,7 +31,7 @@ export async function createSupabaseServerClient() {
               cookieStore.set(name, value, options as CookieOptions);
             });
           } catch {
-            // Server Components can't set cookies — middleware handles refresh.
+            // Server Components can't set cookies - middleware handles refresh.
           }
         },
       },
@@ -34,7 +40,7 @@ export async function createSupabaseServerClient() {
 }
 
 /**
- * Service-role client. Bypasses RLS — only ever call this from server code,
+ * Service-role client. Bypasses RLS - only ever call this from server code,
  * and only after you've verified the caller is a root admin.
  */
 export function createSupabaseServiceRoleClient() {
@@ -42,7 +48,7 @@ export function createSupabaseServiceRoleClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceRoleKey) {
     throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY — required for admin actions.",
+      "Missing SUPABASE_SERVICE_ROLE_KEY - required for admin actions.",
     );
   }
   return createClient(url, serviceRoleKey, {

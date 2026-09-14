@@ -1,4 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 export type AppRole = "client" | "provider" | "staff";
 export type ProviderStatus = "pending" | "approved" | "paused" | "suspended";
@@ -9,7 +11,7 @@ export interface AdminUserRecord {
   email: string;
   fullName: string | null;
   role: AppRole;
-  /** Supabase ban window — present means currently banned. */
+  /** Supabase ban window - present means currently banned. */
   bannedUntil: string | null;
   status: UserStatus;
   createdAt: string;
@@ -143,7 +145,7 @@ export async function getUserById(userId: string): Promise<AdminUserRecord | nul
   return toRecord(data.user);
 }
 
-export async function listAllUsers(): Promise<AdminUserRecord[]> {
+async function fetchAllUsersUncached(): Promise<AdminUserRecord[]> {
   const admin = createSupabaseServiceRoleClient();
   await repairAuthUsersForListing(admin);
   const all: AdminUserRecord[] = [];
@@ -160,3 +162,20 @@ export async function listAllUsers(): Promise<AdminUserRecord[]> {
   }
   return all;
 }
+
+// Cross-request cache: 30s stale-while-revalidate. Auth listUsers is ~300-500ms
+// per call and is used on 4+ pages (overview, providers, users, payments).
+// Without caching every navigation pays that cost, even though the user table
+// rarely changes. Mutations revalidate via `revalidateTag("admin-users")`.
+const cachedFetchAllUsers = unstable_cache(
+  fetchAllUsersUncached,
+  ["admin-users-v1"],
+  { revalidate: 30, tags: ["admin-users"] },
+);
+
+// Per-request dedupe (React cache) + cross-request ISR cache.
+// This means within a single RSC render, multiple callers share one promise,
+// and across navigations we serve stale cache instantly while revalidating in background.
+export const listAllUsers = cache(async (): Promise<AdminUserRecord[]> => {
+  return cachedFetchAllUsers();
+});

@@ -5,10 +5,10 @@ import { requireRootActor } from "@/lib/admin/getRootActor";
 import type { ProviderStatus } from "@/lib/admin/users";
 import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
-const BAN_FOREVER = "876600h"; // 100 years — Supabase requires a finite duration.
+const BAN_FOREVER = "876600h"; // 100 years - Supabase requires a finite duration.
 
 export async function setUserSuspended(formData: FormData) {
   const caller = await requireRootActor();
@@ -48,6 +48,7 @@ export async function setUserSuspended(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  revalidateTag("admin-users", "max");
   revalidatePath(revalidate);
 }
 
@@ -103,6 +104,7 @@ export async function setProviderStatusAction(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
+  revalidateTag("admin-users", "max");
   revalidatePath(revalidate);
 }
 
@@ -143,7 +145,7 @@ export async function setProviderPlanAction(formData: FormData) {
     subscriptionUpdatedAt: new Date().toISOString(),
   };
   if (plan === "pendiente") {
-    // No active plan — let the API derive trialing/expired from free_trial_end.
+    // No active plan - let the API derive trialing/expired from free_trial_end.
     delete merged.subscription_status;
     delete merged.subscription_period_end;
   } else {
@@ -172,6 +174,7 @@ export async function setProviderPlanAction(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
+  revalidateTag("admin-users", "max");
   revalidatePath(revalidate);
 }
 
@@ -179,7 +182,7 @@ export async function setProviderPlanAction(formData: FormData) {
  * Immediate cut: cancels a comercio's subscription right now (not at period end).
  * Sets `subscription_status='canceled'` and ends the term immediately so allons-api
  * and allons-mobile lock the account and show the paywall. Use for fraud, chargebacks
- * or ToS violations — the ordinary self-serve "cancelar al final del período" lives in
+ * or ToS violations - the ordinary self-serve "cancelar al final del período" lives in
  * the mobile app and keeps access until the term ends.
  */
 export async function cancelProviderSubscriptionAction(formData: FormData) {
@@ -232,6 +235,7 @@ export async function cancelProviderSubscriptionAction(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
+  revalidateTag("admin-users", "max");
   revalidatePath(revalidate);
 }
 
@@ -289,6 +293,7 @@ export async function setProviderPasarelaFeeAction(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
+  revalidateTag("admin-users", "max");
   revalidatePath(revalidate);
 }
 

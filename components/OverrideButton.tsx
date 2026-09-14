@@ -60,7 +60,7 @@ export function OverrideButton({
       <input
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Razón (requerida)"
+        placeholder="Por qué (obligatorio)"
         className="rounded border border-white/20 bg-black/40 px-2 py-1 text-[11px] text-white placeholder:text-muted"
       />
       {error && <span className="text-[10px] text-red-400">{error}</span>}

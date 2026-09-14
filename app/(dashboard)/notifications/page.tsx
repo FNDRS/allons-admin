@@ -29,7 +29,7 @@ export default function NotificationsPage() {
         tabs: ["eventos"] as AdminNotificationTab[],
         dedupeKey: dedupeKey.trim() || null,
       };
-      if (!payload.title) throw new Error("title es requerido");
+      if (!payload.title) throw new Error("Falta el título");
       await broadcastNotification(payload);
       setResult("Enviado");
       setTitle("");
@@ -45,7 +45,7 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Notificaciones"
-        description="Enviar una notificación a clientes o proveedores."
+        description="Aviso para clientes o comercios."
       />
 
       <section className="futuristic-panel p-5 space-y-4 max-w-3xl">
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
             placeholder="promo:2026-05"
           />
           <div className="text-xs text-muted">
-            Si la misma audiencia recibe de nuevo la misma dedupe key, no se duplica.
+            Si mandas la misma clave a la misma audiencia, no se duplica.
           </div>
         </label>
 

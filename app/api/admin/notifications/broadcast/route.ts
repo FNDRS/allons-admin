@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   // getRootActor() returns null (does not throw) for unauthenticated/non-root
-  // callers — the result MUST be checked. This endpoint forwards to the backend
+  // callers - the result MUST be checked. This endpoint forwards to the backend
   // using the trusted ADMIN_API_SECRET to broadcast to all clients/providers,
   // so an unguarded path is a platform-wide push-broadcast vector.
   if (!(await getRootActor())) {

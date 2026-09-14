@@ -5,7 +5,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 export type AuditOutcome = "success" | "failure";
 
 /**
- * Contrato estable para Finanzas / controles internos — mantener nomenclatura
+ * Contrato estable para Finanzas / controles internos - mantener nomenclatura
  * `dominio.verbo_detalle`. Ver docs/admin-audit-log.md .
  */
 export type AdminAuditAction =
@@ -101,7 +101,7 @@ export async function logAdminAudit(insert: AdminAuditInsert): Promise<void> {
     if (error) {
       if (error.code === "PGRST205" || error.code === "42P01") {
         console.warn(
-          "[audit] admin_audit_logs no existe — en allons-api ejecutar prisma migrate deploy.",
+          "[audit] admin_audit_logs no existe - en allons-api ejecutar prisma migrate deploy.",
         );
         return;
       }

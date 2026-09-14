@@ -43,7 +43,7 @@ function money(cents: number, currency = "HNL"): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -68,15 +68,19 @@ export default async function PaymentsPage({
   const status =
     params.status && params.status !== "all" ? params.status : undefined;
 
-  let data: Awaited<ReturnType<typeof listSubscriptionOrders>> | null = null;
-  let loadError: string | null = null;
-  try {
-    data = await listSubscriptionOrders(status ? { status } : undefined);
-  } catch (e) {
-    loadError = e instanceof Error ? e.message : "Error al cargar pagos";
-  }
-
-  const providers = await loadProviders();
+  // Parallelize: subscription orders + provider names (both hit different services).
+  // Before: await orders → await providers (waterfall ~400ms + ~30ms). Now: ~max(orders, providers).
+  const [ordersResult, providers] = await Promise.all([
+    listSubscriptionOrders(status ? { status } : undefined)
+      .then((d) => ({ data: d, error: null as string | null }))
+      .catch((e) => ({
+        data: null as Awaited<ReturnType<typeof listSubscriptionOrders>> | null,
+        error: e instanceof Error ? e.message : "Error al cargar pagos",
+      })),
+    loadProviders(),
+  ]);
+  const data = ordersResult.data;
+  const loadError = ordersResult.error;
   const nameByUserId = new Map(
     providers.map((p) => [p.id, p.brandName ?? p.fullName ?? p.email]),
   );
@@ -97,10 +101,8 @@ export default async function PaymentsPage({
       />
 
       <div className="mb-5 border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-white/55">
-        Vista de solo lectura. El cobro es{" "}
-        <strong className="text-white/80">self-serve</strong>: el comercio paga
-        su plan en la app vía Paygate (tarjeta validada) y se activa solo. Estos
-        registros son de control interno —{" "}
+        Solo lectura. El comercio paga su plan en la app (Paygate) y se activa
+        solo. Estos registros son de control interno:{" "}
         <strong className="text-white/80">no son comprobante fiscal</strong>{" "}
         (CAI/SAR).
       </div>
@@ -121,7 +123,7 @@ export default async function PaymentsPage({
           <p className="mt-1 text-2xl font-bold text-yellow-300">
             {totals.pendingCount}
           </p>
-          <p className="text-xs text-muted">checkouts sin completar</p>
+          <p className="text-xs text-muted">pagos sin terminar</p>
         </div>
       </div>
 
@@ -158,7 +160,7 @@ export default async function PaymentsPage({
           <div>Monto</div>
           <div>Estado</div>
           <div>Fecha</div>
-          <div className="text-right">—</div>
+          <div className="text-right" />
         </div>
 
         {loadError ? (

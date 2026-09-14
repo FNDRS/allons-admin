@@ -65,7 +65,7 @@ function buildTrackingUrl(baseUrl: string, slug: string) {
 }
 
 function formatDate(date: string | null) {
-  if (!date) return "—";
+  if (!date) return "-";
   return new Date(date).toLocaleString("es-HN", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -303,7 +303,7 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
       setSetupHints(okData.setupRequired ? okData.setupHints : null);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Ocurrió un error inesperado.",
+        err instanceof Error ? err.message : "Algo salió mal.",
       );
     } finally {
       setLoading(false);
@@ -406,8 +406,7 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
       <header>
         <h1 className="text-2xl font-semibold">Waitlist QR</h1>
         <p className="mt-1 text-sm text-muted">
-          Crea fuentes QR por ubicación y rastrea cuántos registros llegan desde
-          cada código.
+          Un QR por lugar. Acá ves cuántos se registran desde cada uno.
         </p>
       </header>
 
@@ -442,7 +441,7 @@ export function WaitlistQrManager({ waitlistBaseUrl }: Props) {
           </div>
           <div className="border border-white/10 bg-surfaceMuted/40 p-3">
             <div className="eyebrow">
-              Fuentes detectadas externas
+              Fuentes externas
             </div>
             <div className="mt-1 text-2xl font-bold">{discovered.length}</div>
           </div>

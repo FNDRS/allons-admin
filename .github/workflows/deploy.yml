@@ -1,0 +1,163 @@
+name: Deploy Admin (AWS App Runner)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: ${{ github.ref_name == 'main' }}
+
+    env:
+      # Mismo region que la API y que Supabase (us-west-2) para que
+      # ADMIN_API_BASE_URL → api.allonsapp.com sea <10ms y no cruce el país.
+      AWS_REGION: us-west-2
+      ECR_REPOSITORY: allons-admin
+      APP_RUNNER_SERVICE_NAME: allons-admin
+      APP_RUNNER_SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN_ADMIN }}
+      ADMIN_API_SECRET: ${{ secrets.ADMIN_API_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::851725556357:role/GitHubActionsAllonsApiDeploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve App Runner service ARN
+        id: apprunner
+        run: |
+          if [ -n "$APP_RUNNER_SERVICE_ARN" ]; then
+            ARN_REGION=$(echo "$APP_RUNNER_SERVICE_ARN" | cut -d: -f4)
+            if [ "$ARN_REGION" != "$AWS_REGION" ]; then
+              echo "APP_RUNNER_SERVICE_ARN_ADMIN is in '$ARN_REGION' but deploy targets '$AWS_REGION'." >&2
+              exit 1
+            fi
+            echo "service_arn=$APP_RUNNER_SERVICE_ARN" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          SERVICE_ARN=$(aws apprunner list-services \
+            --region "$AWS_REGION" \
+            --query "ServiceSummaryList[?ServiceName=='$APP_RUNNER_SERVICE_NAME'].ServiceArn | [0]" \
+            --output text 2>&1)
+          STATUS=$?
+          set -e
+          if [ $STATUS -ne 0 ]; then
+            echo "$SERVICE_ARN" >&2
+            echo "1) Add secret APP_RUNNER_SERVICE_ARN_ADMIN or 2) Grant apprunner:ListServices" >&2
+            exit $STATUS
+          fi
+          if [ -z "$SERVICE_ARN" ] || [ "$SERVICE_ARN" = "None" ]; then
+            echo "App Runner service '$APP_RUNNER_SERVICE_NAME' not found in $AWS_REGION" >&2
+            echo "Create it first (ECR repo $ECR_REPOSITORY, port 3001, region $AWS_REGION)." >&2
+            exit 1
+          fi
+          echo "service_arn=$SERVICE_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Preflight — check required secrets
+        run: |
+          if [ -z "$ADMIN_API_SECRET" ]; then
+            echo "Missing secret ADMIN_API_SECRET" >&2; exit 1
+          fi
+          SERVICE_ARN="${{ steps.apprunner.outputs.service_arn }}"
+          CURRENT_ENV=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query "Service.SourceConfiguration.ImageRepository.ImageConfiguration.RuntimeEnvironmentVariables" --output json)
+          for k in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY ADMIN_API_BASE_URL; do
+            if ! echo "$CURRENT_ENV" | jq -e --arg k "$k" 'has($k)' >/dev/null; then
+              echo "WARN: runtime env $k not set on App Runner service (set it before deploy)." >&2
+            fi
+          done
+
+      - name: Wait for App Runner to be stable before update
+        run: |
+          SERVICE_ARN="${{ steps.apprunner.outputs.service_arn }}"
+          for i in $(seq 1 40); do
+            STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query "Service.Status" --output text)
+            echo "Pre-update status: $STATUS"
+            [ "$STATUS" = "RUNNING" ] && exit 0
+            [[ "$STATUS" = "CREATE_FAILED" || "$STATUS" = "DELETE_FAILED" ]] && exit 1
+            sleep 15
+          done
+          exit 1
+
+      - name: Build, tag, and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # NEXT_PUBLIC_* se bakea en el build (Next lo incrusta en el JS del browser).
+          # Se pasan como --build-arg desde los secrets de GitHub.
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --build-arg NEXT_PUBLIC_WAITLIST_BASE_URL="${{ secrets.NEXT_PUBLIC_WAITLIST_BASE_URL }}" \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update App Runner service to new image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          SERVICE_ARN="${{ steps.apprunner.outputs.service_arn }}"
+          # App Runner REPLAZA todo RuntimeEnvironmentVariables, así que hay que
+          # leer las existentes y reenviarlas completas + ADMIN_API_SECRET actualizado.
+          CURRENT_ENV=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query "Service.SourceConfiguration.ImageRepository.ImageConfiguration.RuntimeEnvironmentVariables" --output json)
+          ENV_JSON=$(echo "$CURRENT_ENV" | jq -c --arg s "$ADMIN_API_SECRET" '. + {ADMIN_API_SECRET: $s}')
+          SOURCE_CONFIGURATION=$(jq -cn \
+            --arg img "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            --argjson env "$ENV_JSON" \
+            '{
+              ImageRepository: {
+                ImageIdentifier: $img,
+                ImageRepositoryType: "ECR",
+                ImageConfiguration: { Port: "3001", RuntimeEnvironmentVariables: $env }
+              },
+              AuthenticationConfiguration: { AccessRoleArn: "arn:aws:iam::851725556357:role/AppRunnerECRAccessRole-allons-admin" },
+              AutoDeploymentsEnabled: false
+            }')
+          for i in $(seq 1 8); do
+            set +e
+            OUT=$(aws apprunner update-service --service-arn "$SERVICE_ARN" --source-configuration "$SOURCE_CONFIGURATION" 2>&1)
+            STATUS=$?
+            set -e
+            [ $STATUS -eq 0 ] && echo "$OUT" && exit 0
+            echo "$OUT"
+            echo "$OUT" | rg -q "InvalidStateException|OPERATION_IN_PROGRESS" && sleep 20 && continue
+            exit $STATUS
+          done
+          exit 1
+
+      - name: Wait for App Runner to become RUNNING
+        run: |
+          SERVICE_ARN="${{ steps.apprunner.outputs.service_arn }}"
+          for i in $(seq 1 60); do
+            STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query "Service.Status" --output text)
+            echo "Status: $STATUS"
+            [ "$STATUS" = "RUNNING" ] && exit 0
+            [[ "$STATUS" = "CREATE_FAILED" || "$STATUS" = "DELETE_FAILED" ]] && exit 1
+            sleep 15
+          done
+          exit 1

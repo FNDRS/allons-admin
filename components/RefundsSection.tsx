@@ -146,7 +146,7 @@ export function RefundsSection() {
         <div className="futuristic-panel p-6 text-center text-sm text-muted">
           {statusFilter
             ? `No hay reembolsos en estado "${REFUND_STATUS_LABEL[statusFilter]}".`
-            : "No hay reembolsos registrados."}
+            : "No hay reembolsos."}
         </div>
       ) : (
         <div className="futuristic-panel overflow-hidden">
@@ -204,17 +204,17 @@ export function RefundsSection() {
                         hour: "2-digit",
                         minute: "2-digit",
                       })
-                    : "—"}
+                    : "-"}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted">
                   <div title={row.paymentOrderId}>
-                    Order: {row.paymentOrderId.slice(0, 8)}…
+                    Orden: {row.paymentOrderId.slice(0, 8)}…
                   </div>
                   <div
                     className="text-white/40"
                     title={row.paygatePaymentId ?? ""}
                   >
-                    Paygate: {row.paygatePaymentId ?? "—"}
+                    Paygate: {row.paygatePaymentId ?? "-"}
                   </div>
                 </div>
               </div>

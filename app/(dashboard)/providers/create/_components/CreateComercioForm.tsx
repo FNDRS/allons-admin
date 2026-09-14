@@ -9,8 +9,6 @@ import {
 } from "@/lib/commissionTiers";
 
 const EXAMPLE_TICKET = 1000;
-/** Precio por usuario staff adicional (plan Evento Único). */
-const STAFF_USER_ADDON_LPS = 200;
 
 const BUSINESS_TYPES = [
   { value: "ong", label: "ONG / Sin fines de lucro", defaultPct: 2 },
@@ -20,44 +18,6 @@ const BUSINESS_TYPES = [
 ] as const;
 
 type BusinessType = (typeof BUSINESS_TYPES)[number]["value"];
-
-const PLANS = [
-  {
-    id: "single_event",
-    name: "Evento Único",
-    price: 2500,
-    period: "/año",
-    tagline: "Para un único evento al año",
-    features: [
-      "1 evento activo",
-      "Tickets ilimitados",
-      `L. ${STAFF_USER_ADDON_LPS.toLocaleString("es-HN")} por nuevo usuario`,
-    ],
-  },
-  {
-    id: "basico",
-    name: "Básico",
-    price: 499,
-    period: "/mes",
-    tagline: "Estudios pequeños, bares y comercios locales",
-    features: [
-      "Hasta 4 eventos activos",
-      "Hasta 500 tickets por evento",
-      "Soporte por correo",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 1499,
-    period: "/mes",
-    tagline: "Para empresas y tecnología",
-    features: [
-      "Eventos y tickets ilimitados",
-      "Soporte WhatsApp + email",
-    ],
-  },
-] as const;
 
 const COLOR_OPTIONS = [
   "#F67010",
@@ -89,7 +49,6 @@ function applyFormValues(
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
     setPasarelaFeePct: (v: string) => void;
-    setPlan: (v: string) => void;
   },
 ) {
   setters.setFullName(values.fullName);
@@ -101,7 +60,6 @@ function applyFormValues(
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
   setters.setPasarelaFeePct(values.pasarelaFeePct);
-  setters.setPlan(values.subscriptionPlan);
 }
 
 export function CreateComercioForm() {
@@ -125,9 +83,6 @@ export function CreateComercioForm() {
   const [contractPreview, setContractPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Subscription ──
-  const [plan, setPlan] = useState<string>("pendiente");
-
   useEffect(() => {
     if (!state?.values) return;
     applyFormValues(state.values, {
@@ -140,7 +95,6 @@ export function CreateComercioForm() {
       setBusinessType,
       setBrandColor,
       setPasarelaFeePct,
-      setPlan,
     });
   }, [state]);
 
@@ -179,16 +133,6 @@ export function CreateComercioForm() {
     },
     [],
   );
-
-  const freeTrialEnd = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 6);
-    return d.toLocaleDateString("es-HN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  }, []);
 
   const inputCls =
     "w-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none rounded-lg";
@@ -253,9 +197,8 @@ export function CreateComercioForm() {
           </div>
 
           <div className="rounded-lg border border-white/8 bg-white/[0.02] p-3 text-xs leading-relaxed text-white/55">
-            Al crear el comercio, Supabase envía al correo un enlace de
-            invitación. El comercio fija su propia contraseña al ingresar — no
-            se comparten credenciales por separado.
+            Al crear el comercio se manda un enlace de invitación al correo.
+            Ahí eligen su contraseña. No mandamos una clave aparte.
           </div>
         </div>
       </section>
@@ -379,7 +322,7 @@ export function CreateComercioForm() {
 
       {/* ── PASARELA & CONTRATO ── */}
       <section className="futuristic-panel space-y-5 p-6">
-        <p className="eyebrow">Pasarela (Clinpays / banco) & Contrato</p>
+        <p className="eyebrow">Pasarela y contrato</p>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
@@ -457,94 +400,13 @@ export function CreateComercioForm() {
         </div>
       </section>
 
-      {/* ── SUSCRIPCIÓN ── */}
-      <section className="futuristic-panel space-y-5 p-6">
-        <p className="eyebrow">Suscripción</p>
-
-        <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-sm text-white/70">
-          🎁 <strong className="text-white">6 meses gratis</strong> a partir de hoy ·
-          Primer cobro estimado:{" "}
-          <strong className="text-white">{freeTrialEnd}</strong>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLANS.map((p) => (
-            <label
-              key={p.id}
-              className={`flex cursor-pointer flex-col gap-3 rounded-xl border p-5 transition ${
-                plan === p.id
-                  ? "border-orange-500/50 bg-orange-500/8"
-                  : "border-white/10 bg-white/[0.02] hover:border-white/20"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="subscriptionPlan"
-                      value={p.id}
-                      checked={plan === p.id}
-                      onChange={() => setPlan(p.id)}
-                      className="accent-orange-500"
-                    />
-                    <p className="font-bold text-white">{p.name}</p>
-                  </div>
-                  <p className="mt-0.5 text-xs text-white/40">{p.tagline}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-white">L. {p.price}</p>
-                  <p className="text-xs text-white/40">{p.period}</p>
-                </div>
-              </div>
-              <ul className="space-y-1.5">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-xs text-white/55">
-                    <span
-                      className={plan === p.id ? "text-orange-400" : "text-white/25"}
-                    >
-                      ✓
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </label>
-          ))}
-        </div>
-
-        <label
-          className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-            plan === "pendiente"
-              ? "border-orange-500/50 bg-orange-500/8"
-              : "border-white/10 bg-white/[0.02] hover:border-white/20"
-          }`}
-        >
-          <input
-            type="radio"
-            name="subscriptionPlan"
-            value="pendiente"
-            checked={plan === "pendiente"}
-            onChange={() => setPlan("pendiente")}
-            className="accent-orange-500"
-          />
-          <div>
-            <p className="font-semibold text-white">Decidir después</p>
-            <p className="text-xs text-white/40">
-              El comercio elige su plan al finalizar los 6 meses gratis
-            </p>
-          </div>
-        </label>
-      </section>
-
       {/* ── COMISIÓN POR PLAN ── */}
       <section className="futuristic-panel p-6">
         <p className="eyebrow mb-4">Comisión por plan</p>
         <p className="mb-4 text-xs leading-relaxed text-white/45">
-          La comisión combina la base de Allons (según el plan del comercio: los
-          planes con más volumen pagan menos) más la pasarela de este comercio
-          ({parsedPasarela}%). Total = base + pasarela. Se cobra automáticamente
-          por ticket.
+          La comisión es la base de Allons (según el plan: más volumen, menos %)
+          más la pasarela de este comercio ({parsedPasarela}%). Total = base +
+          pasarela. Se cobra por ticket.
         </p>
 
         <div className="overflow-x-auto rounded-lg border border-white/8 bg-white/[0.02]">
@@ -561,9 +423,7 @@ export function CreateComercioForm() {
             {PLAN_COMMISSIONS.map((p) => (
               <div
                 key={p.plan}
-                className={`grid min-w-[420px] items-center px-4 py-3 ${
-                  plan === p.plan ? "bg-orange-500/8" : ""
-                }`}
+                className="grid min-w-[420px] items-center px-4 py-3"
                 style={{ gridTemplateColumns: "1.6fr 0.8fr 0.8fr 0.8fr" }}
               >
                 <span className="font-semibold text-white">{p.name}</span>
@@ -588,13 +448,13 @@ export function CreateComercioForm() {
 
         <div className="mt-4 space-y-1.5 rounded-lg border border-white/6 bg-white/[0.02] p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/35">
-            Costos adicionales a considerar
+            Otros costos
           </p>
           {[
             "Chargebacks: ~$25 USD por disputa perdida (cargo del banco).",
-            "Tarjetas internacionales: +1–3% adicional (varía por banco).",
+            "Tarjetas internacionales: +1-3% extra (según el banco).",
             "ISR sobre pagos: posible retención del 12.5% si el organizador supera L. 5,000/mes.",
-            "Liquidación: fondos disponibles 3–7 días hábiles después del evento.",
+            "Liquidación: fondos disponibles 3-7 días hábiles después del evento.",
             "Reembolsos: la comisión de la pasarela no se devuelve en casos de reembolso.",
           ].map((note) => (
             <p key={note} className="text-xs text-white/35">

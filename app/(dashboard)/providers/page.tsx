@@ -60,9 +60,9 @@ function subscriptionSummary(p: AdminUserRecord): string {
 }
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -134,15 +134,15 @@ export default async function ProvidersPage({
 
       {params.created ? (
         <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-          ✓ Comercio <strong>{params.created}</strong> creado correctamente. Apruébalo
-          cuando el equipo haya verificado los datos.
+          Comercio <strong>{params.created}</strong> creado. Apruébalo cuando
+          hayas revisado los datos.
           {params.invite === "invited" ? (
             <div className="mt-1 text-xs text-green-300/80">
-              Supabase envió un enlace de invitación al correo del comercio.
+              Se mandó un enlace de invitación al correo del comercio.
             </div>
           ) : params.invite === "existing" ? (
             <div className="mt-1 text-xs text-yellow-300/80">
-              ⚠ Ya existía una cuenta con ese correo — se actualizaron los metadatos pero no se envió invitación.
+              Ya había una cuenta con ese correo. Se actualizaron los metadatos y no se mandó invitación.
             </div>
           ) : null}
         </div>
@@ -150,19 +150,19 @@ export default async function ProvidersPage({
 
       {params.resent === "ok" ? (
         <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-          ✓ Invitación reenviada a <strong>{params.email}</strong>.
+          Invitación reenviada a <strong>{params.email}</strong>.
         </div>
       ) : params.resent === "already_confirmed" ? (
         <div className="mb-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
-          El usuario ya aceptó la invitación previa — no se reenvió. Si perdió el acceso, usa el flujo de recuperación de contraseña.
+          Ya aceptó la invitación anterior, así que no se reenvió. Si perdió el acceso, usa recuperar contraseña.
         </div>
       ) : params.resent === "failed" ? (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          ⚠ No se pudo reenviar la invitación{params.reason ? `: ${params.reason}` : "."}
+          No se pudo reenviar la invitación{params.reason ? `: ${params.reason}` : "."}
         </div>
       ) : params.resent === "missing_email" ? (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          ⚠ El usuario no tiene correo registrado.
+          El usuario no tiene correo registrado.
         </div>
       ) : null}
 

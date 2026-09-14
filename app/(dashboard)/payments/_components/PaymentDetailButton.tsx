@@ -26,9 +26,9 @@ function money(cents: number, currency = "HNL"): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "long",
@@ -139,9 +139,9 @@ export function PaymentDetailButton({
 
             <div className="border-t border-white/10 px-7 py-4">
               <p className="text-[10px] leading-relaxed text-white/35">
-                Cobro self-serve vía Paygate (tarjeta validada). Documento de
-                control interno — no es comprobante fiscal (CAI/SAR); el PDF y la
-                numeración fiscal formal son un paso aparte.
+                Cobro por Paygate con tarjeta validada. Documento de control
+                interno: no es comprobante fiscal (CAI/SAR). El PDF y la
+                numeración fiscal van aparte.
               </p>
               <button
                 type="button"

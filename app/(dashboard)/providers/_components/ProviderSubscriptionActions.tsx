@@ -5,7 +5,7 @@ import { cancelProviderSubscriptionAction } from "@/lib/admin/actions";
 /**
  * Subscription/account-level controls for a comercio: export its data and the
  * immediate cut (cancel access now). The ordinary cancel-at-period-end is
- * self-serve in the mobile app — this cut is for fraud / chargeback / ToS.
+ * self-serve in the mobile app - this cut is for fraud / chargeback / ToS.
  */
 export function ProviderSubscriptionActions({
   userId,

@@ -26,13 +26,13 @@ async function RefundsSummaryCards() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Pagado (30 d)"
-          value="—"
+          value="-"
           hint="Error al cargar"
           icon={CircleDollarSign}
         />
-        <KpiCard label="Pendientes" value="—" hint="Error" icon={Hourglass} />
-        <KpiCard label="Fallidos" value="—" hint="Error" icon={AlertTriangle} />
-        <KpiCard label="Total" value="—" hint="Error" icon={Receipt} />
+        <KpiCard label="Pendientes" value="-" hint="Error" icon={Hourglass} />
+        <KpiCard label="Fallidos" value="-" hint="Error" icon={AlertTriangle} />
+        <KpiCard label="Total" value="-" hint="Error" icon={Receipt} />
       </section>
     );
   }
@@ -54,13 +54,13 @@ async function RefundsSummaryCards() {
       <KpiCard
         label="Pendientes"
         value={String(pending)}
-        hint="Solicitados o aprobados sin pagar"
+        hint="Pedidos o aprobados, aún sin pagar"
         icon={Hourglass}
       />
       <KpiCard
         label="Fallidos"
         value={String(failed)}
-        hint="Requieren intervención manual"
+        hint="Hay que resolverlos a mano"
         icon={AlertTriangle}
       />
       <KpiCard
@@ -78,9 +78,9 @@ function DisputesPanel() {
     <div className="futuristic-panel p-6">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="eyebrow mb-1">Disputas / Chargebacks</div>
+          <div className="eyebrow mb-1">Disputas / chargebacks</div>
           <div className="text-sm text-white/80">
-            Casos abiertos con el banco vía Paygate
+            Casos abiertos con el banco, vía Paygate
           </div>
         </div>
         <div className="flex h-7 w-7 items-center justify-center border border-white/15">
@@ -89,13 +89,12 @@ function DisputesPanel() {
       </div>
       <div className="mt-6 border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center text-sm text-muted">
         <div className="font-semibold text-white/80">
-          Sin integración activa
+          Paygate aún no manda disputas
         </div>
         <div className="mt-2 leading-relaxed">
-          Paygate todavía no envía webhooks de disputa/chargeback. Cuando lo
-          habiliten, los casos abiertos aparecerán acá con monto, motivo y
-          fecha límite de respuesta. Mientras tanto el banco notifica por
-          correo y el equipo de ops lo registra manualmente.
+          Cuando habiliten el webhook, los casos salen acá con monto, motivo y
+          fecha límite. Mientras tanto el banco avisa por correo y ops lo
+          anota a mano.
         </div>
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3 text-center">
@@ -120,9 +119,8 @@ export default function RefundsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Tesorería"
         title="Reembolsos y disputas"
-        description="Reembolsos solicitados desde la app y chargebacks abiertos con el banco."
+        description="Pedidos desde la app y disputas con el banco."
       />
 
       <Suspense

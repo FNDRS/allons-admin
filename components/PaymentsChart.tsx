@@ -70,7 +70,7 @@ export function PaymentsChart({
 
   return (
     <div className="futuristic-panel mt-4 p-5">
-      <div className="eyebrow mb-4">Pagos por día (30d)</div>
+      <div className="eyebrow mb-4">Pagos por día, 30 d</div>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart
           data={chartData}

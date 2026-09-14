@@ -12,8 +12,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - .well-known (browser/app metadata endpoints)
+     * - login / api/auth (public, no Supabase needed)
      * - file-extension paths (assets like .json, .svg, .png, etc)
      */
-    "/((?!_next/static|_next/image|\\.well-known|.*\\.[a-zA-Z0-9]+$).*)",
+    "/((?!_next/static|_next/image|\\.well-known|login|api/auth|.*\\.[a-zA-Z0-9]+$).*)",
   ],
 };

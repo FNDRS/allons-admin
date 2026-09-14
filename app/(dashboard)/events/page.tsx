@@ -39,9 +39,9 @@ const STATUS_VARIANT: Record<
 };
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -124,19 +124,19 @@ export default async function EventsPage({
             <KpiCard
               label="Publicados"
               value={summary.published.toLocaleString()}
-              hint="En el feed del cliente"
+              hint="En el feed"
               icon={Calendar}
             />
             <KpiCard
               label="Agotados"
               value={summary.soldOut.toLocaleString()}
-              hint="Con tickets vendidos"
+              hint="Sin cupos"
               icon={Ticket}
             />
             <KpiCard
-              label="Capacidad combinada"
+              label="Aforo total"
               value={summary.capacity.toLocaleString()}
-              hint="Suma de aforo"
+              hint="Suma de cupos"
               icon={Users}
             />
           </section>
@@ -231,7 +231,7 @@ function EventRow({ event }: { event: AdminEventListItem }) {
       </div>
       <div className="min-w-0">
         <div className="truncate text-sm">
-          {event.provider?.name ?? "—"}
+          {event.provider?.name ?? "-"}
         </div>
         {event.provider?.handle ? (
           <div className="truncate text-xs text-muted">
@@ -268,7 +268,7 @@ function ConnectionWarning({ message }: { message: string }) {
       </div>
       <div>
         <h2 className="text-lg font-bold uppercase tracking-tight">
-          No se pudo conectar al admin API
+          No hay conexión con la API
         </h2>
         <p className="mt-2 max-w-md text-sm text-muted">{message}</p>
       </div>

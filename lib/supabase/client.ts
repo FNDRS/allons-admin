@@ -3,8 +3,12 @@
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createSupabaseBrowserClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY - required to create Supabase browser client. Check .env.local (see .env.example) and https://supabase.com/dashboard/project/_/settings/api",
+    );
+  }
+  return createBrowserClient(url, anonKey);
 }

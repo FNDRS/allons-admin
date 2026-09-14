@@ -109,9 +109,9 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
 };
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -120,9 +120,9 @@ function formatDate(iso: string | null) {
 }
 
 function formatDateTime(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -305,13 +305,13 @@ export default async function ProviderDetailPage({
           <InfoItem label="Correo" value={providerUser.email} />
           <InfoItem
             label="Handle"
-            value={providerUser.brandHandle ?? provider?.handle ?? "—"}
+            value={providerUser.brandHandle ?? provider?.handle ?? "-"}
           />
           <InfoItem label="Estado comercio" value={STATUS_LABEL[status]} />
           <InfoItem label="Plan" value={PLAN_LABEL[providerUser.subscriptionPlan ?? "pendiente"] ?? "Prueba"} />
           <InfoItem
             label="Estado suscripción"
-            value={providerUser.subscriptionStatus ?? "—"}
+            value={providerUser.subscriptionStatus ?? "-"}
           />
           <InfoItem
             label="Fin de prueba"
@@ -335,7 +335,7 @@ export default async function ProviderDetailPage({
               />
               <InfoItem
                 label="Sitio web"
-                value={provider.websiteUrl ?? "—"}
+                value={provider.websiteUrl ?? "-"}
               />
             </>
           ) : null}
@@ -349,7 +349,7 @@ export default async function ProviderDetailPage({
         <dl className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InfoItem
             label="Tipo de negocio"
-            value={BUSINESS_TYPE_LABEL[providerUser.businessType ?? ""] ?? "—"}
+            value={BUSINESS_TYPE_LABEL[providerUser.businessType ?? ""] ?? "-"}
           />
           <InfoItem
             label="Pasarela (Clinpays / banco)"
@@ -462,7 +462,7 @@ export default async function ProviderDetailPage({
                       {formatDateTime(ev.startsAt)}
                     </td>
                     <td className="py-2.5 pr-4 text-xs text-muted">
-                      {ev.city ?? "—"}
+                      {ev.city ?? "-"}
                     </td>
                     <td className="py-2.5 text-right tabular-nums">
                       {ev.capacity.toLocaleString()}
@@ -592,7 +592,7 @@ export default async function ProviderDetailPage({
                       />
                     </td>
                     <td className="py-2.5 pr-4 text-xs text-muted">
-                      {row.actorEmail ?? "—"}
+                      {row.actorEmail ?? "-"}
                     </td>
                     <td className="py-2.5 text-xs text-white/60">
                       {auditSummary(row)}

@@ -120,7 +120,7 @@ export function OrdersSection() {
         <div className="futuristic-panel p-6 text-center text-sm text-red-400">{error}</div>
       ) : orders.length === 0 ? (
         <div className="futuristic-panel p-6 text-center text-sm text-muted">
-          {statusFilter ? `No hay órdenes con estado "${ORDER_STATUS_LABEL[statusFilter]}"` : "No hay órdenes registradas."}
+          {statusFilter ? `No hay órdenes con estado "${ORDER_STATUS_LABEL[statusFilter]}"` : "No hay órdenes."}
         </div>
       ) : (
         <div className="futuristic-panel overflow-hidden">

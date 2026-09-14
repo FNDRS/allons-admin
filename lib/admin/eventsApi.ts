@@ -2,7 +2,7 @@
  * Server-side helpers for talking to the admin endpoints in `allons-api`.
  *
  * `ADMIN_API_BASE_URL` and `ADMIN_API_SECRET` must be set in the environment
- * (server-only — never reference these from a client component).
+ * (server-only - never reference these from a client component).
  */
 
 export interface AdminEventListItem {
@@ -58,8 +58,8 @@ export interface AdminEventListFilters {
 export interface AdminOverviewMetricsResponse {
   activeEvents: number;
   tickets30d: number;
-  posthogErrors30d: number | null;
-  gmv30d: number | null;
+  posthogErrors30d?: number | null;
+  gmv30d?: number | null;
   totalEvents?: number;
 }
 
@@ -217,6 +217,24 @@ export function getAdminPlatformStatus() {
     method: "GET",
   });
 }
+
+// Cached variants - 30s ISR. Overview metrics are 3 Prisma counts + Paygate
+// health; without cache every navigation pays ~50-150ms (local) or 300-600ms
+// (cross-region prod) for data that changes slowly. Pages keep
+// `dynamic = "force-dynamic"` (auth gate) but data is stale-while-revalidate.
+import { unstable_cache as _unstable_cache } from "next/cache";
+
+export const getAdminOverviewMetricsCached = _unstable_cache(
+  getAdminOverviewMetrics,
+  ["admin:overview-metrics-v1"],
+  { revalidate: 30, tags: ["admin-overview"] },
+);
+
+export const getAdminPlatformStatusCached = _unstable_cache(
+  getAdminPlatformStatus,
+  ["admin:platform-status-v1"],
+  { revalidate: 30, tags: ["admin-platform"] },
+);
 
 export function isValidAdminEventStatus(value: string): value is AdminEventStatus {
   return (ALLOWED_STATUSES as readonly string[]).includes(value);

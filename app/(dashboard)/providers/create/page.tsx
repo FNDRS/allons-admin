@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { CreateComercioForm } from "./_components/CreateComercioForm";
 
-export const metadata = { title: "Nuevo Comercio — Allons Admin" };
+export const metadata = { title: "Nuevo Comercio | Allons Admin" };
 
 export default function CreateComercioPage() {
   return (
@@ -9,7 +9,7 @@ export default function CreateComercioPage() {
       <PageHeader
         eyebrow="Comercios"
         title="Nuevo Comercio"
-        description="Crea la cuenta de un nuevo proveedor. Recibirán una contraseña temporal que deben cambiar al primer acceso."
+        description="Alta de un comercio. Se manda un enlace de invitación al correo."
       />
       <CreateComercioForm />
     </div>

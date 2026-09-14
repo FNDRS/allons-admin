@@ -33,7 +33,7 @@ interface WaitlistPersonRow {
 }
 
 function formatDate(date: string | null) {
-  if (!date) return "—";
+  if (!date) return "-";
   return new Date(date).toLocaleString("es-HN", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -196,7 +196,7 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
                   >
                     <td className="px-3 py-2">{person.email}</td>
                     <td className="px-3 py-2">{formatDate(person.created_at)}</td>
-                    <td className="px-3 py-2 text-muted">{person.referer ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted">{person.referer ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>

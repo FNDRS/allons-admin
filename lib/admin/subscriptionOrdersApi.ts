@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Read-only subscription payments. Server-only — calls allons-api
+ * Read-only subscription payments. Server-only - calls allons-api
  * `/admin/subscription-orders` with the shared admin secret.
  */
 function getEnv() {

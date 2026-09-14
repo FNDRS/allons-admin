@@ -45,4 +45,4 @@ Sondeo superficial de valores relevantes cuando es barato obtenerlos (ej. estado
 
 ## Retención
 
-Definido por **Legal / Finanzas** (duración típica 1–7 años para trazabilidad organizacional). Esta tabla puede crecer: planificar purga/export archivado bajo proceso documentado fuera del SQL.
+Definido por **Legal / Finanzas** (duración típica 1-7 años para trazabilidad organizacional). Esta tabla puede crecer: planificar purga/export archivado bajo proceso documentado fuera del SQL.

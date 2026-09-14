@@ -55,9 +55,9 @@ const ORDER_STATUS_VARIANT: Record<
 };
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -66,9 +66,9 @@ function formatDate(iso: string | null) {
 }
 
 function formatDateTime(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString("es-HN", {
     day: "2-digit",
     month: "short",
@@ -189,18 +189,18 @@ export default async function EventDetailPage({
           <InfoItem label="Estado" value={STATUS_LABEL[status] ?? status} />
           <InfoItem label="Inicio" value={formatDateTime(event.startsAt)} />
           <InfoItem label="Fin" value={formatDateTime(event.endsAt)} />
-          <InfoItem label="Ciudad" value={event.city ?? "—"} />
-          <InfoItem label="Lugar" value={event.venue ?? "—"} />
-          <InfoItem label="Dirección" value={event.address ?? "—"} />
+          <InfoItem label="Ciudad" value={event.city ?? "-"} />
+          <InfoItem label="Lugar" value={event.venue ?? "-"} />
+          <InfoItem label="Dirección" value={event.address ?? "-"} />
           <InfoItem label="Modo tickets" value={event.ticketMode} />
-          <InfoItem label="Recurrencia" value={event.recurrence ?? "—"} />
+          <InfoItem label="Recurrencia" value={event.recurrence ?? "-"} />
           <InfoItem
             label="Edad mínima"
-            value={event.minAge != null ? `${event.minAge}+` : "—"}
+            value={event.minAge != null ? `${event.minAge}+` : "-"}
           />
           <InfoItem
             label="Comercio"
-            value={event.provider?.name ?? "—"}
+            value={event.provider?.name ?? "-"}
           />
           <InfoItem label="Creado" value={formatDate(event.createdAt)} />
           <InfoItem label="Actualizado" value={formatDate(event.updatedAt)} />
@@ -336,7 +336,7 @@ export default async function EventDetailPage({
                       />
                     </td>
                     <td className="py-2.5 pr-4 text-xs text-muted">
-                      {row.actorEmail ?? "—"}
+                      {row.actorEmail ?? "-"}
                     </td>
                     <td className="py-2.5 text-xs text-white/60">
                       {row.stateAfter.status

@@ -39,10 +39,10 @@ async function PaymentsSummaryCards() {
   } catch {
     return (
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="GMV (30 d)" value="—" hint="Error al cargar" icon={CircleDollarSign} />
-        <KpiCard label="Fee plataforma" value="—" hint="Error al cargar" icon={CreditCard} />
-        <KpiCard label="Pagado a proveedores" value="—" hint="Error al cargar" icon={ArrowUpRight} />
-        <KpiCard label="Saldo pendiente" value="—" hint="Error al cargar" icon={Wallet} />
+        <KpiCard label="GMV (30 d)" value="-" hint="Error al cargar" icon={CircleDollarSign} />
+        <KpiCard label="Comisión Allons" value="-" hint="Error al cargar" icon={CreditCard} />
+        <KpiCard label="Pagado a comercios" value="-" hint="Error al cargar" icon={ArrowUpRight} />
+        <KpiCard label="Órdenes pagadas" value="-" hint="Error al cargar" icon={Wallet} />
       </section>
     );
   }
@@ -68,15 +68,15 @@ async function PaymentsSummaryCards() {
           icon={CircleDollarSign}
         />
         <KpiCard
-          label="Fee plataforma"
+          label="Comisión Allons"
           value={formatCurrency(feeCents / 100)}
           hint={`~${platformFeePct.toFixed(1)}% del GMV · comisión base estimada`}
           icon={CreditCard}
         />
         <KpiCard
-          label="Pagado a proveedores"
+          label="Pagado a comercios"
           value={formatCurrency(paidCents / 100)}
-          hint="Payouts completados"
+          hint="Retiros hechos"
           icon={ArrowUpRight}
         />
         <KpiCard
@@ -87,7 +87,7 @@ async function PaymentsSummaryCards() {
         />
         {summary.stalePendingCount > 0 && (
           <KpiCard
-            label="Pendientes estancadas"
+            label="Pendientes viejas"
             value={String(summary.stalePendingCount)}
             hint="Más de 1h sin actualizar"
             icon={Plug}
@@ -105,10 +105,9 @@ async function RecentPayoutsPanel() {
     if (items.length === 0) {
       return (
         <div className="px-0 py-6 text-center text-sm leading-relaxed text-muted">
-          No hay solicitudes de retiro registradas. Los comercios las crean desde la app
-          en <span className="text-white/70">Finanzas → retiro</span>. Los cobros con pasarela
-          aparecen arriba en <span className="text-white/70">Órdenes</span>; esta lista es solo
-          el flujo de desembolsos que gestionamos nosotros.
+          No hay solicitudes de retiro. Los comercios las piden en la app
+          (Finanzas, retiro). Los cobros con pasarela están en Órdenes. Esta
+          lista es solo el desembolso que hacemos nosotros.
         </div>
       );
     }
@@ -183,18 +182,17 @@ export default function FinancePage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Tesorería"
         title="Finanzas"
-        description="Volumen, fees y payouts."
+        description="GMV, comisión y retiros."
       />
 
       <Suspense
         fallback={
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard label="GMV (30 d)" value="…" hint="Cargando" icon={CircleDollarSign} />
-            <KpiCard label="Fee plataforma" value="…" hint="Cargando" icon={CreditCard} />
-            <KpiCard label="Pagado a proveedores" value="…" hint="Cargando" icon={ArrowUpRight} />
-            <KpiCard label="Saldo pendiente" value="…" hint="Cargando" icon={Wallet} />
+            <KpiCard label="Comisión Allons" value="…" hint="Cargando" icon={CreditCard} />
+            <KpiCard label="Pagado a comercios" value="…" hint="Cargando" icon={ArrowUpRight} />
+            <KpiCard label="Órdenes pagadas" value="…" hint="Cargando" icon={Wallet} />
           </section>
         }
       >
@@ -208,7 +206,7 @@ export default function FinancePage() {
 
       <section className="mt-8">
         <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Últimos payouts</div>
+          <div className="eyebrow mb-4">Últimos retiros</div>
           <Suspense
             fallback={
               <div className="py-8 text-center text-sm text-muted">Cargando retiros…</div>

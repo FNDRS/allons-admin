@@ -1,7 +1,10 @@
 import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
-import { getAdminOverviewMetrics, getAdminPlatformStatus } from "@/lib/admin/eventsApi";
+import {
+  getAdminOverviewMetricsCached,
+  getAdminPlatformStatusCached,
+} from "@/lib/admin/eventsApi";
 import { listAllUsers } from "@/lib/admin/users";
 import {
   Activity,
@@ -12,6 +15,7 @@ import {
   Ticket,
   Users,
 } from "lucide-react";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +44,7 @@ type PaygateStatus = {
 
 async function loadPaygateStatus(): Promise<PaygateStatus> {
   try {
-    const status = await getAdminPlatformStatus();
+    const status = await getAdminPlatformStatusCached();
     return {
       connected: true,
       configured: Boolean(status.paygate?.configured),
@@ -101,13 +105,13 @@ function formatCurrency(value: number) {
 
 async function loadOverviewMetrics(): Promise<OverviewMetrics> {
   try {
-    const metrics = await getAdminOverviewMetrics();
+    const metrics = await getAdminOverviewMetricsCached();
     return {
-      activeEvents: metrics.activeEvents,
-      totalEvents: metrics.totalEvents ?? metrics.activeEvents,
-      tickets30d: metrics.tickets30d,
-      posthogErrors30d: metrics.posthogErrors30d,
-      gmv30d: metrics.gmv30d,
+      activeEvents: metrics.activeEvents ?? 0,
+      totalEvents: metrics.totalEvents ?? metrics.activeEvents ?? 0,
+      tickets30d: metrics.tickets30d ?? 0,
+      posthogErrors30d: metrics.posthogErrors30d ?? null,
+      gmv30d: metrics.gmv30d ?? null,
       connected: true,
     };
   } catch (error) {
@@ -123,88 +127,105 @@ async function loadOverviewMetrics(): Promise<OverviewMetrics> {
   }
 }
 
-export default async function OverviewPage() {
-  const [counts, metrics, paygate] = await Promise.all([
-    loadCounts(),
-    loadOverviewMetrics(),
-    loadPaygateStatus(),
-  ]);
-
+export default function OverviewPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Panel root"
-        title="Overview"
-        description="Salud de la plataforma con métricas agregadas en tiempo real desde admin API."
+        eyebrow="Inicio"
+        title="Resumen"
+        description="Cuentas, eventos y ventas de los últimos 30 días."
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Clientes"
-          value={counts.clients.toLocaleString()}
-          hint="Usuarios registrados"
-          icon={Users}
-        />
-        <KpiCard
-          label="Proveedores"
-          value={counts.providers.toLocaleString()}
-          hint={`${counts.pendingProviders} pendientes`}
-          icon={Store}
-        />
-        <KpiCard
-          label="Staff"
-          value={counts.staff.toLocaleString()}
-          hint="Equipos invitados"
-          icon={Activity}
-        />
-        <KpiCard
-          label="Altas 24 h"
-          value={counts.signupsLast24h.toLocaleString()}
-          hint="Sign-ups recientes"
-          icon={Users}
-        />
-      </section>
+      <Suspense fallback={<CountsSkeleton />}>
+        <CountsSection />
+      </Suspense>
 
+      <Suspense fallback={<MetricsSkeleton />}>
+        <MetricsSection />
+      </Suspense>
+    </div>
+  );
+}
+
+async function CountsSection() {
+  const counts = await loadCounts();
+  return (
+    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <KpiCard
+        label="Clientes"
+        value={counts.clients.toLocaleString()}
+        hint="Cuentas de cliente"
+        icon={Users}
+      />
+      <KpiCard
+        label="Proveedores"
+        value={counts.providers.toLocaleString()}
+        hint={`${counts.pendingProviders} pendientes`}
+        icon={Store}
+      />
+      <KpiCard
+        label="Staff"
+        value={counts.staff.toLocaleString()}
+        hint="Cuentas de staff"
+        icon={Activity}
+      />
+      <KpiCard
+        label="Altas 24 h"
+        value={counts.signupsLast24h.toLocaleString()}
+        hint="Altas de las últimas 24 h"
+        icon={Users}
+      />
+    </section>
+  );
+}
+
+async function MetricsSection() {
+  const [metrics, paygate] = await Promise.all([
+    loadOverviewMetrics(),
+    loadPaygateStatus(),
+  ]);
+  return (
+    <>
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Eventos activos"
-          value={metrics.activeEvents.toLocaleString()}
+          value={(metrics.activeEvents ?? 0).toLocaleString()}
           hint={
             metrics.connected
-              ? metrics.totalEvents > metrics.activeEvents
-                ? `${metrics.totalEvents.toLocaleString()} en catálogo (incl. borradores o vencidos)`
-                : "Publicados, agotados y vigentes"
-              : "Sin conexión a Admin API"
+              ? (metrics.totalEvents ?? 0) > (metrics.activeEvents ?? 0)
+                ? `${(metrics.totalEvents ?? 0).toLocaleString()} en total, con borradores y vencidos`
+                : "Publicados y vigentes"
+              : "Sin conexión a la API"
           }
           icon={Calendar}
         />
         <KpiCard
           label="Tickets 30 d"
-          value={metrics.tickets30d.toLocaleString()}
-          hint={metrics.connected ? "Emitidos últimos 30 días" : "Sin conexión"}
+          value={(metrics.tickets30d ?? 0).toLocaleString()}
+          hint={metrics.connected ? "Últimos 30 días" : "Sin conexión"}
           icon={Ticket}
         />
         <KpiCard
           label="GMV 30 d"
           value={
-            metrics.gmv30d === null ? '—' : formatCurrency(metrics.gmv30d)
+            metrics.gmv30d == null ? "-" : formatCurrency(metrics.gmv30d)
           }
           hint={
-            metrics.gmv30d === null ? 'Pendiente de pasarela' : 'Venta bruta 30 días'
+            metrics.gmv30d == null ? "Sin dato de pasarela" : "Ventas brutas"
           }
           icon={CircleDollarSign}
         />
         <KpiCard
           label="Errores 30 d"
           value={
-            metrics.posthogErrors30d === null
-              ? "—"
+            metrics.posthogErrors30d == null
+              ? "-"
               : metrics.posthogErrors30d.toLocaleString()
           }
           hint={
-            metrics.posthogErrors30d === null
-              ? "PostHog no configurado o sin acceso"
-              : "Excepciones capturadas en PostHog"
+            metrics.posthogErrors30d == null
+              ? "PostHog no está conectado"
+              : "Errores en PostHog"
           }
           icon={Bug}
         />
@@ -212,21 +233,21 @@ export default async function OverviewPage() {
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
         <div className="futuristic-panel p-6">
-          <div className="eyebrow mb-4">Estado del sistema</div>
+          <div className="eyebrow mb-4">Servicios</div>
           <div className="space-y-3 text-sm">
             <Row
               label="Auth (Supabase)"
-              value={<StatusPill label="Operativo" variant="success" />}
+              value={<StatusPill label="OK" variant="success" />}
             />
             <Row
               label="Edge function · invite-staff"
-              value={<StatusPill label="Operativo" variant="success" />}
+              value={<StatusPill label="OK" variant="success" />}
             />
             <Row
               label="Métricas de eventos"
               value={
                 <StatusPill
-                  label={metrics.connected ? "Operativo" : "Pendiente"}
+                  label={metrics.connected ? "OK" : "Pendiente"}
                   variant={metrics.connected ? "success" : "warning"}
                 />
               }
@@ -237,7 +258,7 @@ export default async function OverviewPage() {
                 paygate.connected &&
                 paygate.configured &&
                 paygate.connectivityStatus === 'ok' ? (
-                  <StatusPill label="Operativo" variant="success" />
+                  <StatusPill label="OK" variant="success" />
                 ) : paygate.connected && paygate.connectivityStatus === 'unauthorized' ? (
                   <StatusPill label="No autorizado" variant="danger" />
                 ) : paygate.connected && paygate.configured ? (
@@ -252,7 +273,45 @@ export default async function OverviewPage() {
           </div>
         </div>
       </section>
-    </div>
+    </>
+  );
+}
+
+function CountsSkeleton() {
+  return (
+    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="futuristic-panel p-4 animate-pulse">
+          <div className="h-3 w-20 bg-white/10 mb-3" />
+          <div className="h-6 w-12 bg-white/10" />
+          <div className="h-3 w-24 bg-white/5 mt-2" />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function MetricsSkeleton() {
+  return (
+    <>
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="futuristic-panel p-4 animate-pulse">
+            <div className="h-3 w-20 bg-white/10 mb-3" />
+            <div className="h-6 w-12 bg-white/10" />
+          </div>
+        ))}
+      </section>
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="futuristic-panel p-6 animate-pulse">
+          <div className="h-4 w-32 bg-white/10 mb-4" />
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-white/5" />
+            <div className="h-4 w-full bg-white/5" />
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 

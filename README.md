@@ -1,13 +1,12 @@
 # Allons Admin
 
-Internal control panel for the Allons platform. Used by the root team to
-monitor activity, manage providers and users, and review finance metrics.
+Panel interno: cuentas, comercios, eventos, pagos y waitlist.
 
 ## Stack
 
 - Next.js 15 (App Router) + React 19
 - TypeScript + Tailwind CSS
-- Supabase (auth + admin) — same project as `allons-mobile`
+- Supabase (auth + admin), el mismo proyecto que `allons-mobile`
 - Lucide icons
 
 ## Getting started
@@ -40,12 +39,12 @@ pnpm dev
 
 ## Pages
 
-- `/` — Overview KPIs (users, providers, events, GMV, tickets, scans).
-- `/providers` — Provider list with approve/pause/suspend.
-- `/users` — Client list with suspend/reactivate.
-- `/events` — All events with status + provider filters.
-- `/finance` — GMV, fees, payouts.
-- `/waitlist-qr` — Create QR sources and track waitlist signups by source.
+- `/` Resumen: cuentas, eventos, GMV, tickets.
+- `/providers` Comercios: aprobar, pausar, suspender.
+- `/users` Clientes: suspender o reactivar.
+- `/events` Eventos, con filtro de estado y comercio.
+- `/finance` GMV, comisión y retiros.
+- `/waitlist-qr` QR de waitlist y registros por fuente.
 
 ## Waitlist QR setup
 

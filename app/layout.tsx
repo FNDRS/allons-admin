@@ -19,7 +19,7 @@ const urbanist = Urbanist({
 
 export const metadata: Metadata = {
   title: "Allons Admin",
-  description: "Internal control panel for the Allons platform.",
+  description: "Panel interno de Allons.",
   icons: {
     icon: "/apple-touch-icon.png",
     apple: "/apple-touch-icon.png",

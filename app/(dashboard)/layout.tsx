@@ -9,10 +9,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const root = checkRoot(user?.email);
+  // Use getClaims() (local JWT decode, 0ms) instead of getUser() (network).
+  // Proxy already validated with getClaims - this is just a second guard.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims as { email?: string } | null | undefined;
+  const root = checkRoot(claims?.email);
 
   if (!root.ok) {
     redirect("/login");

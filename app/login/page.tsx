@@ -20,7 +20,7 @@ export default function LoginPage() {
       fallback={
         <main className="min-h-screen flex items-center justify-center px-4">
           <div className="futuristic-panel w-full max-w-md p-8 text-sm text-muted">
-            Cargando login...
+            Cargando...
           </div>
         </main>
       }
@@ -71,7 +71,7 @@ function LoginPageContent() {
     const password = passwordRef.current?.value ?? "";
 
     if (!trimmedEmail || !password) {
-      void showLoginError("Email y contraseña son requeridos");
+      void showLoginError("Falta el correo o la contraseña");
       return;
     }
 
@@ -95,7 +95,7 @@ function LoginPageContent() {
 
       router.replace(from as never);
     } catch {
-      void showLoginError("Error de red. Revisa tu conexión e intenta de nuevo.");
+      void showLoginError("No hay red. Revisa la conexión e intenta otra vez.");
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +115,7 @@ function LoginPageContent() {
           />
           <div>
             <h1 className="text-lg font-bold leading-tight">Allons Admin</h1>
-            <p className="eyebrow mt-1">Acceso solo para el equipo root</p>
+            <p className="eyebrow mt-1">Solo el equipo interno</p>
           </div>
         </div>
 

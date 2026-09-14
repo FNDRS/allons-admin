@@ -15,7 +15,6 @@ export type CreateComercioFormValues = {
   businessType: string;
   brandColor: string;
   pasarelaFeePct: string;
-  subscriptionPlan: string;
 };
 
 export type CreateComercioState = {
@@ -41,8 +40,6 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
       (formData.get("brandColor") as string | null)?.trim() || "#F67010",
     pasarelaFeePct:
       (formData.get("pasarelaFeePct") as string | null)?.trim() || "5",
-    subscriptionPlan:
-      (formData.get("subscriptionPlan") as string | null) ?? "pendiente",
   };
 }
 
@@ -74,7 +71,6 @@ export async function createComercioAction(
       0,
       Math.min(100, parseFloat(values.pasarelaFeePct) || 0),
     );
-    const subscriptionPlan = values.subscriptionPlan;
     const contractFile = formData.get("contractFile") as File | null;
 
     if (!fullName || !email || !brandName || !brandHandle) {
@@ -133,7 +129,7 @@ export async function createComercioAction(
       // the provider detail page once the bank contract sets the final rate.
       paygate_fee_pct: pasarelaFeePct,
       contract_url: contractUrl,
-      subscription_plan: subscriptionPlan,
+      subscription_plan: "pendiente",
       free_trial_start: freeTrialStart,
       free_trial_end: freeTrialEnd,
       providerStatus: "pending",
@@ -186,7 +182,7 @@ export async function createComercioAction(
       inviteStatus = "existing";
     } else {
       // Invite email is sent via Resend (lib/admin/comercioInviteMail.ts), not
-      // Supabase's built-in template — so links always use allonsapp.com.
+      // Supabase's built-in template, so links always use allonsapp.com.
       const invited = await sendComercioInviteEmail({
         email,
         metadata: userMetadata,
@@ -286,7 +282,7 @@ export async function createComercioAction(
         brandHandle,
         businessType,
         pasarelaFeePct,
-        subscriptionPlan,
+        subscriptionPlan: "pendiente",
         hasContract: Boolean(contractUrl),
         invite: inviteStatus,
       },
