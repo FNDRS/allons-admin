@@ -90,20 +90,23 @@ function DatePicker({
               size="sm"
               className="normal-case tracking-normal"
               onClick={() => {
-                setNext(toYmd(new Date()));
+                setNext("");
                 setOpen(false);
               }}
             >
-              Hoy
+              Borrar
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="normal-case tracking-normal"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setNext(toYmd(new Date()));
+                setOpen(false);
+              }}
             >
-              Cerrar
+              Hoy
             </Button>
           </div>
         </PopoverContent>

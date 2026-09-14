@@ -4,8 +4,10 @@ import type { DemoEventFormField } from "@/lib/demoEventForms";
 import { getDemoEventForm } from "@/lib/demoEventForms";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioItem } from "@/components/ui/radio-group";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
@@ -137,10 +139,24 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
     );
   }
 
-  // Radios y casillas comparten el `name`: el primero manda un valor, el
-  // segundo manda uno por casilla marcada y la acción los une con `getAll`.
-  if (field.kind === "radio" || field.kind === "checkbox") {
-    const type = field.kind === "radio" ? "radio" : "checkbox";
+  if (field.kind === "radio") {
+    return (
+      <fieldset>
+        <legend className="mb-1.5 block text-xs font-medium text-white/60">
+          {label}
+        </legend>
+        <RadioGroup name={name} required={field.required}>
+          {field.options.map((option) => (
+            <RadioItem key={option} value={option}>
+              {option}
+            </RadioItem>
+          ))}
+        </RadioGroup>
+      </fieldset>
+    );
+  }
+
+  if (field.kind === "checkbox") {
     return (
       <fieldset>
         <legend className="mb-1.5 block text-xs font-medium text-white/60">
@@ -152,16 +168,7 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
               key={option}
               className="flex items-center gap-3 border border-white/12 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80"
             >
-              <input
-                type={type}
-                name={name}
-                value={option}
-                // En un grupo de radios `required` en uno alcanza para el grupo;
-                // en casillas obligaría a marcar cada una, así que se valida en
-                // el servidor.
-                required={field.required && type === "radio"}
-                className="size-4 accent-[#F67010]"
-              />
+              <Checkbox name={name} value={option} />
               {option}
             </label>
           ))}
@@ -192,7 +199,11 @@ function DemoFieldInput({ field }: { field: DemoEventFormField }) {
     return (
       <div>
         <Label>{label}</Label>
-        <Input name={name} type="date" required={field.required} />
+        <DatePicker
+          name={name}
+          required={field.required}
+          placeholder="Elige una fecha"
+        />
       </div>
     );
   }
