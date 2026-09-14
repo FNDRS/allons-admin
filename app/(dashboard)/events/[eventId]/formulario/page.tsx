@@ -50,7 +50,7 @@ export default async function EventRegistrationFormPage({
     listDemoEventRegistrations(eventId),
   ]);
   const saveAction = saveDemoRegistrationForm.bind(null, eventId);
-  const demoUrl = `/demo/eventos/${eventId}`;
+  const publicUrl = `/registro/eventos/${eventId}`;
   const isSingleEvent = event.eventType === "single";
 
   return (
@@ -77,7 +77,7 @@ export default async function EventRegistrationFormPage({
 
       {query.created ? (
         <div className="mb-5 border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          Evento creado en las tablas reales. Si quedó publicado, ya aparece en la app cliente.
+          Evento creado. Si quedó publicado, ya aparece en la app.
         </div>
       ) : null}
 
@@ -118,11 +118,11 @@ export default async function EventRegistrationFormPage({
             </p>
           ) : null}
           <div className="break-all border border-white/10 bg-white/[0.03] p-3 text-xs text-white/70">
-            {demoUrl}
+            {publicUrl}
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm">
-              <Link href={demoUrl as never} target="_blank">
+              <Link href={publicUrl as never} target="_blank">
                 Abrir registro <ExternalLink size={14} />
               </Link>
             </Button>
