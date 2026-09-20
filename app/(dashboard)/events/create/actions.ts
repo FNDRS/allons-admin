@@ -265,6 +265,7 @@ export async function createAdminEventAction(
       refund_policy: refundPolicy,
       refund_partial_pct: refundPartialPct,
       refund_deadline_days: refundDeadlineDays,
+      kit_pickup_info: formString(formData, "kitPickupInfo") || null,
     })
     .select("id")
     .single();
@@ -289,6 +290,7 @@ export async function createAdminEventAction(
         // Los tickets gratuitos no tienen ventana: se venden hasta que empieza.
         sale_starts_at: ticket.price > 0 ? ticket.saleStartsAt : null,
         sale_ends_at: ticket.price > 0 ? ticket.saleEndsAt : null,
+        donation_enabled: ticket.donationEnabled,
       })),
     );
 

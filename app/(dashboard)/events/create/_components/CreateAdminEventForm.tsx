@@ -3,6 +3,7 @@
 import { EventBannerMediaField } from "@/components/admin/EventBannerMediaField";
 import { EventCategoryField } from "@/components/admin/EventCategoryField";
 import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
+import { EventKitPickupField } from "@/components/admin/EventKitPickupField";
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
 import { EventTicketsField } from "@/components/admin/EventTicketsField";
 import {
@@ -193,6 +194,8 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
       <EventCategoryField />
 
       <EventTicketsField eventDate={date} eventTime={time} capacity={capacity} />
+
+      <EventKitPickupField />
 
       <EventFormFieldsEditor
         initialFields={[]}
