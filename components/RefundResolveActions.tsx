@@ -14,6 +14,7 @@ const ACTION_LABEL: Partial<Record<AdminRefundStatus, string>> = {
   paid: "Marcar pagado",
   denied: "Denegar",
   failed: "Marcar fallido",
+  needs_reconciliation: "Verificar en Paygate",
 };
 
 /** The ones worth a second look before pressing. */
@@ -21,6 +22,10 @@ const CONFIRM_COPY: Partial<Record<AdminRefundStatus, string>> = {
   paid: "Marcar como pagado le avisa al cliente que ya tiene su dinero. Hazlo después de hacer la transferencia, no antes.",
   denied: "Denegar es definitivo: no se puede reabrir, solo crear un reembolso nuevo.",
 };
+
+/** Lo que hay que haber hecho antes de tocar los botones de esta fila. */
+const NEEDS_CHECK_FIRST =
+  "El resultado de la reversión es desconocido: puede que el dinero ya haya vuelto. Busca el cobro en Paygate antes de marcarlo pagado o fallido.";
 
 interface Props {
   row: AdminRefundRow;
@@ -44,7 +49,10 @@ export function RefundResolveActions({ row, onResolved }: Props) {
     return <span className="text-[11px] text-muted">Cerrado</span>;
   }
 
+  const run0 = row.status === "needs_reconciliation";
+
   const run = async (status: AdminRefundStatus) => {
+    if (run0 && !window.confirm(NEEDS_CHECK_FIRST)) return;
     const confirmCopy = CONFIRM_COPY[status];
     if (confirmCopy && !window.confirm(confirmCopy)) return;
 

@@ -26,7 +26,9 @@ export type AdminRefundStatus =
   | "approved"
   | "paid"
   | "denied"
-  | "failed";
+  | "failed"
+  /** La pasarela puede haber devuelto el dinero o no; nadie verificó aún. */
+  | "needs_reconciliation";
 
 export interface AdminRefundRow {
   id: string;
@@ -99,9 +101,10 @@ export const REFUND_NEXT_STATUSES: Record<
   AdminRefundStatus,
   AdminRefundStatus[]
 > = {
-  requested: ["approved", "paid", "denied", "failed"],
-  approved: ["paid", "denied", "failed"],
-  failed: ["approved", "paid", "denied"],
+  requested: ["approved", "paid", "denied", "failed", "needs_reconciliation"],
+  approved: ["paid", "denied", "failed", "needs_reconciliation"],
+  failed: ["approved", "paid", "denied", "needs_reconciliation"],
+  needs_reconciliation: ["paid", "failed", "denied"],
   paid: [],
   denied: [],
   skipped_policy: [],

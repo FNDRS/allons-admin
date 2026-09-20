@@ -26,6 +26,7 @@ const REFUND_STATUS_VARIANT: Record<
   paid: "success",
   denied: "danger",
   failed: "danger",
+  needs_reconciliation: "warning",
 };
 
 const REFUND_STATUS_LABEL: Record<AdminRefundStatus, string> = {
@@ -35,6 +36,7 @@ const REFUND_STATUS_LABEL: Record<AdminRefundStatus, string> = {
   paid: "Pagado",
   denied: "Denegado",
   failed: "Fallido",
+  needs_reconciliation: "Verificar en Paygate",
 };
 
 const REASON_LABEL: Record<string, string> = {
@@ -44,6 +46,7 @@ const REASON_LABEL: Record<string, string> = {
 };
 
 const FILTERS: AdminRefundStatus[] = [
+  "needs_reconciliation",
   "requested",
   "approved",
   "paid",
