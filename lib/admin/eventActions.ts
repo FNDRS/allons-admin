@@ -89,8 +89,12 @@ export async function setEventKitPickup(formData: FormData) {
     resource_id: id,
     outcome: error || missing ? "failure" : "success",
     // El texto puede traer una dirección; se registra si quedó puesto o vacío,
-    // no lo que dice.
-    state_after: { has_kit_pickup_info: info.length > 0 },
+    // no lo que dice. Si no se guardó, va como intento: el estado posterior
+    // del evento es el viejo, no el que se mandó.
+    state_after:
+      error || missing
+        ? { has_kit_pickup_info_attempted: info.length > 0 }
+        : { has_kit_pickup_info: info.length > 0 },
     error_message:
       error?.message ?? (missing ? "evento no encontrado" : undefined),
   });
