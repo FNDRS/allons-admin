@@ -86,3 +86,50 @@ export async function listRefunds(params?: {
   }
   return res.json();
 }
+
+/**
+ * Which moves the UI may offer from a given status. Mirrors the API's own
+ * table, which is the one that enforces it — this copy only decides which
+ * buttons to draw, so a stale one is a missing button rather than a bad write.
+ *
+ * `skipped_policy` and `denied` have no rows on purpose: both record a
+ * decision, and reversing one is a new refund, not an edit of the old.
+ */
+export const REFUND_NEXT_STATUSES: Record<
+  AdminRefundStatus,
+  AdminRefundStatus[]
+> = {
+  requested: ["approved", "paid", "denied", "failed"],
+  approved: ["paid", "denied", "failed"],
+  failed: ["approved", "paid", "denied"],
+  paid: [],
+  denied: [],
+  skipped_policy: [],
+};
+
+/**
+ * Records what a person did with a refund.
+ *
+ * Marking one `paid` does not move money — there is no partial-refund API at
+ * the gateway, so the transfer happens outside Allons and this is the record
+ * that it did. It is also what notifies the customer, so it should be pressed
+ * after the transfer, not before.
+ */
+export async function resolveRefund(
+  id: string,
+  status: AdminRefundStatus,
+  note?: string,
+): Promise<AdminRefundRow> {
+  const res = await fetch(refundsUrl(id), {
+    method: "PATCH",
+    headers: { ...adminHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ status, note }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}) as { message?: string });
+    throw new Error(
+      body?.message ?? `No se pudo actualizar el reembolso (${res.status})`,
+    );
+  }
+  return res.json();
+}

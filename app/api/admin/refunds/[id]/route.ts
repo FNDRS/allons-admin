@@ -1,0 +1,49 @@
+import { getRootActor } from "@/lib/admin/getRootActor";
+import {
+  getAdminApiBaseUrl,
+  getAdminApiSecretHeader,
+} from "@/lib/admin/allonsPaymentsBackendRequest";
+import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * Proxies a refund resolution to the API. The admin secret never reaches the
+ * browser, so the transition has to go through here rather than straight from
+ * the client component.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!(await getRootActor())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let base: string;
+  try {
+    base = getAdminApiBaseUrl();
+  } catch {
+    return NextResponse.json(
+      { error: "ADMIN_API_BASE_URL is not configured" },
+      { status: 500 },
+    );
+  }
+
+  const { id } = await params;
+  const body = await req.text();
+
+  const res = await fetch(`${base}/admin/refunds/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: {
+      ...getAdminApiSecretHeader(),
+      "Content-Type": "application/json",
+    },
+    body,
+    cache: "no-store",
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return NextResponse.json(data, { status: res.status });
+}

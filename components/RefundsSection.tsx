@@ -9,6 +9,7 @@ import {
 import { ArrowDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/StatusPill";
+import { RefundResolveActions } from "@/components/RefundResolveActions";
 
 function formatCurrency(value: number, currency: string) {
   const prefix = currency === "HNL" ? "L." : currency;
@@ -158,26 +159,26 @@ export function RefundsSection() {
         <div className="futuristic-panel overflow-hidden">
           <div className="-mx-2 overflow-x-auto">
             <div
-              className="grid min-w-[920px] border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+              className="grid min-w-[1080px] border-b border-white/12 bg-white/[0.02] px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
               style={{
                 gridTemplateColumns:
-                  "130px 110px 150px 140px 140px 1fr",
+                  "130px 110px 150px 140px 1fr 260px",
               }}
             >
               <div>Estado</div>
               <div className="text-right">Monto</div>
               <div>Motivo</div>
               <div>Solicitado</div>
-              <div>Resuelto</div>
               <div>Order / Paygate</div>
+              <div>Resolver</div>
             </div>
             {items.map((row) => (
               <div
                 key={row.id}
-                className="grid min-w-[920px] items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
+                className="grid min-w-[1080px] items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/[0.02]"
                 style={{
                   gridTemplateColumns:
-                    "130px 110px 150px 140px 140px 1fr",
+                    "130px 110px 150px 140px 1fr 260px",
                 }}
               >
                 <div>
@@ -193,24 +194,24 @@ export function RefundsSection() {
                   {REASON_LABEL[row.reason] ?? row.reason}
                 </div>
                 <div className="text-[11px] text-muted">
-                  {new Date(row.requestedAt).toLocaleDateString("es-HN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-                <div className="text-[11px] text-muted">
-                  {row.resolvedAt
-                    ? new Date(row.resolvedAt).toLocaleDateString("es-HN", {
+                  <div>
+                    {new Date(row.requestedAt).toLocaleDateString("es-HN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                  {row.resolvedAt ? (
+                    <div className="text-white/40">
+                      Resuelto{" "}
+                      {new Date(row.resolvedAt).toLocaleDateString("es-HN", {
                         day: "2-digit",
                         month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "-"}
+                      })}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted">
                   <div title={row.paymentOrderId}>
@@ -223,6 +224,7 @@ export function RefundsSection() {
                     Paygate: {row.paygatePaymentId ?? "-"}
                   </div>
                 </div>
+                <RefundResolveActions row={row} onResolved={handleRefresh} />
               </div>
             ))}
           </div>
