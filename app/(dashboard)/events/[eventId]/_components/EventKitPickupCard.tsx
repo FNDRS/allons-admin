@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { setEventKitPickup } from "@/lib/admin/eventActions";
 
@@ -30,7 +31,9 @@ export function EventKitPickupCard({
       <form action={setEventKitPickup} className="mt-5 space-y-3">
         <input type="hidden" name="eventId" value={eventId} />
         <input type="hidden" name="revalidate" value={revalidatePath} />
+        <Label htmlFor="event-kit-pickup-info">Instrucciones de retiro</Label>
         <Textarea
+          id="event-kit-pickup-info"
           name="kitPickupInfo"
           defaultValue={kitPickupInfo ?? ""}
           rows={4}

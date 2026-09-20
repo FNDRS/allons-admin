@@ -69,10 +69,16 @@ export async function setEventKitPickup(formData: FormData) {
   if (!id) throw new Error("eventId requerido");
 
   const admin = createSupabaseServiceRoleClient();
-  const { error } = await admin
+  // `update().eq()` no falla cuando el id no existe: sin pedir la fila de
+  // vuelta, un evento borrado o un id inventado quedarían auditados como un
+  // guardado exitoso que no cambió nada.
+  const { data: updated, error } = await admin
     .from("events")
     .update({ kit_pickup_info: info || null })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  const missing = !error && !updated;
 
   await logAdminAudit({
     actor_user_id: caller.userId,
@@ -81,14 +87,16 @@ export async function setEventKitPickup(formData: FormData) {
     action: "event.kit_pickup_patch",
     resource_type: "event",
     resource_id: id,
-    outcome: error ? "failure" : "success",
+    outcome: error || missing ? "failure" : "success",
     // El texto puede traer una dirección; se registra si quedó puesto o vacío,
     // no lo que dice.
     state_after: { has_kit_pickup_info: info.length > 0 },
-    error_message: error?.message,
+    error_message:
+      error?.message ?? (missing ? "evento no encontrado" : undefined),
   });
 
   if (error) throw new Error(error.message);
+  if (missing) throw new Error("Evento no encontrado");
 
   revalidatePath(revalidate);
   revalidatePath("/events");

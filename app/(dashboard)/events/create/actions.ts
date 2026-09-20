@@ -265,7 +265,10 @@ export async function createAdminEventAction(
       refund_policy: refundPolicy,
       refund_partial_pct: refundPartialPct,
       refund_deadline_days: refundDeadlineDays,
-      kit_pickup_info: formString(formData, "kitPickupInfo") || null,
+      // Mismo tope que el editor del detalle: sin esto un formulario armado a
+      // mano guarda un texto más largo que el que después se puede editar.
+      kit_pickup_info:
+        formString(formData, "kitPickupInfo").slice(0, 2000) || null,
     })
     .select("id")
     .single();

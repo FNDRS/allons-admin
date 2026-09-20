@@ -1,5 +1,6 @@
 "use client";
 
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 /**
@@ -25,7 +26,9 @@ export function EventKitPickupField({
       </p>
 
       <div className="mt-5">
+        <Label htmlFor="event-kit-pickup-info">Instrucciones de retiro</Label>
         <Textarea
+          id="event-kit-pickup-info"
           name="kitPickupInfo"
           defaultValue={defaultValue ?? ""}
           rows={4}
