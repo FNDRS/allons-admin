@@ -3,9 +3,11 @@ import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
+import { EventKitPickupCard } from "@/app/(dashboard)/events/[eventId]/_components/EventKitPickupCard";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
 import {
   countEventTickets,
+  describeEventAuditRow,
   listEventAuditLogs,
   listEventTicketTypes,
   loadEventPaymentOrders,
@@ -243,6 +245,14 @@ export default async function EventDetailPage({
         ) : null}
       </Section>
 
+      <div className="mb-6">
+        <EventKitPickupCard
+          eventId={eventId}
+          kitPickupInfo={event.kitPickupInfo ?? null}
+          revalidatePath={`/events/${eventId}`}
+        />
+      </div>
+
       {ticketTypes.length > 0 ? (
         <Section title="Tipos de entrada">
           <div className="overflow-x-auto">
@@ -349,11 +359,7 @@ export default async function EventDetailPage({
                       {row.actorEmail ?? "-"}
                     </td>
                     <td className="py-2.5 text-xs text-white/60">
-                      {row.stateAfter.status
-                        ? `Estado: ${String(row.stateAfter.status)}`
-                        : row.stateAfter.status_attempted
-                          ? `Intento: ${String(row.stateAfter.status_attempted)}`
-                          : "Cambio de estado"}
+                      {describeEventAuditRow(row)}
                       {row.errorMessage ? (
                         <span className="block text-danger">{row.errorMessage}</span>
                       ) : null}

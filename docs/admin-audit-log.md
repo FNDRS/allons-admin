@@ -34,6 +34,7 @@ Mantener nombres estables tipo `area.palabra_clave`:
 | `auth.user_suspend` / `auth.user_unsuspend` | Suspende o reactiva acceso desde `/users`. |
 | `provider.status_change` | Cambia estado de comerciante en `/providers`. |
 | `event.status_patch` | Cambia estado del evento vía API administrativa. |
+| `event.kit_pickup_patch` | Edita el punto de retiro de kit del evento desde `/events/[id]`. |
 | `waitlist_qr.source_upsert` | Crea/edita QR waitlist desde API routes. |
 | `waitlist_qr.source_delete` | Elimina fuente QR. |
 

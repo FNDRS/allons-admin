@@ -38,6 +38,8 @@ export interface AdminEventDetailItem extends AdminEventListItem {
   petFriendly: boolean;
   parkingAvailable: boolean;
   minAge: number | null;
+  /** Dónde se recoge el kit; vacío si el evento no entrega nada. */
+  kitPickupInfo: string | null;
 }
 
 export interface AdminEventListResponse {

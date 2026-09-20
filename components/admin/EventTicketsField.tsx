@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,7 @@ export function EventTicketsField({
   const [name, setName] = useState("General");
   const [price, setPrice] = useState("0");
   const [quantity, setQuantity] = useState("100");
+  const [donationEnabled, setDonationEnabled] = useState(false);
 
   const [saleStartDate, setSaleStartDate] = useState(() =>
     new Date().toISOString().slice(0, 10),
@@ -112,8 +114,9 @@ export function EventTicketsField({
       total: Math.floor(parsedQuantity),
       saleStartsAt: parsedPrice > 0 ? saleWindow.saleStartsAt : null,
       saleEndsAt: parsedPrice > 0 ? saleWindow.saleEndsAt : null,
+      donationEnabled: parsedPrice > 0 && donationEnabled,
     };
-  }, [name, price, parsedPrice, quantity, saleWindow]);
+  }, [name, price, parsedPrice, quantity, saleWindow, donationEnabled]);
 
   const hasAnyPaidTicket = tickets.some((ticket) => ticket.price > 0);
   const totalTickets = tickets.reduce((sum, ticket) => sum + ticket.total, 0);
@@ -132,6 +135,7 @@ export function EventTicketsField({
     setName("");
     setPrice("");
     setQuantity("");
+    setDonationEnabled(false);
   };
 
   const removeTicket = (id: string) => {
@@ -260,6 +264,22 @@ export function EventTicketsField({
             </div>
           ) : null}
 
+          {isPaidDraft ? (
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <Checkbox
+                checked={donationEnabled}
+                onCheckedChange={setDonationEnabled}
+              />
+              <span className="text-sm leading-5 text-white/70">
+                Permitir aportar más
+                <span className="mt-1 block text-xs leading-5 text-white/45">
+                  El precio es la base: en la app el comprador puede elegir
+                  pagar más y la diferencia se registra como aporte.
+                </span>
+              </span>
+            </label>
+          ) : null}
+
           <Button
             type="button"
             variant="brand"
@@ -303,6 +323,7 @@ export function EventTicketsField({
                     <p className="text-sm font-medium text-white">{ticket.name}</p>
                     <p className="text-xs text-white/45">
                       {ticket.price > 0 ? `L ${ticket.price}` : "Gratis"}
+                      {ticket.donationEnabled ? " · acepta aportes" : ""}
                       {ticket.saleEndsAt
                         ? ` · venta hasta ${formatSaleEnd(ticket.saleEndsAt)}`
                         : ""}

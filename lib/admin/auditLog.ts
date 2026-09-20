@@ -20,6 +20,7 @@ export type AdminAuditAction =
   | "provider.subscription_cancel"
   | "provider.data_export"
   | "event.status_patch"
+  | "event.kit_pickup_patch"
   | "waitlist_qr.source_upsert"
   | "waitlist_qr.source_delete";
 

@@ -12,6 +12,8 @@ export type EventTicketDraft = {
   total: number;
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  /** Acepta que el comprador pague más que `price` (aporte voluntario). */
+  donationEnabled: boolean;
 };
 
 export type SaleWindow = {
@@ -120,6 +122,9 @@ export function normalizeTicketDrafts(value: unknown): EventTicketDraft[] | null
       total,
       saleStartsAt: price > 0 ? optionalIso(item.saleStartsAt) : null,
       saleEndsAt: price > 0 ? optionalIso(item.saleEndsAt) : null,
+      // Una entrada gratis no tiene precio base sobre el cual aportar, y el
+      // checkout la rechaza igual: guardar la bandera sería mentir.
+      donationEnabled: price > 0 && item.donationEnabled === true,
     });
   }
 

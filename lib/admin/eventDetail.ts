@@ -27,6 +27,36 @@ export interface EventAuditLogRow {
   errorMessage: string | null;
 }
 
+/**
+ * Qué dice una fila del audit log del evento.
+ *
+ * Vive aquí y no en la página porque el catálogo de acciones crece: sin esto,
+ * cada acción nueva aparece como «Cambio de estado», que es justo lo que uno
+ * no quiere leer cuando revisa quién tocó qué.
+ */
+export function describeEventAuditRow(row: EventAuditLogRow): string {
+  if (row.action === "event.kit_pickup_patch") {
+    const state = row.stateAfter;
+    if ("has_kit_pickup_info" in state) {
+      return state.has_kit_pickup_info
+        ? "Retiro de kit: actualizado"
+        : "Retiro de kit: quitado";
+    }
+    if ("has_kit_pickup_info_attempted" in state) {
+      return state.has_kit_pickup_info_attempted
+        ? "Intento de actualizar el retiro de kit"
+        : "Intento de quitar el retiro de kit";
+    }
+    return "Retiro de kit";
+  }
+
+  if (row.stateAfter.status) return `Estado: ${String(row.stateAfter.status)}`;
+  if (row.stateAfter.status_attempted) {
+    return `Intento: ${String(row.stateAfter.status_attempted)}`;
+  }
+  return "Cambio de estado";
+}
+
 export async function loadEventPaymentOrders(eventId: string) {
   try {
     const data = await listPaymentOrders({ eventId, limit: 100 });
