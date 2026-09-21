@@ -147,7 +147,7 @@ export async function updateEventTicketType(
   // vendido y el aviso de precio, de lo que costaba hasta ahora.
   const { data: current, error: readError } = await admin
     .from("provider_event_ticket_types")
-    .select("id, price, sold_count, event_id")
+    .select("id, price, sold_count, event_id, sale_starts_at, sale_ends_at")
     .eq("id", id)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -196,8 +196,11 @@ export async function updateEventTicketType(
     return failTicketTypeUpdate("Evento no encontrado");
   }
 
+  const saleWindowChanged =
+    optionalIso(saleStartsAt) !== optionalIso(current.sale_starts_at ?? null) ||
+    optionalIso(saleEndsAt) !== optionalIso(current.sale_ends_at ?? null);
   const eventDayEnd = endOfEventDay(event.starts_at ?? null);
-  if (paid && !eventDayEnd) {
+  if (paid && saleWindowChanged && !eventDayEnd) {
     await auditTicketTypeUpdateFailure({
       caller,
       ticketTypeId: id,
