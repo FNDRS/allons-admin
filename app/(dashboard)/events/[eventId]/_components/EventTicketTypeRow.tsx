@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -135,7 +135,15 @@ function EditableTicketTypeForm({
     null,
   );
   const [currentRequestId, setCurrentRequestId] = useState("");
-  const requestIdRef = useRef<HTMLInputElement>(null);
+  const submitAction = useCallback(
+    (formData: FormData) => {
+      const nextRequestId = createRequestId();
+      setCurrentRequestId(nextRequestId);
+      formData.set("requestId", nextRequestId);
+      action(formData);
+    },
+    [action],
+  );
 
   useEffect(() => {
     if (
@@ -148,19 +156,10 @@ function EditableTicketTypeForm({
   }, [currentRequestId, lastHandledSuccessId, onSaved, state]);
 
   return (
-    <form
-      action={action}
-      className="space-y-4"
-      onSubmitCapture={() => {
-        const nextRequestId = createRequestId();
-        if (requestIdRef.current) requestIdRef.current.value = nextRequestId;
-        setCurrentRequestId(nextRequestId);
-      }}
-    >
+    <form action={submitAction} className="space-y-4">
       <input type="hidden" name="ticketTypeId" value={ticketType.id} />
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
-      <input ref={requestIdRef} type="hidden" name="requestId" defaultValue="" />
 
       {!state?.ok && state?.errors.length ? (
         <div
