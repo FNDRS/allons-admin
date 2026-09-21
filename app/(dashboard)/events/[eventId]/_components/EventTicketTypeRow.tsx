@@ -278,7 +278,10 @@ function EditableTicketTypeForm({
         venderse y la app no explica por qué.
       </p>
 
-      <p role="status" aria-live="polite" className="text-xs text-white/60">
+      <p role="status" aria-live="polite" className="sr-only">
+        {isPending ? "Guardando cambios…" : null}
+      </p>
+      <p aria-hidden="true" className="text-xs text-white/60">
         {isPending ? "Guardando cambios…" : "Listo para guardar cambios."}
       </p>
 
