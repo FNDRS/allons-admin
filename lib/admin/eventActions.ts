@@ -132,8 +132,9 @@ export async function updateEventTicketType(
   if (!eventId) return failTicketTypeUpdate("eventId requerido");
 
   const name = String(formData.get("name") ?? "").trim().slice(0, 120);
-  const priceCents = Math.round(Number(formData.get("price") ?? 0) * 100);
-  const total = Number(formData.get("total") ?? 0);
+  const price = formNumber(formData.get("price"));
+  const priceCents = Number.isFinite(price) ? Math.round(price * 100) : Number.NaN;
+  const total = formInteger(formData.get("total"));
   const active = String(formData.get("active") ?? "") === "on";
   const paid = priceCents > 0;
   const saleStartsAt = paid ? formOptionalText(formData.get("saleStartsAt")) : null;
@@ -296,6 +297,19 @@ export async function updateEventTicketType(
 function formOptionalText(value: FormDataEntryValue | null): string | null {
   const raw = String(value ?? "").trim();
   return raw || null;
+}
+
+function formNumber(value: FormDataEntryValue | null): number {
+  const raw = String(value ?? "").trim();
+  if (!raw) return Number.NaN;
+  return Number(raw);
+}
+
+function formInteger(value: FormDataEntryValue | null): number {
+  const raw = String(value ?? "").trim();
+  if (!raw) return Number.NaN;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : Number.NaN;
 }
 
 function optionalIso(value: string | null): string | null {

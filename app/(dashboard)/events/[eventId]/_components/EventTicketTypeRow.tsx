@@ -76,7 +76,12 @@ export function EventTicketTypeEditableRow({
         {warnings.length ? (
           <tr className="border-b border-white/8 last:border-0">
             <td colSpan={5} className="pb-4">
-              <div className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+              <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100"
+              >
                 <p>Guardado con aviso:</p>
                 {warnings.map((warning, index) => (
                   <p key={`${ticketType.id}-warning-${index}`}>{warning}</p>
@@ -139,7 +144,12 @@ function EditableTicketTypeForm({
       <input type="hidden" name="revalidate" value={revalidatePath} />
 
       {!state?.ok && state?.errors.length ? (
-        <div className="space-y-1 border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">
+        <div
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          className="space-y-1 border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+        >
           {state.errors.map((error, index) => (
             <p key={`${ticketType.id}-error-${index}`}>{error}</p>
           ))}
@@ -147,7 +157,12 @@ function EditableTicketTypeForm({
       ) : null}
 
       {!state?.ok && state?.warnings.length ? (
-        <div className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100"
+        >
           {state.warnings.map((warning, index) => (
             <p key={`${ticketType.id}-form-warning-${index}`}>{warning}</p>
           ))}
