@@ -3,9 +3,13 @@
 import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import {
+  ADMIN_FEE_MODES,
   isValidAdminEventStatus,
+  setAdminEventFees,
   setAdminEventKitPickup,
   updateAdminEventStatus,
+  type AdminEventFeeOverrides,
+  type AdminFeeMode,
 } from "./eventsApi";
 import { revalidatePath } from "next/cache";
 
@@ -57,5 +61,82 @@ export async function setEventKitPickup(formData: FormData) {
   }
 
   revalidatePath(revalidate);
+  revalidatePath("/events");
+}
+
+/**
+ * Lee un campo de porcentaje del formulario. Vacío devuelve null, que borra el
+ * override y hace que el evento vuelva a usar el valor del comercio; hay que
+ * distinguirlo de un 0, que es una tarifa real para un comercio que no paga.
+ */
+function optionalNumber(
+  raw: FormDataEntryValue | null,
+  max: number,
+  label: string,
+) {
+  const text = String(raw ?? "").trim();
+  if (text === "") return null;
+  const value = Number(text.replace(",", "."));
+  if (!Number.isFinite(value) || value < 0 || value > max) {
+    throw new Error(`${label} debe estar entre 0 y ${max}`);
+  }
+  return value;
+}
+
+/**
+ * Guarda la configuración de comisiones de un evento.
+ *
+ * Estos cinco valores deciden cuánto paga cada comprador del evento y cuánto
+ * recibe el comercio, así que la API los audita completos.
+ */
+export async function setEventFees(formData: FormData) {
+  const caller = await requireRootActor();
+  const id = String(formData.get("eventId") ?? "");
+  if (!id) throw new Error("eventId requerido");
+
+  const rawMode = String(formData.get("feeMode") ?? "").trim();
+  if (rawMode !== "" && !ADMIN_FEE_MODES.some((m) => m.value === rawMode)) {
+    throw new Error(`Modo de cobro inválido: ${rawMode}`);
+  }
+
+  const fixedRaw = String(formData.get("gatewayFixedLps") ?? "").trim();
+  let gatewayFixedCents: number | null = null;
+  if (fixedRaw !== "") {
+    const lps = Number(fixedRaw.replace(",", "."));
+    const cents = Math.round(lps * 100);
+    // Checked after the conversion, not before: 1e308 is finite but its cents
+    // are Infinity, which serializes to JSON null and would clear the override
+    // instead of setting it.
+    if (!Number.isFinite(lps) || lps < 0 || !Number.isSafeInteger(cents)) {
+      throw new Error("El costo fijo de pasarela debe ser un monto válido");
+    }
+    gatewayFixedCents = cents;
+  }
+
+  const overrides: AdminEventFeeOverrides = {
+    feeMode: rawMode === "" ? null : (rawMode as AdminFeeMode),
+    allonsFeePct: optionalNumber(
+      formData.get("allonsFeePct"),
+      100,
+      "La comisión de Allons",
+    ),
+    gatewayFeePct: optionalNumber(
+      formData.get("gatewayFeePct"),
+      99,
+      "La comisión de pasarela",
+    ),
+    gatewayFixedCents,
+    isvPct: optionalNumber(formData.get("isvPct"), 100, "El ISV"),
+  };
+
+  try {
+    await setAdminEventFees(id, overrides, caller);
+  } catch (error) {
+    throw new Error(
+      adminApiErrorMessage(error, "No se pudieron guardar las comisiones"),
+    );
+  }
+
+  revalidatePath(`/events/${id}`);
   revalidatePath("/events");
 }
