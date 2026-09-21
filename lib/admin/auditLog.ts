@@ -21,6 +21,7 @@ export type AdminAuditAction =
   | "provider.data_export"
   | "event.status_patch"
   | "event.kit_pickup_patch"
+  | "event.ticket_type_patch"
   | "waitlist_qr.source_upsert"
   | "waitlist_qr.source_delete";
 

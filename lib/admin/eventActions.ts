@@ -2,6 +2,7 @@
 
 import { logAdminAudit } from "@/lib/admin/auditLog";
 import { requireRootActor } from "@/lib/admin/getRootActor";
+import { checkTicketType } from "@/lib/admin/ticketTypeRules";
 import { isValidAdminEventStatus, updateAdminEventStatus } from "./eventsApi";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -104,4 +105,140 @@ export async function setEventKitPickup(formData: FormData) {
 
   revalidatePath(revalidate);
   revalidatePath("/events");
+}
+
+/**
+ * Edita un tipo de entrada desde el detalle del evento.
+ *
+ * Vive aquí porque el precio, el cupo y la ventana de venta cambian después de
+ * publicar —se agota un tier, se corre la fecha, se corrige un precio mal
+ * cargado— y hasta ahora la única salida era tocar la base a mano.
+ */
+export async function updateEventTicketType(formData: FormData) {
+  const caller = await requireRootActor();
+  const id = String(formData.get("ticketTypeId") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  const revalidate = String(formData.get("revalidate") ?? "/events");
+
+  if (!id) throw new Error("ticketTypeId requerido");
+  if (!eventId) throw new Error("eventId requerido");
+
+  const name = String(formData.get("name") ?? "").trim().slice(0, 120);
+  const priceCents = Math.round(Number(formData.get("price") ?? 0) * 100);
+  const total = Number(formData.get("total") ?? 0);
+  const active = String(formData.get("active") ?? "") === "on";
+  const saleStartsAt = emptyToNull(formData.get("saleStartsAt"));
+  const saleEndsAt = emptyToNull(formData.get("saleEndsAt"));
+
+  const admin = createSupabaseServiceRoleClient();
+
+  // Se lee el estado actual antes de validar: el cupo mínimo depende de lo ya
+  // vendido y el aviso de precio, de lo que costaba hasta ahora.
+  const { data: current, error: readError } = await admin
+    .from("provider_event_ticket_types")
+    .select("id, price, sold_count, event_id")
+    .eq("id", id)
+    .eq("event_id", eventId)
+    .maybeSingle();
+
+  if (readError) throw new Error(readError.message);
+  if (!current) throw new Error("Tipo de entrada no encontrado");
+
+  const { data: event } = await admin
+    .from("events")
+    .select("starts_at")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  const check = checkTicketType(
+    { name, priceCents, total, active, saleStartsAt, saleEndsAt },
+    {
+      soldCount: Number(current.sold_count ?? 0),
+      currentPriceCents: Math.round(Number(current.price ?? 0) * 100),
+      eventDayEnd: endOfEventDay(event?.starts_at ?? null),
+    },
+  );
+
+  if (check.errors.length > 0) {
+    await logAdminAudit({
+      actor_user_id: caller.userId,
+      actor_email: caller.email,
+      source: "server_action",
+      action: "event.ticket_type_patch",
+      resource_type: "provider_event_ticket_type",
+      resource_id: id,
+      outcome: "failure",
+      state_after: { event_id: eventId, rejected: check.errors.length },
+      error_message: check.errors.join(" "),
+    });
+    throw new Error(check.errors.join(" "));
+  }
+
+  const { data: updated, error } = await admin
+    .from("provider_event_ticket_types")
+    .update({
+      name,
+      price: priceCents / 100,
+      total,
+      active,
+      sale_starts_at: saleStartsAt,
+      sale_ends_at: saleEndsAt,
+    })
+    .eq("id", id)
+    .eq("event_id", eventId)
+    .select("id")
+    .maybeSingle();
+
+  const missing = !error && !updated;
+
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "event.ticket_type_patch",
+    resource_type: "provider_event_ticket_type",
+    resource_id: id,
+    outcome: error || missing ? "failure" : "success",
+    // El precio y el cupo son justamente lo que hay que poder auditar después.
+    state_after: {
+      event_id: eventId,
+      price_cents: priceCents,
+      total,
+      active,
+      has_sale_window: Boolean(saleStartsAt && saleEndsAt),
+      warnings: check.warnings.length,
+    },
+    error_message:
+      error?.message ?? (missing ? "tipo de entrada no encontrado" : undefined),
+  });
+
+  if (error) throw new Error(error.message);
+  if (missing) throw new Error("Tipo de entrada no encontrado");
+
+  revalidatePath(revalidate);
+  revalidatePath("/events");
+}
+
+function emptyToNull(value: FormDataEntryValue | null): string | null {
+  const raw = String(value ?? "").trim();
+  return raw ? new Date(raw).toISOString() : null;
+}
+
+/**
+ * Fin del día del evento en hora local. La venta no puede pasar de ahí, que es
+ * la misma regla que aplica la API al crear el tier.
+ */
+function endOfEventDay(startsAt: string | null): Date | null {
+  if (!startsAt) return null;
+  const start = new Date(startsAt);
+  if (Number.isNaN(start.getTime())) return null;
+  return new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
 }

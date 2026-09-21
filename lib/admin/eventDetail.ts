@@ -15,6 +15,9 @@ export interface EventTicketTypeRow {
   total: number;
   soldCount: number;
   active: boolean;
+  /** Null en un tier gratis; la API los exige en cuanto el precio es mayor a cero. */
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
 }
 
 export interface EventAuditLogRow {
@@ -95,7 +98,9 @@ export async function listEventTicketTypes(
   const admin = createSupabaseServiceRoleClient();
   const { data, error } = await admin
     .from("provider_event_ticket_types")
-    .select("id, name, price, total, sold_count, active")
+    .select(
+      "id, name, price, total, sold_count, active, sale_starts_at, sale_ends_at",
+    )
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
 
@@ -111,6 +116,8 @@ export async function listEventTicketTypes(
     total: Number(row.total),
     soldCount: Number(row.sold_count ?? 0),
     active: Boolean(row.active),
+    saleStartsAt: row.sale_starts_at ? String(row.sale_starts_at) : null,
+    saleEndsAt: row.sale_ends_at ? String(row.sale_ends_at) : null,
   }));
 }
 
