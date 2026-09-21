@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export type UpdateEventTicketTypeState =
   | { ok: false; errors: string[]; warnings: string[] }
-  | { ok: true; warnings: string[] }
+  | { ok: true; warnings: string[]; resultId: string }
   | null;
 
 export async function setEventStatus(formData: FormData) {
@@ -291,7 +291,11 @@ export async function updateEventTicketType(
 
   revalidatePath(revalidate);
   revalidatePath("/events");
-  return { ok: true, warnings: check.warnings };
+  return {
+    ok: true,
+    warnings: check.warnings,
+    resultId: `${Date.now()}-${id}`,
+  };
 }
 
 function formOptionalText(value: FormDataEntryValue | null): string | null {
@@ -309,7 +313,7 @@ function formInteger(value: FormDataEntryValue | null): number {
   const raw = String(value ?? "").trim();
   if (!raw) return Number.NaN;
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : Number.NaN;
+  return Number.isInteger(parsed) ? parsed : Number.NaN;
 }
 
 function optionalIso(value: string | null): string | null {

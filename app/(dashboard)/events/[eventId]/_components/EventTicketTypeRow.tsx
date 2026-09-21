@@ -29,16 +29,18 @@ export function EventTicketTypeEditableRow({
   revalidatePath: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [formSession, setFormSession] = useState(0);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [lastHandledSuccessId, setLastHandledSuccessId] = useState<string | null>(
+    null,
+  );
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
   const openEditor = useCallback(() => {
     setWarnings([]);
-    setFormSession((value) => value + 1);
     setOpen(true);
   }, []);
   const closeEditor = useCallback(() => setOpen(false), []);
-  const handleSaved = useCallback((nextWarnings: string[]) => {
+  const handleSaved = useCallback((nextWarnings: string[], resultId: string) => {
+    setLastHandledSuccessId(resultId);
     setWarnings(nextWarnings);
     setOpen(false);
   }, []);
@@ -98,12 +100,12 @@ export function EventTicketTypeEditableRow({
     <tr className="border-b border-white/8 last:border-0">
       <td colSpan={5} className="py-4">
         <EditableTicketTypeForm
-          key={`${ticketType.id}-${formSession}`}
           ticketType={ticketType}
           eventId={eventId}
           revalidatePath={revalidatePath}
           inputId={inputId}
           onCancel={closeEditor}
+          lastHandledSuccessId={lastHandledSuccessId}
           onSaved={handleSaved}
         />
       </td>
@@ -117,6 +119,7 @@ function EditableTicketTypeForm({
   revalidatePath,
   inputId,
   onCancel,
+  lastHandledSuccessId,
   onSaved,
 }: {
   ticketType: TicketType;
@@ -124,7 +127,8 @@ function EditableTicketTypeForm({
   revalidatePath: string;
   inputId: (field: string) => string;
   onCancel: () => void;
-  onSaved: (warnings: string[]) => void;
+  lastHandledSuccessId: string | null;
+  onSaved: (warnings: string[], resultId: string) => void;
 }) {
   const [state, action, isPending] = useActionState<UpdateEventTicketTypeState, FormData>(
     updateEventTicketType,
@@ -132,10 +136,10 @@ function EditableTicketTypeForm({
   );
 
   useEffect(() => {
-    if (state?.ok) {
-      onSaved(state.warnings);
+    if (state?.ok && state.resultId !== lastHandledSuccessId) {
+      onSaved(state.warnings, state.resultId);
     }
-  }, [onSaved, state]);
+  }, [lastHandledSuccessId, onSaved, state]);
 
   return (
     <form action={action} className="space-y-4">
