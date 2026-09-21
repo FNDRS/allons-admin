@@ -29,32 +29,55 @@ export function EventTicketTypeEditableRow({
   revalidatePath: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
 
   if (!open) {
     return (
-      <tr className="border-b border-white/8 last:border-0">
-        <td className="py-2.5 pr-4 font-medium">
-          {ticketType.name}
-          {!ticketType.active ? (
-            <span className="ml-2 text-xs text-muted">(inactivo)</span>
-          ) : null}
-        </td>
-        <td className="py-2.5 pr-4 text-right tabular-nums">
-          {money(Math.round(ticketType.price * 100))}
-        </td>
-        <td className="py-2.5 pr-4 text-right tabular-nums">
-          {ticketType.soldCount}
-        </td>
-        <td className="py-2.5 pr-4 text-right tabular-nums">
-          {ticketType.total}
-        </td>
-        <td className="py-2.5 text-right">
-          <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(true)}>
-            Editar
-          </Button>
-        </td>
-      </tr>
+      <>
+        <tr className="border-b border-white/8">
+          <td className="py-2.5 pr-4 font-medium">
+            {ticketType.name}
+            {!ticketType.active ? (
+              <span className="ml-2 text-xs text-muted">(inactivo)</span>
+            ) : null}
+          </td>
+          <td className="py-2.5 pr-4 text-right tabular-nums">
+            {money(Math.round(ticketType.price * 100))}
+          </td>
+          <td className="py-2.5 pr-4 text-right tabular-nums">
+            {ticketType.soldCount}
+          </td>
+          <td className="py-2.5 pr-4 text-right tabular-nums">
+            {ticketType.total}
+          </td>
+          <td className="py-2.5 text-right">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setWarnings([]);
+                setOpen(true);
+              }}
+            >
+              Editar
+            </Button>
+          </td>
+        </tr>
+        {warnings.length ? (
+          <tr className="border-b border-white/8 last:border-0">
+            <td colSpan={5} className="pb-4">
+              <div className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                <p>Guardado con aviso:</p>
+                {warnings.map((warning) => (
+                  <p key={warning}>{warning}</p>
+                ))}
+              </div>
+            </td>
+          </tr>
+        ) : null}
+      </>
     );
   }
 
@@ -67,6 +90,10 @@ export function EventTicketTypeEditableRow({
           revalidatePath={revalidatePath}
           inputId={inputId}
           onCancel={() => setOpen(false)}
+          onSaved={(nextWarnings) => {
+            setWarnings(nextWarnings);
+            setOpen(false);
+          }}
         />
       </td>
     </tr>
@@ -79,12 +106,14 @@ function EditableTicketTypeForm({
   revalidatePath,
   inputId,
   onCancel,
+  onSaved,
 }: {
   ticketType: TicketType;
   eventId: string;
   revalidatePath: string;
   inputId: (field: string) => string;
   onCancel: () => void;
+  onSaved: (warnings: string[]) => void;
 }) {
   const [state, action, isPending] = useActionState<UpdateEventTicketTypeState, FormData>(
     updateEventTicketType,
@@ -92,10 +121,10 @@ function EditableTicketTypeForm({
   );
 
   useEffect(() => {
-    if (state?.ok && state.warnings.length === 0) {
-      onCancel();
+    if (state?.ok) {
+      onSaved(state.warnings);
     }
-  }, [onCancel, state]);
+  }, [onSaved, state]);
 
   return (
     <form action={action} className="space-y-4">
@@ -111,9 +140,8 @@ function EditableTicketTypeForm({
         </div>
       ) : null}
 
-      {state?.warnings.length ? (
+      {!state?.ok && state?.warnings.length ? (
         <div className="space-y-1 border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-          {state.ok ? <p>Guardado con aviso:</p> : null}
           {state.warnings.map((warning) => (
             <p key={warning}>{warning}</p>
           ))}

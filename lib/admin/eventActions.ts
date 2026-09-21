@@ -225,6 +225,15 @@ export async function updateEventTicketType(
     return { ok: false, errors: check.errors, warnings: check.warnings };
   }
 
+  const stateAfter = {
+    event_id: eventId,
+    price_cents: priceCents,
+    total,
+    active,
+    has_sale_window: Boolean(saleStartsAt && saleEndsAt),
+    warnings: check.warnings.length,
+  };
+
   const { data: updated, error } = await admin
     .from("provider_event_ticket_types")
     .update({
@@ -242,6 +251,31 @@ export async function updateEventTicketType(
 
   const missing = !error && !updated;
 
+  if (error) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: error.message,
+      stateAfter,
+    });
+    return { ok: false, errors: [error.message], warnings: check.warnings };
+  }
+  if (missing) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: "tipo de entrada no encontrado",
+      stateAfter,
+    });
+    return {
+      ok: false,
+      errors: ["Tipo de entrada no encontrado"],
+      warnings: check.warnings,
+    };
+  }
+
   await logAdminAudit({
     actor_user_id: caller.userId,
     actor_email: caller.email,
@@ -249,30 +283,10 @@ export async function updateEventTicketType(
     action: "event.ticket_type_patch",
     resource_type: "provider_event_ticket_type",
     resource_id: id,
-    outcome: error || missing ? "failure" : "success",
+    outcome: "success",
     // El precio y el cupo son justamente lo que hay que poder auditar después.
-    state_after: {
-      event_id: eventId,
-      price_cents: priceCents,
-      total,
-      active,
-      has_sale_window: Boolean(saleStartsAt && saleEndsAt),
-      warnings: check.warnings.length,
-    },
-    error_message:
-      error?.message ?? (missing ? "tipo de entrada no encontrado" : undefined),
+    state_after: stateAfter,
   });
-
-  if (error) {
-    return { ok: false, errors: [error.message], warnings: check.warnings };
-  }
-  if (missing) {
-    return {
-      ok: false,
-      errors: ["Tipo de entrada no encontrado"],
-      warnings: check.warnings,
-    };
-  }
 
   revalidatePath(revalidate);
   revalidatePath("/events");
@@ -319,12 +333,14 @@ async function auditTicketTypeUpdateFailure({
   eventId,
   errorMessage,
   rejected,
+  stateAfter,
 }: {
   caller: Awaited<ReturnType<typeof requireRootActor>>;
   ticketTypeId: string;
   eventId: string;
   errorMessage: string;
   rejected?: number;
+  stateAfter?: Record<string, unknown>;
 }) {
   await logAdminAudit({
     actor_user_id: caller.userId,
@@ -336,6 +352,7 @@ async function auditTicketTypeUpdateFailure({
     outcome: "failure",
     state_after: {
       event_id: eventId,
+      ...(stateAfter ?? {}),
       ...(typeof rejected === "number" ? { rejected } : {}),
     },
     error_message: errorMessage,
