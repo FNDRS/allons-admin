@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +31,15 @@ export function EventTicketTypeEditableRow({
   const [open, setOpen] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
+  const openEditor = useCallback(() => {
+    setWarnings([]);
+    setOpen(true);
+  }, []);
+  const closeEditor = useCallback(() => setOpen(false), []);
+  const handleSaved = useCallback((nextWarnings: string[]) => {
+    setWarnings(nextWarnings);
+    setOpen(false);
+  }, []);
 
   if (!open) {
     return (
@@ -56,10 +65,7 @@ export function EventTicketTypeEditableRow({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={() => {
-                setWarnings([]);
-                setOpen(true);
-              }}
+              onClick={openEditor}
             >
               Editar
             </Button>
@@ -89,11 +95,8 @@ export function EventTicketTypeEditableRow({
           eventId={eventId}
           revalidatePath={revalidatePath}
           inputId={inputId}
-          onCancel={() => setOpen(false)}
-          onSaved={(nextWarnings) => {
-            setWarnings(nextWarnings);
-            setOpen(false);
-          }}
+          onCancel={closeEditor}
+          onSaved={handleSaved}
         />
       </td>
     </tr>
