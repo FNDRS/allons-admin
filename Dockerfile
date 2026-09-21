@@ -10,6 +10,9 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml next.config.ts tsconfig.json postcss.config.js tailwind.config.ts ./
+# Sin proxy.ts la imagen se construye sin middleware: ni gate de root admin en
+# el borde, ni refresco de la sesión de Supabase, ni el bypass de /monitoring.
+COPY proxy.ts ./
 # Sentry se inicializa desde la raíz; sin estos archivos el build no lo incluye.
 COPY instrumentation.ts instrumentation-client.ts sentry.shared.ts sentry.server.config.ts sentry.edge.config.ts ./
 COPY app ./app

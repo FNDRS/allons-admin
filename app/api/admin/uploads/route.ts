@@ -2,6 +2,7 @@ import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { getRootActor } from "@/lib/admin/getRootActor";
 import { createUploadTicket, deleteUpload } from "@/lib/admin/uploadsApi";
 import { isUploadKind, type UploadedFile } from "@/lib/admin/uploads";
+import { createSupabaseAnonClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -55,23 +56,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const upload = await fetch(ticket.signedUrl, {
-    method: "PUT",
-    headers: {
-      "content-type": ticket.contentType,
+  // Con el SDK y no con un PUT a mano: es él quien sabe qué cabeceras espera
+  // el endpoint de Storage detrás del gateway, y equivocarse ahí sólo se nota
+  // en producción.
+  const { error: uploadError } = await createSupabaseAnonClient()
+    .storage.from(ticket.bucket)
+    .uploadToSignedUrl(ticket.path, ticket.token, await file.arrayBuffer(), {
+      contentType: ticket.contentType,
       // Cada ticket nombra una ruta nueva, así que sobrescribir sólo podría
       // pasar por accidente.
-      "x-upsert": "false",
-    },
-    body: await file.arrayBuffer(),
-  });
+      upsert: false,
+    });
 
-  if (!upload.ok) {
-    const detail = await upload.text().catch(() => "");
+  if (uploadError) {
     return NextResponse.json(
-      {
-        error: `Error subiendo ${file.name}: ${detail || upload.statusText}`,
-      },
+      { error: `Error subiendo ${file.name}: ${uploadError.message}` },
       { status: 502 },
     );
   }
