@@ -373,6 +373,8 @@ export interface AdminEventFeeQuote {
 
 export interface AdminEventFeeConfig {
   eventId: string;
+  /** False mientras el cobro real no lea esta configuración. */
+  appliesToCheckout?: boolean;
   overrides: AdminEventFeeOverrides;
   providerDefaults: { allonsFee: number; pasarelaFee: number };
   effective: {

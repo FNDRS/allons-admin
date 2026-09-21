@@ -103,10 +103,14 @@ export async function setEventFees(formData: FormData) {
   let gatewayFixedCents: number | null = null;
   if (fixedRaw !== "") {
     const lps = Number(fixedRaw.replace(",", "."));
-    if (!Number.isFinite(lps) || lps < 0) {
+    const cents = Math.round(lps * 100);
+    // Checked after the conversion, not before: 1e308 is finite but its cents
+    // are Infinity, which serializes to JSON null and would clear the override
+    // instead of setting it.
+    if (!Number.isFinite(lps) || lps < 0 || !Number.isSafeInteger(cents)) {
       throw new Error("El costo fijo de pasarela debe ser un monto válido");
     }
-    gatewayFixedCents = Math.round(lps * 100);
+    gatewayFixedCents = cents;
   }
 
   const overrides: AdminEventFeeOverrides = {

@@ -278,7 +278,11 @@ export default async function EventDetailPage({
 
         {feeConfig ? (
           <div className="mb-6">
-            <EventFeesCard eventId={eventId} config={feeConfig} />
+            <EventFeesCard
+              eventId={eventId}
+              config={feeConfig}
+              hasPricedTicket={previewCents !== undefined}
+            />
           </div>
         ) : null}
 

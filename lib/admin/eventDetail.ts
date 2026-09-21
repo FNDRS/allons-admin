@@ -32,6 +32,13 @@ export interface EventAuditLogRow {
   errorMessage: string | null;
 }
 
+/** Etiquetas de los modos de cobro, espejo de las de allons-api. */
+const FEE_MODE_LABELS: Record<string, string> = {
+  provider_absorbs: "el comercio absorbe todo",
+  buyer_pays_gateway: "el comprador paga la pasarela",
+  buyer_pays_all: "el comprador paga todo",
+};
+
 /**
  * Qué dice una fila del audit log del evento.
  *
@@ -53,6 +60,43 @@ export function describeEventAuditRow(row: EventAuditLogRow): string {
         : "Intento de quitar el retiro de kit";
     }
     return "Retiro de kit";
+  }
+
+  if (row.action === "event.fees_patch") {
+    const state = row.stateAfter as Record<string, unknown>;
+    const parts: string[] = [];
+    if ("feeMode" in state) {
+      const mode = state.feeMode;
+      parts.push(
+        mode === null
+          ? "modo: el del comercio"
+          : `modo: ${FEE_MODE_LABELS[String(mode)] ?? String(mode)}`,
+      );
+    }
+    for (const [key, label] of [
+      ["allonsFeePct", "Allons"],
+      ["gatewayFeePct", "pasarela"],
+      ["isvPct", "ISV"],
+    ] as const) {
+      if (!(key in state)) continue;
+      const value = state[key];
+      parts.push(
+        value === null
+          ? `${label}: del comercio`
+          : `${label}: ${String(value)}%`,
+      );
+    }
+    if ("gatewayFixedCents" in state) {
+      const cents = state.gatewayFixedCents;
+      parts.push(
+        cents === null
+          ? "fijo pasarela: del comercio"
+          : `fijo pasarela: L ${(Number(cents) / 100).toFixed(2)}`,
+      );
+    }
+    return parts.length > 0
+      ? `Comisiones: ${parts.join(", ")}`
+      : "Comisiones del evento";
   }
 
   if (row.action === "event.create") return "Evento creado";

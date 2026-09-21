@@ -24,9 +24,12 @@ const lps = (cents: number) =>
 export function EventFeesCard({
   eventId,
   config,
+  hasPricedTicket,
 }: {
   eventId: string;
   config: AdminEventFeeConfig;
+  /** False when the event sells nothing, so the preview is a sample amount. */
+  hasPricedTicket: boolean;
 }) {
   const { overrides, providerDefaults, preview } = config;
 
@@ -40,11 +43,21 @@ export function EventFeesCard({
         que realmente se va a cobrar.
       </p>
 
+      {config.appliesToCheckout === false && (
+        <p className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm leading-6 text-amber-200/90">
+          Todavía no está conectado al cobro. Guardar aquí deja la configuración
+          lista y cambia este desglose, pero el comprador sigue pagando como
+          hasta ahora hasta que se libere el cambio en la app.
+        </p>
+      )}
+
       <form action={setEventFees} className="mt-5 space-y-5">
         <input type="hidden" name="eventId" value={eventId} />
 
         <fieldset className="space-y-2">
-          <Label>Quién paga cada comisión</Label>
+          <legend className="mb-2 text-sm font-medium">
+            Quién paga cada comisión
+          </legend>
           {ADMIN_FEE_MODES.map((mode) => (
             <label
               key={mode.value}
@@ -141,8 +154,17 @@ export function EventFeesCard({
 
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
           <div className="text-xs uppercase tracking-wide text-white/40">
-            Desglose de un boleto de {lps(preview.subtotalCents)}
+            {hasPricedTicket
+              ? `Desglose de un boleto de ${lps(preview.subtotalCents)}`
+              : `Ejemplo sobre ${lps(preview.subtotalCents)}`}
           </div>
+          {!hasPricedTicket && (
+            <p className="mt-2 text-xs leading-5 text-white/40">
+              Este evento no tiene boletos de pago, así que el desglose usa un
+              monto de muestra. El cargo por servicio no es un porcentaje fijo:
+              cambia con el precio.
+            </p>
+          )}
           <dl className="mt-3 space-y-1.5 text-sm">
             <Row label="Precio del boleto" value={lps(preview.subtotalCents)} />
             {preview.serviceChargeCents > 0 && (
