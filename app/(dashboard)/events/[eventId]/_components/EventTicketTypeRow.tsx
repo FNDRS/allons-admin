@@ -269,7 +269,7 @@ function EditableTicketTypeForm({
       </p>
 
       <p role="status" aria-live="polite" className="text-xs text-white/60">
-        {isPending ? "Guardando cambios…" : ""}
+        {isPending ? "Guardando cambios…" : "Listo para guardar cambios."}
       </p>
 
       <div className="flex gap-2">
