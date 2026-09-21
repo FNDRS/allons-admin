@@ -33,6 +33,16 @@ pnpm dev
   no service-role key: every read and write goes to `allons-api` behind
   `ADMIN_API_SECRET`, and the API records who did what in `admin_audit_logs`.
 
+## Sentry
+
+Sin `NEXT_PUBLIC_SENTRY_DSN` no se inicializa: local y CI quedan iguales. Las
+tres variables del cliente son `NEXT_PUBLIC_` porque Next las incrusta en el
+bundle del navegador, así que van como `--build-arg`, no sólo en runtime.
+
+Los source maps se suben sólo si el build recibe `SENTRY_AUTH_TOKEN`, que viaja
+como secret de BuildKit y no como build arg: un build arg quedaría en el
+historial de la imagen que se publica en ECR.
+
 ## Deploy (Vercel)
 
 1. Connect the repo to Vercel.
