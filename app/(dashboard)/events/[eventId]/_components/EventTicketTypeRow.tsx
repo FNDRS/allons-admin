@@ -29,7 +29,7 @@ export function EventTicketTypeEditableRow({
   revalidatePath: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [sessionId, setSessionId] = useState(0);
+  const [sessionId, setSessionId] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastHandledSuccessId, setLastHandledSuccessId] = useState<string | null>(
     null,
@@ -37,7 +37,7 @@ export function EventTicketTypeEditableRow({
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
   const openEditor = useCallback(() => {
     setWarnings([]);
-    setSessionId((value) => value + 1);
+    setSessionId(globalThis.crypto.randomUUID());
     setOpen(true);
   }, []);
   const closeEditor = useCallback(() => setOpen(false), []);
@@ -107,7 +107,7 @@ export function EventTicketTypeEditableRow({
           revalidatePath={revalidatePath}
           inputId={inputId}
           onCancel={closeEditor}
-          submitSessionId={String(sessionId)}
+          submitSessionId={sessionId}
           lastHandledSuccessId={lastHandledSuccessId}
           onSaved={handleSaved}
         />
