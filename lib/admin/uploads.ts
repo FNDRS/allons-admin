@@ -32,8 +32,14 @@ export const UPLOAD_CONFIGS: Record<UploadKind, UploadPickerConfig> = {
 
 export const EVENT_IMAGE_MAX_COUNT = 10;
 
+const UPLOAD_KINDS = new Set(Object.keys(UPLOAD_CONFIGS));
+
+/**
+ * `in` también acepta claves heredadas, así que `kind: "constructor"` pasaba y
+ * terminaba leyendo una config que no existe.
+ */
 export function isUploadKind(value: unknown): value is UploadKind {
-  return typeof value === "string" && value in UPLOAD_CONFIGS;
+  return typeof value === "string" && UPLOAD_KINDS.has(value);
 }
 
 export type UploadedFile = {
