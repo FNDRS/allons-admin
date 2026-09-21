@@ -1,101 +1,51 @@
 /**
- * Subidas del panel: qué se puede subir, a qué bucket y con qué límite.
+ * Subidas del panel: qué puede elegir el usuario en cada campo de archivo.
  *
- * Todo pasa por `/api/admin/uploads` en vez de por los Server Actions, porque
- * Next corta el body de un action a 1 MB y cualquier foto lo supera
- * ("Body exceeded 1 MB limit"). Un route handler no tiene ese límite y la
- * escritura sigue siendo con service role detrás del guard de root admin.
+ * Los formularios no mandan archivos por el Server Action (Next corta ese body
+ * a 1 MB), así que pasan por `/api/admin/uploads`, que pide un permiso de un
+ * solo uso a `allons-api` y escribe con él.
+ *
+ * Acá vive sólo lo que necesita el `<input type="file">`. Tipo, extensión y
+ * tamaño los valida `allons-api`: es quien firma la subida, y una validación
+ * que el navegador puede saltarse no es una validación.
  */
-
-const IMAGE_CONTENT_TYPES: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  heic: "image/heic",
-  heif: "image/heif",
-};
-
-const DOCUMENT_CONTENT_TYPES: Record<string, string> = {
-  ...IMAGE_CONTENT_TYPES,
-  pdf: "application/pdf",
-};
 
 export type UploadKind = "event-image" | "provider-logo" | "comercio-contract";
 
-type UploadConfig = {
-  bucket: string;
-  /** Prefijo de la ruta; también es lo único que `DELETE` acepta borrar. */
-  prefix: string;
-  contentTypes: Record<string, string>;
+type UploadPickerConfig = {
+  /** Valor del atributo `accept` del input. */
   accept: string;
-  maxBytes: number;
-  formatsLabel: string;
 };
 
-export const UPLOAD_CONFIGS: Record<UploadKind, UploadConfig> = {
+export const UPLOAD_CONFIGS: Record<UploadKind, UploadPickerConfig> = {
   "event-image": {
-    bucket: "event-images",
-    prefix: "gallery/admin_",
-    contentTypes: IMAGE_CONTENT_TYPES,
     accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
-    maxBytes: 10 * 1024 * 1024,
-    formatsLabel: "JPG, PNG, WEBP, HEIC o HEIF",
   },
   "provider-logo": {
-    bucket: "event-images",
-    prefix: "provider-logos/logo_",
-    contentTypes: IMAGE_CONTENT_TYPES,
     accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
-    maxBytes: 5 * 1024 * 1024,
-    formatsLabel: "JPG, PNG, WEBP, HEIC o HEIF",
   },
   "comercio-contract": {
-    bucket: "comercio-contracts",
-    prefix: "contract_",
-    contentTypes: DOCUMENT_CONTENT_TYPES,
-    accept: "image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf",
-    maxBytes: 20 * 1024 * 1024,
-    formatsLabel: "PDF, JPG, PNG, WEBP, HEIC o HEIF",
+    accept:
+      "image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf",
   },
 };
 
 export const EVENT_IMAGE_MAX_COUNT = 10;
 
+const UPLOAD_KINDS = new Set(Object.keys(UPLOAD_CONFIGS));
+
+/**
+ * `in` también acepta claves heredadas, así que `kind: "constructor"` pasaba y
+ * terminaba leyendo una config que no existe.
+ */
 export function isUploadKind(value: unknown): value is UploadKind {
-  return typeof value === "string" && value in UPLOAD_CONFIGS;
+  return typeof value === "string" && UPLOAD_KINDS.has(value);
 }
 
 export type UploadedFile = {
   url: string;
   path: string;
 };
-
-/** Extensión y content-type reales, tomando el nombre o el tipo del archivo. */
-export function describeUploadFile(
-  file: { name: string; type: string },
-  config: UploadConfig,
-) {
-  const rawExtension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const fromExtension = config.contentTypes[rawExtension];
-  const fromFile = Object.values(config.contentTypes).includes(file.type)
-    ? file.type
-    : null;
-  const contentType = fromExtension ?? fromFile;
-  const extension = fromExtension
-    ? rawExtension
-    : Object.entries(config.contentTypes).find(
-        ([, type]) => type === fromFile,
-      )?.[0] ?? "jpg";
-
-  if (!contentType) {
-    throw new Error(
-      `Formato no permitido para ${file.name}. Usa ${config.formatsLabel}.`,
-    );
-  }
-
-  return { extension, contentType };
-}
 
 /**
  * Lee la lista de archivos ya subidos que manda un formulario en un input

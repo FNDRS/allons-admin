@@ -1,7 +1,12 @@
 import "server-only";
 
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { listAdminAudit } from "@/lib/admin/auditApi";
+import {
+  getAdminEventTicketStats,
+  listAdminEventTicketTypes,
+} from "@/lib/admin/eventsApi";
 import { listPaymentOrders } from "@/lib/admin/paymentsApi";
+import { getProviderOwnerUserId } from "@/lib/admin/providersApi";
 
 export interface EventTicketStats {
   total: number;
@@ -50,6 +55,8 @@ export function describeEventAuditRow(row: EventAuditLogRow): string {
     return "Retiro de kit";
   }
 
+  if (row.action === "event.create") return "Evento creado";
+
   if (row.stateAfter.status) return `Estado: ${String(row.stateAfter.status)}`;
   if (row.stateAfter.status_attempted) {
     return `Intento: ${String(row.stateAfter.status_attempted)}`;
@@ -70,77 +77,43 @@ export async function loadEventPaymentOrders(eventId: string) {
 export async function countEventTickets(
   eventId: string,
 ): Promise<EventTicketStats> {
-  const admin = createSupabaseServiceRoleClient();
-  const [totalRes, activeRes] = await Promise.all([
-    admin
-      .from("tickets")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId),
-    admin
-      .from("tickets")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId)
-      .is("cancelled_at", null),
-  ]);
-
-  return {
-    total: totalRes.count ?? 0,
-    active: activeRes.count ?? 0,
-  };
+  try {
+    return await getAdminEventTicketStats(eventId);
+  } catch (error) {
+    console.warn("[eventDetail] ticket stats:", error);
+    return { total: 0, active: 0 };
+  }
 }
 
 export async function listEventTicketTypes(
   eventId: string,
 ): Promise<EventTicketTypeRow[]> {
-  const admin = createSupabaseServiceRoleClient();
-  const { data, error } = await admin
-    .from("provider_event_ticket_types")
-    .select("id, name, price, total, sold_count, active")
-    .eq("event_id", eventId)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.warn("[eventDetail] ticket types:", error.message);
+  try {
+    const { items } = await listAdminEventTicketTypes(eventId);
+    return items;
+  } catch (error) {
+    console.warn("[eventDetail] ticket types:", error);
     return [];
   }
-
-  return (data ?? []).map((row) => ({
-    id: String(row.id),
-    name: String(row.name),
-    price: Number(row.price),
-    total: Number(row.total),
-    soldCount: Number(row.sold_count ?? 0),
-    active: Boolean(row.active),
-  }));
 }
 
 export async function listEventAuditLogs(
   eventId: string,
 ): Promise<EventAuditLogRow[]> {
-  const admin = createSupabaseServiceRoleClient();
-  const { data, error } = await admin
-    .from("admin_audit_logs")
-    .select(
-      "id, occurred_at, action, outcome, actor_email, state_after, error_message",
-    )
-    .eq("resource_id", eventId)
-    .eq("resource_type", "event")
-    .order("occurred_at", { ascending: false })
-    .limit(30);
+  const rows = await listAdminAudit({
+    resourceIds: [eventId],
+    resourceType: "event",
+    limit: 30,
+  });
 
-  if (error) {
-    console.warn("[eventDetail] audit logs:", error.message);
-    return [];
-  }
-
-  return (data ?? []).map((row) => ({
-    id: String(row.id),
-    occurredAt: String(row.occurred_at),
-    action: String(row.action),
-    outcome: String(row.outcome),
-    actorEmail: (row.actor_email as string | null) ?? null,
-    stateAfter: (row.state_after as Record<string, unknown>) ?? {},
-    errorMessage: (row.error_message as string | null) ?? null,
+  return rows.map((row) => ({
+    id: row.id,
+    occurredAt: row.occurredAt,
+    action: row.action,
+    outcome: row.outcome,
+    actorEmail: row.actorEmail,
+    stateAfter: row.stateAfter,
+    errorMessage: row.errorMessage,
   }));
 }
 
@@ -149,22 +122,11 @@ export async function resolveProviderOwnerUserId(
   providerId: string | null,
 ): Promise<string | null> {
   if (!providerId) return null;
-  const admin = createSupabaseServiceRoleClient();
-  const { data } = await admin
-    .from("provider_members")
-    .select("user_id, role")
-    .eq("provider_id", providerId)
-    .eq("role", "owner")
-    .maybeSingle();
-
-  if (data?.user_id) return String(data.user_id);
-
-  const { data: anyMember } = await admin
-    .from("provider_members")
-    .select("user_id")
-    .eq("provider_id", providerId)
-    .limit(1)
-    .maybeSingle();
-
-  return anyMember?.user_id ? String(anyMember.user_id) : null;
+  try {
+    const { userId } = await getProviderOwnerUserId(providerId);
+    return userId;
+  } catch (error) {
+    console.warn("[eventDetail] provider owner:", error);
+    return null;
+  }
 }

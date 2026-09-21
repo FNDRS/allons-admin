@@ -1,4 +1,4 @@
-import { logAdminAudit } from "@/lib/admin/auditLog";
+import { recordAdminAudit } from "@/lib/admin/auditApi";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import {
   countTicketsForProviderEvents,
@@ -71,20 +71,21 @@ export async function GET(
     auditLogs,
   };
 
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "route_handler",
-    action: "provider.data_export",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: "success",
-    state_after: {
-      events: events.items.length,
-      subscriptionOrders: subscriptionOrders.length,
-      members: members.length,
+  // El único caso que la API no puede observar: la exportación ocurre entera
+  // acá, así que el panel la reporta.
+  await recordAdminAudit(
+    {
+      action: "provider.data_export",
+      resourceType: "provider_user",
+      resourceId: userId,
+      stateAfter: {
+        events: events.items.length,
+        subscriptionOrders: subscriptionOrders.length,
+        members: members.length,
+      },
     },
-  });
+    caller,
+  );
 
   const slug = (provider?.handle ?? providerUser.email.split("@")[0]).replace(
     /[^a-z0-9_-]+/gi,

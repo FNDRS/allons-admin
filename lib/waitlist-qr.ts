@@ -1,4 +1,5 @@
-export const WAITLIST_SOURCE_RE = /^[a-z0-9][a-z0-9-_]{0,40}$/i;
+/** Primer carácter más hasta 39: 40 en total, como dice el mensaje de error. */
+export const WAITLIST_SOURCE_RE = /^[a-z0-9][a-z0-9-_]{0,39}$/i;
 
 export function normalizeSourceSlug(value: unknown): string | null {
   if (typeof value !== "string") return null;

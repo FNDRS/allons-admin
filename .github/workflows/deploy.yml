@@ -27,6 +27,7 @@ jobs:
       APP_RUNNER_SERVICE_NAME: allons-admin
       APP_RUNNER_SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN_ADMIN }}
       ADMIN_API_SECRET: ${{ secrets.ADMIN_API_SECRET }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - name: Checkout
@@ -82,7 +83,7 @@ jobs:
           fi
           SERVICE_ARN="${{ steps.apprunner.outputs.service_arn }}"
           CURRENT_ENV=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query "Service.SourceConfiguration.ImageRepository.ImageConfiguration.RuntimeEnvironmentVariables" --output json)
-          for k in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY ADMIN_API_BASE_URL; do
+          for k in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY ADMIN_API_BASE_URL; do
             if ! echo "$CURRENT_ENV" | jq -e --arg k "$k" 'has($k)' >/dev/null; then
               echo "WARN: runtime env $k not set on App Runner service (set it before deploy)." >&2
             fi
@@ -107,10 +108,17 @@ jobs:
         run: |
           # NEXT_PUBLIC_* se bakea en el build (Next lo incrusta en el JS del browser).
           # Se pasan como --build-arg desde los secrets de GitHub.
-          docker build \
+          # DOCKER_BUILDKIT para poder pasar el token de Sentry como secret.
+          DOCKER_BUILDKIT=1 docker build \
+            --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
             --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
             --build-arg NEXT_PUBLIC_WAITLIST_BASE_URL="${{ secrets.NEXT_PUBLIC_WAITLIST_BASE_URL }}" \
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}" \
+            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT="production" \
+            --build-arg NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE="${{ vars.SENTRY_TRACES_SAMPLE_RATE || '0.1' }}" \
+            --build-arg SENTRY_ORG="${{ vars.SENTRY_ORG }}" \
+            --build-arg SENTRY_PROJECT="${{ vars.SENTRY_PROJECT }}" \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

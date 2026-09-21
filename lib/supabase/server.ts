@@ -39,19 +39,24 @@ export async function createSupabaseServerClient() {
   );
 }
 
+
 /**
- * Service-role client. Bypasses RLS - only ever call this from server code,
- * and only after you've verified the caller is a root admin.
+ * Anon client with no session, for server code that carries its own permit.
+ *
+ * Today that is the upload route: the object write is authorised by the
+ * one-shot token `allons-api` signed, not by who is calling, but the Storage
+ * endpoint still sits behind the API gateway and expects the project's anon
+ * key like any other request to it.
  */
-export function createSupabaseServiceRoleClient() {
+export function createSupabaseAnonClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
     throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY - required for admin actions.",
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY - required to upload with a signed URL.",
     );
   }
-  return createClient(url, serviceRoleKey, {
+  return createClient(url, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

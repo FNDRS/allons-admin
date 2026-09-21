@@ -4,9 +4,11 @@ Panel interno: cuentas, comercios, eventos, pagos y waitlist.
 
 ## Stack
 
-- Next.js 15 (App Router) + React 19
+- Next.js 16 (App Router) + React 19
 - TypeScript + Tailwind CSS
-- Supabase (auth + admin), el mismo proyecto que `allons-mobile`
+- Supabase, sólo para el login del propio admin
+- `allons-api` para todo lo demás: este panel no toca la base de datos
+- Sentry para errores
 - Lucide icons
 
 ## Getting started
@@ -15,7 +17,7 @@ Panel interno: cuentas, comercios, eventos, pagos y waitlist.
 pnpm install
 cp .env.example .env.local
 # Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# SUPABASE_SERVICE_ROLE_KEY, ROOT_ADMIN_EMAILS, and (optional)
+# ROOT_ADMIN_EMAILS, ADMIN_API_BASE_URL, ADMIN_API_SECRET, and (optional)
 # NEXT_PUBLIC_WAITLIST_BASE_URL.
 pnpm dev
 ```
@@ -27,9 +29,19 @@ pnpm dev
   email is in `ROOT_ADMIN_EMAILS`. Everyone else is signed out and bounced
   to `/login`.
 - Current root admin allowlist: `marlon.castro@allonsapp.com`.
-- The service-role key is only ever read in server components / route
-  handlers via `lib/supabase/server.ts`. It must never be exposed to the
-  browser bundle.
+- That session is the only thing Supabase is used for here. This panel holds
+  no service-role key: every read and write goes to `allons-api` behind
+  `ADMIN_API_SECRET`, and the API records who did what in `admin_audit_logs`.
+
+## Sentry
+
+Sin `NEXT_PUBLIC_SENTRY_DSN` no se inicializa: local y CI quedan iguales. Las
+tres variables del cliente son `NEXT_PUBLIC_` porque Next las incrusta en el
+bundle del navegador, así que van como `--build-arg`, no sólo en runtime.
+
+Los source maps se suben sólo si el build recibe `SENTRY_AUTH_TOKEN`, que viaja
+como secret de BuildKit y no como build arg: un build arg quedaría en el
+historial de la imagen que se publica en ECR.
 
 ## Deploy (Vercel)
 
@@ -48,9 +60,9 @@ pnpm dev
 
 ## Waitlist QR setup
 
-Run the SQL in `db/waitlist_qr_sources.sql` on the same Supabase project used
-by the waitlist app. This creates the metadata table the admin panel uses to
-store slugs like `diunsa`, `la20`, etc.
+`waitlist_qr_sources` is owned by `allons-api` (migration
+`20260921120000_adopt_waitlist_qr_sources`). `db/waitlist_qr_sources.sql` is
+kept only as the record of how the table was first created by hand.
 
 ### QR script (admin)
 

@@ -202,7 +202,7 @@ export default async function ProvidersPage({
         {filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted">
             {all.length === 0
-              ? "No se pudieron cargar los proveedores. Verifica SUPABASE_SERVICE_ROLE_KEY."
+              ? "No se pudieron cargar los proveedores. Revisa ADMIN_API_BASE_URL y ADMIN_API_SECRET."
               : "Sin coincidencias."}
           </div>
         ) : (

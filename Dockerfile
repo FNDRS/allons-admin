@@ -10,6 +10,11 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml next.config.ts tsconfig.json postcss.config.js tailwind.config.ts ./
+# Sin proxy.ts la imagen se construye sin middleware: ni gate de root admin en
+# el borde, ni refresco de la sesión de Supabase, ni el bypass de /monitoring.
+COPY proxy.ts ./
+# Sentry se inicializa desde la raíz; sin estos archivos el build no lo incluye.
+COPY instrumentation.ts instrumentation-client.ts sentry.shared.ts sentry.server.config.ts sentry.edge.config.ts ./
 COPY app ./app
 COPY components ./components
 COPY lib ./lib
@@ -18,11 +23,26 @@ COPY public ./public
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_WAITLIST_BASE_URL
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT
+ARG NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_WAITLIST_BASE_URL=$NEXT_PUBLIC_WAITLIST_BASE_URL
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT
+ENV NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=$NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+ENV SENTRY_ORG=$SENTRY_ORG
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+# El token de Sentry va por secret de BuildKit, no por ARG: un build arg queda
+# en el historial de la imagen que se sube a ECR. Sin el secret el build corre
+# igual y sólo se queda sin subir los source maps.
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
+    pnpm build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app

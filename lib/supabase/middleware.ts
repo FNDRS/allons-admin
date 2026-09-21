@@ -15,6 +15,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/.well-known") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
+    // Sentry's tunnel. It carries error reports out to Sentry and reads
+    // nothing here, so gating it would only mean every client-side error is
+    // answered with a redirect to /login and never reported.
+    pathname.startsWith("/monitoring") ||
     // Static assets only. The previous `/\.[a-z0-9]+$/` treated ANY path
     // ending in a dot-extension as public, which could expose a sensitive
     // route that happens to end that way. Restrict to known asset extensions.

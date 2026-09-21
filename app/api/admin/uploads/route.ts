@@ -1,10 +1,8 @@
-import {
-  describeUploadFile,
-  isUploadKind,
-  UPLOAD_CONFIGS,
-  type UploadedFile,
-} from "@/lib/admin/uploads";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
+import { getRootActor } from "@/lib/admin/getRootActor";
+import { createUploadTicket, deleteUpload } from "@/lib/admin/uploadsApi";
+import { isUploadKind, type UploadedFile } from "@/lib/admin/uploads";
+import { createSupabaseAnonClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -13,10 +11,18 @@ export const runtime = "nodejs";
  * Sube un archivo del panel (imagen de evento, logo de comercio o contrato).
  *
  * Los formularios no pueden mandar archivos por el Server Action: Next corta
- * ese body a 1 MB. Acá no hay ese límite, y el bucket nunca queda expuesto al
- * navegador porque la escritura la hace el service role.
+ * ese body a 1 MB. Acá no hay ese límite.
+ *
+ * El panel ya no tiene service role, así que la escritura va con un permiso de
+ * un solo uso: `allons-api` valida tipo y tamaño, devuelve una URL firmada
+ * para exactamente un objeto, y estos bytes se escriben contra ella. El bucket
+ * nunca queda expuesto al navegador y esta app nunca ve una llave.
  */
 export async function POST(request: Request) {
+  if (!(await getRootActor())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let file: File | null = null;
   let kind: unknown;
   try {
@@ -31,55 +37,54 @@ export async function POST(request: Request) {
   if (!isUploadKind(kind)) {
     return NextResponse.json({ error: "Tipo de subida inválido." }, { status: 422 });
   }
-  const config = UPLOAD_CONFIGS[kind];
-
   if (!file || file.size === 0) {
     return NextResponse.json({ error: "Falta el archivo." }, { status: 400 });
   }
-  if (file.size > config.maxBytes) {
-    const mb = Math.round(config.maxBytes / (1024 * 1024));
-    return NextResponse.json(
-      { error: `${file.name} supera el límite de ${mb} MB.` },
-      { status: 413 },
-    );
-  }
 
-  let extension: string;
-  let contentType: string;
+  let ticket;
   try {
-    ({ extension, contentType } = describeUploadFile(file, config));
+    ticket = await createUploadTicket({
+      kind,
+      filename: file.name,
+      contentType: file.type,
+      sizeBytes: file.size,
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Formato no permitido." },
-      { status: 415 },
+      { error: adminApiErrorMessage(error, "No se pudo preparar la subida.") },
+      { status: 422 },
     );
   }
 
-  const admin = createSupabaseServiceRoleClient();
-  const filename = `${config.prefix}${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}.${extension}`;
+  // Con el SDK y no con un PUT a mano: es él quien sabe qué cabeceras espera
+  // el endpoint de Storage detrás del gateway, y equivocarse ahí sólo se nota
+  // en producción.
+  const { error: uploadError } = await createSupabaseAnonClient()
+    .storage.from(ticket.bucket)
+    .uploadToSignedUrl(ticket.path, ticket.token, await file.arrayBuffer(), {
+      contentType: ticket.contentType,
+      // Cada ticket nombra una ruta nueva, así que sobrescribir sólo podría
+      // pasar por accidente.
+      upsert: false,
+    });
 
-  const { data, error } = await admin.storage
-    .from(config.bucket)
-    .upload(filename, await file.arrayBuffer(), { contentType, upsert: false });
-
-  if (error || !data) {
+  if (uploadError) {
     return NextResponse.json(
-      { error: `Error subiendo ${file.name}: ${error?.message ?? "desconocido"}` },
+      { error: `Error subiendo ${file.name}: ${uploadError.message}` },
       { status: 502 },
     );
   }
 
-  const uploaded: UploadedFile = {
-    path: data.path,
-    url: admin.storage.from(config.bucket).getPublicUrl(data.path).data.publicUrl,
-  };
+  const uploaded: UploadedFile = { path: ticket.path, url: ticket.publicUrl };
   return NextResponse.json(uploaded);
 }
 
 /** Borra un archivo que se quitó del formulario antes de guardarlo. */
 export async function DELETE(request: Request) {
+  if (!(await getRootActor())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let path = "";
   let kind: unknown;
   try {
@@ -93,18 +98,15 @@ export async function DELETE(request: Request) {
   if (!isUploadKind(kind)) {
     return NextResponse.json({ error: "Tipo de subida inválido." }, { status: 422 });
   }
-  const config = UPLOAD_CONFIGS[kind];
 
-  // Sólo lo que sube este panel: sin esto se podría borrar cualquier objeto
-  // del bucket pasando una ruta arbitraria.
-  if (!path.startsWith(config.prefix)) {
-    return NextResponse.json({ error: "Ruta no permitida." }, { status: 422 });
+  try {
+    await deleteUpload(kind, path);
+  } catch (error) {
+    return NextResponse.json(
+      { error: adminApiErrorMessage(error, "No se pudo borrar el archivo.") },
+      { status: 502 },
+    );
   }
 
-  const admin = createSupabaseServiceRoleClient();
-  const { error } = await admin.storage.from(config.bucket).remove([path]);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 502 });
-  }
   return NextResponse.json({ ok: true });
 }
