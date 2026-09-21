@@ -10,6 +10,8 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml next.config.ts tsconfig.json postcss.config.js tailwind.config.ts ./
+# Sentry se inicializa desde la raíz; sin estos archivos el build no lo incluye.
+COPY instrumentation.ts instrumentation-client.ts sentry.shared.ts sentry.server.config.ts sentry.edge.config.ts ./
 COPY app ./app
 COPY components ./components
 COPY lib ./lib
@@ -18,9 +20,11 @@ COPY public ./public
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_WAITLIST_BASE_URL
+ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_WAITLIST_BASE_URL=$NEXT_PUBLIC_WAITLIST_BASE_URL
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 

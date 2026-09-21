@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -21,4 +22,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Source maps are uploaded only when SENTRY_AUTH_TOKEN is set, so a local or
+ * CI build without Sentry credentials behaves exactly as before.
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  // Keeps the browser bundle from shipping readable stack traces while Sentry
+  // still resolves them.
+  widenClientFileUpload: true,
+  // Routes Sentry's own requests through this app, so an ad blocker does not
+  // silently drop every client-side error report.
+  tunnelRoute: "/monitoring",
+});
