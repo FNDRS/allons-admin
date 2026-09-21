@@ -7,6 +7,11 @@ import { isValidAdminEventStatus, updateAdminEventStatus } from "./eventsApi";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export type UpdateEventTicketTypeState =
+  | { ok: false; errors: string[]; warnings: string[] }
+  | { ok: true; warnings: string[] }
+  | null;
+
 export async function setEventStatus(formData: FormData) {
   const caller = await requireRootActor();
   const id = String(formData.get("eventId") ?? "");
@@ -114,21 +119,25 @@ export async function setEventKitPickup(formData: FormData) {
  * publicar —se agota un tier, se corre la fecha, se corrige un precio mal
  * cargado— y hasta ahora la única salida era tocar la base a mano.
  */
-export async function updateEventTicketType(formData: FormData) {
+export async function updateEventTicketType(
+  _prevState: UpdateEventTicketTypeState,
+  formData: FormData,
+): Promise<UpdateEventTicketTypeState> {
   const caller = await requireRootActor();
   const id = String(formData.get("ticketTypeId") ?? "");
   const eventId = String(formData.get("eventId") ?? "");
   const revalidate = String(formData.get("revalidate") ?? "/events");
 
-  if (!id) throw new Error("ticketTypeId requerido");
-  if (!eventId) throw new Error("eventId requerido");
+  if (!id) return failTicketTypeUpdate("ticketTypeId requerido");
+  if (!eventId) return failTicketTypeUpdate("eventId requerido");
 
   const name = String(formData.get("name") ?? "").trim().slice(0, 120);
   const priceCents = Math.round(Number(formData.get("price") ?? 0) * 100);
   const total = Number(formData.get("total") ?? 0);
   const active = String(formData.get("active") ?? "") === "on";
-  const saleStartsAt = emptyToNull(formData.get("saleStartsAt"));
-  const saleEndsAt = emptyToNull(formData.get("saleEndsAt"));
+  const paid = priceCents > 0;
+  const saleStartsAt = paid ? formOptionalText(formData.get("saleStartsAt")) : null;
+  const saleEndsAt = paid ? formOptionalText(formData.get("saleEndsAt")) : null;
 
   const admin = createSupabaseServiceRoleClient();
 
@@ -141,37 +150,79 @@ export async function updateEventTicketType(formData: FormData) {
     .eq("event_id", eventId)
     .maybeSingle();
 
-  if (readError) throw new Error(readError.message);
-  if (!current) throw new Error("Tipo de entrada no encontrado");
+  if (readError) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: readError.message,
+    });
+    return failTicketTypeUpdate(readError.message);
+  }
+  if (!current) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: "Tipo de entrada no encontrado",
+    });
+    return failTicketTypeUpdate("Tipo de entrada no encontrado");
+  }
 
-  const { data: event } = await admin
+  const { data: event, error: eventError } = await admin
     .from("events")
     .select("starts_at")
     .eq("id", eventId)
     .maybeSingle();
+
+  if (eventError) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: eventError.message,
+    });
+    return failTicketTypeUpdate(eventError.message);
+  }
+  if (!event) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: "Evento no encontrado",
+    });
+    return failTicketTypeUpdate("Evento no encontrado");
+  }
+
+  const eventDayEnd = endOfEventDay(event.starts_at ?? null);
+  if (paid && !eventDayEnd) {
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: "No se pudo leer la fecha del evento.",
+    });
+    return failTicketTypeUpdate("No se pudo leer la fecha del evento.");
+  }
 
   const check = checkTicketType(
     { name, priceCents, total, active, saleStartsAt, saleEndsAt },
     {
       soldCount: Number(current.sold_count ?? 0),
       currentPriceCents: Math.round(Number(current.price ?? 0) * 100),
-      eventDayEnd: endOfEventDay(event?.starts_at ?? null),
+      eventDayEnd,
     },
   );
 
   if (check.errors.length > 0) {
-    await logAdminAudit({
-      actor_user_id: caller.userId,
-      actor_email: caller.email,
-      source: "server_action",
-      action: "event.ticket_type_patch",
-      resource_type: "provider_event_ticket_type",
-      resource_id: id,
-      outcome: "failure",
-      state_after: { event_id: eventId, rejected: check.errors.length },
-      error_message: check.errors.join(" "),
+    await auditTicketTypeUpdateFailure({
+      caller,
+      ticketTypeId: id,
+      eventId,
+      errorMessage: check.errors.join(" "),
+      rejected: check.errors.length,
     });
-    throw new Error(check.errors.join(" "));
+    return { ok: false, errors: check.errors, warnings: check.warnings };
   }
 
   const { data: updated, error } = await admin
@@ -181,8 +232,8 @@ export async function updateEventTicketType(formData: FormData) {
       price: priceCents / 100,
       total,
       active,
-      sale_starts_at: saleStartsAt,
-      sale_ends_at: saleEndsAt,
+      sale_starts_at: optionalIso(saleStartsAt),
+      sale_ends_at: optionalIso(saleEndsAt),
     })
     .eq("id", id)
     .eq("event_id", eventId)
@@ -212,16 +263,31 @@ export async function updateEventTicketType(formData: FormData) {
       error?.message ?? (missing ? "tipo de entrada no encontrado" : undefined),
   });
 
-  if (error) throw new Error(error.message);
-  if (missing) throw new Error("Tipo de entrada no encontrado");
+  if (error) {
+    return { ok: false, errors: [error.message], warnings: check.warnings };
+  }
+  if (missing) {
+    return {
+      ok: false,
+      errors: ["Tipo de entrada no encontrado"],
+      warnings: check.warnings,
+    };
+  }
 
   revalidatePath(revalidate);
   revalidatePath("/events");
+  return { ok: true, warnings: check.warnings };
 }
 
-function emptyToNull(value: FormDataEntryValue | null): string | null {
+function formOptionalText(value: FormDataEntryValue | null): string | null {
   const raw = String(value ?? "").trim();
-  return raw ? new Date(raw).toISOString() : null;
+  return raw || null;
+}
+
+function optionalIso(value: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 /**
@@ -241,4 +307,37 @@ function endOfEventDay(startsAt: string | null): Date | null {
     59,
     999,
   );
+}
+
+function failTicketTypeUpdate(error: string): UpdateEventTicketTypeState {
+  return { ok: false, errors: [error], warnings: [] };
+}
+
+async function auditTicketTypeUpdateFailure({
+  caller,
+  ticketTypeId,
+  eventId,
+  errorMessage,
+  rejected,
+}: {
+  caller: Awaited<ReturnType<typeof requireRootActor>>;
+  ticketTypeId: string;
+  eventId: string;
+  errorMessage: string;
+  rejected?: number;
+}) {
+  await logAdminAudit({
+    actor_user_id: caller.userId,
+    actor_email: caller.email,
+    source: "server_action",
+    action: "event.ticket_type_patch",
+    resource_type: "provider_event_ticket_type",
+    resource_id: ticketTypeId,
+    outcome: "failure",
+    state_after: {
+      event_id: eventId,
+      ...(typeof rejected === "number" ? { rejected } : {}),
+    },
+    error_message: errorMessage,
+  });
 }

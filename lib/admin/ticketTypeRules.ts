@@ -60,13 +60,13 @@ export function checkTicketType(
   }
 
   const paid = input.priceCents > 0;
-  const startsAt = parseDate(input.saleStartsAt);
-  const endsAt = parseDate(input.saleEndsAt);
+  const startsAt = paid ? parseDate(input.saleStartsAt) : null;
+  const endsAt = paid ? parseDate(input.saleEndsAt) : null;
 
-  if (input.saleStartsAt && !startsAt) {
+  if (paid && input.saleStartsAt && !startsAt) {
     errors.push("La fecha de inicio de venta no es válida.");
   }
-  if (input.saleEndsAt && !endsAt) {
+  if (paid && input.saleEndsAt && !endsAt) {
     errors.push("La fecha de fin de venta no es válida.");
   }
 
