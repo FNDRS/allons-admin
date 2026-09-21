@@ -82,7 +82,7 @@ export interface AdminPlatformStatusResponse {
     connectivityStatus: string;
   };
   massSignupAlerts: {
-    mode: 'cron';
+    mode: "cron";
     enabled: boolean;
     windowMinutes: number;
     threshold: number;
@@ -153,7 +153,9 @@ export interface AdminEventRegistration {
   createdAt: string;
 }
 
-export function isFreeWebRegistration(event: Pick<AdminEventListItem, "ticketMode">) {
+export function isFreeWebRegistration(
+  event: Pick<AdminEventListItem, "ticketMode">,
+) {
   return event.ticketMode === "free";
 }
 
@@ -236,7 +238,9 @@ export const getAdminPlatformStatusCached = _unstable_cache(
   { revalidate: 30, tags: ["admin-platform"] },
 );
 
-export function isValidAdminEventStatus(value: string): value is AdminEventStatus {
+export function isValidAdminEventStatus(
+  value: string,
+): value is AdminEventStatus {
   return (ALLOWED_STATUSES as readonly string[]).includes(value);
 }
 
@@ -317,6 +321,94 @@ export function setAdminEventKitPickup(
       actor,
       source: "server_action",
     },
+  );
+}
+
+export type AdminFeeMode =
+  "provider_absorbs" | "buyer_pays_gateway" | "buyer_pays_all";
+
+export const ADMIN_FEE_MODES: ReadonlyArray<{
+  value: AdminFeeMode;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "provider_absorbs",
+    label: "El comercio absorbe todo",
+    hint: "El comprador paga el precio publicado. Al comercio se le descuentan la comisión y la pasarela.",
+  },
+  {
+    value: "buyer_pays_gateway",
+    label: "El comprador paga la pasarela",
+    hint: "Se suma un cargo por servicio al precio. Al comercio solo se le descuenta la comisión de Allons.",
+  },
+  {
+    value: "buyer_pays_all",
+    label: "El comprador paga todo",
+    hint: "El comercio recibe el precio del boleto íntegro. El comprador cubre la pasarela y la comisión.",
+  },
+];
+
+/** Overrides del evento. Null en cualquiera significa «usar el del comercio». */
+export interface AdminEventFeeOverrides {
+  feeMode: AdminFeeMode | null;
+  allonsFeePct: number | null;
+  gatewayFeePct: number | null;
+  gatewayFixedCents: number | null;
+  isvPct: number | null;
+}
+
+/** Desglose de un boleto de muestra, calculado por la API. */
+export interface AdminEventFeeQuote {
+  feeMode: AdminFeeMode;
+  subtotalCents: number;
+  serviceChargeCents: number;
+  totalCents: number;
+  gatewayCostCents: number;
+  allonsFeeCents: number;
+  isvCents: number;
+  providerNetCents: number;
+  roundingCents: number;
+}
+
+export interface AdminEventFeeConfig {
+  eventId: string;
+  overrides: AdminEventFeeOverrides;
+  providerDefaults: { allonsFee: number; pasarelaFee: number };
+  effective: {
+    feeMode: AdminFeeMode;
+    allonsFeePct: number;
+    gatewayRatePct: number;
+    gatewayFixedCents: number;
+    isvPct: number;
+  };
+  preview: AdminEventFeeQuote;
+}
+
+export function getAdminEventFees(eventId: string, previewCents?: number) {
+  const query =
+    typeof previewCents === "number" && previewCents > 0
+      ? `?previewCents=${Math.round(previewCents)}`
+      : "";
+  return adminFetch<AdminEventFeeConfig>(
+    `/admin/events/${encodeURIComponent(eventId)}/fees${query}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Guarda los overrides. Se manda el objeto completo con nulls explícitos: un
+ * null limpia el override y devuelve ese campo al valor del comercio, que es
+ * la única forma de deshacerlo.
+ */
+export function setAdminEventFees(
+  eventId: string,
+  overrides: AdminEventFeeOverrides,
+  actor: AdminApiActor,
+) {
+  return adminFetch<AdminEventFeeConfig>(
+    `/admin/events/${encodeURIComponent(eventId)}/fees`,
+    { method: "PATCH", body: overrides, actor, source: "server_action" },
   );
 }
 
