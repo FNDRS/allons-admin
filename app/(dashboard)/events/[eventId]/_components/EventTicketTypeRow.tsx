@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +29,6 @@ export function EventTicketTypeEditableRow({
   revalidatePath: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [sessionId, setSessionId] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastHandledSuccessId, setLastHandledSuccessId] = useState<string | null>(
     null,
@@ -37,7 +36,6 @@ export function EventTicketTypeEditableRow({
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
   const openEditor = useCallback(() => {
     setWarnings([]);
-    setSessionId(globalThis.crypto.randomUUID());
     setOpen(true);
   }, []);
   const closeEditor = useCallback(() => setOpen(false), []);
@@ -107,7 +105,6 @@ export function EventTicketTypeEditableRow({
           revalidatePath={revalidatePath}
           inputId={inputId}
           onCancel={closeEditor}
-          submitSessionId={sessionId}
           lastHandledSuccessId={lastHandledSuccessId}
           onSaved={handleSaved}
         />
@@ -122,7 +119,6 @@ function EditableTicketTypeForm({
   revalidatePath,
   inputId,
   onCancel,
-  submitSessionId,
   lastHandledSuccessId,
   onSaved,
 }: {
@@ -131,7 +127,6 @@ function EditableTicketTypeForm({
   revalidatePath: string;
   inputId: (field: string) => string;
   onCancel: () => void;
-  submitSessionId: string;
   lastHandledSuccessId: string | null;
   onSaved: (warnings: string[], resultId: string) => void;
 }) {
@@ -139,23 +134,33 @@ function EditableTicketTypeForm({
     updateEventTicketType,
     null,
   );
+  const [currentRequestId, setCurrentRequestId] = useState("");
+  const requestIdRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (
       state?.ok &&
-      state.sessionId === submitSessionId &&
+      state.requestId === currentRequestId &&
       state.resultId !== lastHandledSuccessId
     ) {
       onSaved(state.warnings, state.resultId);
     }
-  }, [lastHandledSuccessId, onSaved, state, submitSessionId]);
+  }, [currentRequestId, lastHandledSuccessId, onSaved, state]);
 
   return (
-    <form action={action} className="space-y-4">
+    <form
+      action={action}
+      className="space-y-4"
+      onSubmitCapture={() => {
+        const nextRequestId = globalThis.crypto.randomUUID();
+        if (requestIdRef.current) requestIdRef.current.value = nextRequestId;
+        setCurrentRequestId(nextRequestId);
+      }}
+    >
       <input type="hidden" name="ticketTypeId" value={ticketType.id} />
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
-      <input type="hidden" name="sessionId" value={submitSessionId} />
+      <input ref={requestIdRef} type="hidden" name="requestId" defaultValue="" />
 
       {!state?.ok && state?.errors.length ? (
         <div
