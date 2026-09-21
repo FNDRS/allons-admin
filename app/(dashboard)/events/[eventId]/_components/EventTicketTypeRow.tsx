@@ -152,7 +152,7 @@ function EditableTicketTypeForm({
       action={action}
       className="space-y-4"
       onSubmitCapture={() => {
-        const nextRequestId = globalThis.crypto.randomUUID();
+        const nextRequestId = createRequestId();
         if (requestIdRef.current) requestIdRef.current.value = nextRequestId;
         setCurrentRequestId(nextRequestId);
       }}
@@ -305,4 +305,11 @@ function money(cents: number): string {
     currency: "HNL",
     maximumFractionDigits: 2,
   }).format(cents / 100);
+}
+
+function createRequestId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
 }
