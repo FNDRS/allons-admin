@@ -160,6 +160,16 @@ function EditableTicketTypeForm({
       <input type="hidden" name="ticketTypeId" value={ticketType.id} />
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
+      <input
+        type="hidden"
+        name="originalSaleStartsAt"
+        value={toLocalInput(ticketType.saleStartsAt)}
+      />
+      <input
+        type="hidden"
+        name="originalSaleEndsAt"
+        value={toLocalInput(ticketType.saleEndsAt)}
+      />
 
       {!state?.ok && state?.errors.length ? (
         <div

@@ -140,6 +140,12 @@ export async function updateEventTicketType(
   const paid = priceCents > 0;
   const saleStartsAt = paid ? formOptionalText(formData.get("saleStartsAt")) : null;
   const saleEndsAt = paid ? formOptionalText(formData.get("saleEndsAt")) : null;
+  const originalSaleStartsAt = paid
+    ? formOptionalText(formData.get("originalSaleStartsAt"))
+    : null;
+  const originalSaleEndsAt = paid
+    ? formOptionalText(formData.get("originalSaleEndsAt"))
+    : null;
 
   const admin = createSupabaseServiceRoleClient();
 
@@ -197,8 +203,7 @@ export async function updateEventTicketType(
   }
 
   const saleWindowChanged =
-    optionalIso(saleStartsAt) !== optionalIso(current.sale_starts_at ?? null) ||
-    optionalIso(saleEndsAt) !== optionalIso(current.sale_ends_at ?? null);
+    saleStartsAt !== originalSaleStartsAt || saleEndsAt !== originalSaleEndsAt;
   const eventDayEnd = endOfEventDay(event.starts_at ?? null);
   if (paid && saleWindowChanged && !eventDayEnd) {
     await auditTicketTypeUpdateFailure({
