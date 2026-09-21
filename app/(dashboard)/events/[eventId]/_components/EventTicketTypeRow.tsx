@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -134,11 +134,11 @@ function EditableTicketTypeForm({
     updateEventTicketType,
     null,
   );
-  const [currentRequestId, setCurrentRequestId] = useState("");
+  const latestRequestIdRef = useRef("");
   const submitAction = useCallback(
     (formData: FormData) => {
       const nextRequestId = createRequestId();
-      setCurrentRequestId(nextRequestId);
+      latestRequestIdRef.current = nextRequestId;
       formData.set("requestId", nextRequestId);
       action(formData);
     },
@@ -148,12 +148,12 @@ function EditableTicketTypeForm({
   useEffect(() => {
     if (
       state?.ok &&
-      state.requestId === currentRequestId &&
+      state.requestId === latestRequestIdRef.current &&
       state.resultId !== lastHandledSuccessId
     ) {
       onSaved(state.warnings, state.resultId);
     }
-  }, [currentRequestId, lastHandledSuccessId, onSaved, state]);
+  }, [lastHandledSuccessId, onSaved, state]);
 
   return (
     <form action={submitAction} className="space-y-4">
@@ -268,11 +268,9 @@ function EditableTicketTypeForm({
         venderse y la app no explica por qué.
       </p>
 
-      {isPending ? (
-        <p role="status" aria-live="polite" className="text-xs text-white/60">
-          Guardando cambios…
-        </p>
-      ) : null}
+      <p role="status" aria-live="polite" className="text-xs text-white/60">
+        {isPending ? "Guardando cambios…" : ""}
+      </p>
 
       <div className="flex gap-2">
         <Button type="submit" size="sm" variant="brand" disabled={isPending}>
