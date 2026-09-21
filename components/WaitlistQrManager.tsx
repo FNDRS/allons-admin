@@ -24,17 +24,17 @@ interface SourceRow {
   label: string;
   location: string | null;
   notes: string | null;
-  is_active: boolean;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SourceStatRow {
   source: string;
   total: number;
-  first_seen_at: string | null;
-  last_seen_at: string | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
 }
 
 interface ApiPayload {
@@ -144,12 +144,12 @@ function SourceQrCard({
         <span
           className={
             "border px-2 py-1 text-[10px] font-medium " +
-            (source.is_active
+            (source.isActive
               ? "border-success/35 bg-success/20 text-success"
               : "border-white/20 bg-white/10 text-muted")
           }
         >
-          {source.is_active ? "Activo" : "Pausado"}
+          {source.isActive ? "Activo" : "Pausado"}
         </span>
       </div>
 
@@ -173,7 +173,7 @@ function SourceQrCard({
             Último registro
           </div>
           <div className="mt-1 text-[11px] text-white">
-            {formatDate(stats?.last_seen_at ?? null)}
+            {formatDate(stats?.lastSeenAt ?? null)}
           </div>
         </div>
       </div>

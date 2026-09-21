@@ -21,15 +21,15 @@ interface SourceRow {
   label: string;
   location: string | null;
   notes: string | null;
-  is_active: boolean;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface WaitlistPersonRow {
   email: string;
-  created_at: string;
+  createdAt: string;
   referer: string | null;
   ip: string | null;
 }
@@ -192,11 +192,11 @@ export function WaitlistQrSourceDetail({ slug }: { slug: string }) {
               <tbody>
                 {people.map((person) => (
                   <tr
-                    key={`${person.email}-${person.created_at}`}
+                    key={`${person.email}-${person.createdAt}`}
                     className="border-t border-white/10"
                   >
                     <td className="px-3 py-2">{person.email}</td>
-                    <td className="px-3 py-2">{formatDate(person.created_at)}</td>
+                    <td className="px-3 py-2">{formatDate(person.createdAt)}</td>
                     <td className="px-3 py-2 text-muted">{person.referer ?? "-"}</td>
                   </tr>
                 ))}
