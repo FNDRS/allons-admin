@@ -1,29 +1,15 @@
 import "server-only";
 
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { listProviderOptionsApi, type ProviderOption } from "@/lib/admin/providersApi";
 
-export interface ProviderOption {
-  id: string;
-  name: string;
-  handle: string | null;
-}
+export type { ProviderOption };
 
 export async function listProviderOptions(): Promise<ProviderOption[]> {
-  const admin = createSupabaseServiceRoleClient();
-  const { data, error } = await admin
-    .from("providers")
-    .select("id, name, handle")
-    .order("name", { ascending: true })
-    .limit(500);
-
-  if (error) {
-    console.warn("[providerOptions] providers:", error.message);
+  try {
+    const { items } = await listProviderOptionsApi();
+    return items;
+  } catch (error) {
+    console.warn("[providerOptions] providers:", error);
     return [];
   }
-
-  return (data ?? []).map((row) => ({
-    id: String(row.id),
-    name: String(row.name ?? "Comercio sin nombre"),
-    handle: (row.handle as string | null) ?? null,
-  }));
 }

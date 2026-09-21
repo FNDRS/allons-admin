@@ -1,10 +1,17 @@
 "use server";
 
-import { logAdminAudit } from "@/lib/admin/auditLog";
+import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
+import {
+  cancelProviderSubscriptionApi,
+  resendProviderInviteApi,
+  setProviderFeesApi,
+  setProviderPlanApi,
+  setProviderStatusApi,
+  type ProviderPlanValue,
+} from "@/lib/admin/providersApi";
+import { setAdminUserSuspended } from "@/lib/admin/usersApi";
 import type { ProviderStatus } from "@/lib/admin/users";
-import { sendComercioInviteEmail } from "@/lib/admin/comercioInviteMail";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import {
   clampFeePct,
   DEFAULT_ALLONS_FEE,
@@ -13,7 +20,28 @@ import {
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
-const BAN_FOREVER = "876600h"; // 100 years - Supabase requires a finite duration.
+const PROVIDER_STATUSES: ProviderStatus[] = [
+  "pending",
+  "approved",
+  "paused",
+  "suspended",
+];
+
+const PLAN_VALUES: ProviderPlanValue[] = [
+  "pendiente",
+  "single_event",
+  "basico",
+  "pro",
+];
+
+/**
+ * Every action here delegates to `allons-api`, which performs the change and
+ * records the audit row in the same request. The panel no longer writes either.
+ */
+function afterMutation(revalidate: string) {
+  revalidateTag("admin-users", "max");
+  revalidatePath(revalidate);
+}
 
 export async function setUserSuspended(formData: FormData) {
   const caller = await requireRootActor();
@@ -23,38 +51,15 @@ export async function setUserSuspended(formData: FormData) {
 
   if (!userId) throw new Error("userId requerido");
 
-  const admin = createSupabaseServiceRoleClient();
-
-  let beforeSuspended: boolean | null = null;
-  const { data: beforeUser, error: beforeErr } =
-    await admin.auth.admin.getUserById(userId);
-  if (!beforeErr && beforeUser?.user?.banned_until) {
-    beforeSuspended =
-      Date.parse(String(beforeUser.user.banned_until)) > Date.now();
+  try {
+    await setAdminUserSuspended(userId, suspend, caller);
+  } catch (error) {
+    throw new Error(
+      adminApiErrorMessage(error, "No se pudo cambiar el estado del usuario"),
+    );
   }
 
-  const { error } = await admin.auth.admin.updateUserById(userId, {
-    ban_duration: suspend ? BAN_FOREVER : "none",
-  });
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: suspend ? "auth.user_suspend" : "auth.user_unsuspend",
-    resource_type: "auth_user",
-    resource_id: userId,
-    outcome: error ? "failure" : "success",
-    state_before:
-      beforeSuspended === null ? {} : { banned: Boolean(beforeSuspended) },
-    state_after: suspend ? { banned: true } : { banned: false },
-    error_message: error?.message ?? null,
-  });
-
-  if (error) throw new Error(error.message);
-
-  revalidateTag("admin-users", "max");
-  revalidatePath(revalidate);
+  afterMutation(revalidate);
 }
 
 export async function setProviderStatusAction(formData: FormData) {
@@ -62,133 +67,51 @@ export async function setProviderStatusAction(formData: FormData) {
   const userId = String(formData.get("userId") ?? "");
   const status = String(formData.get("status") ?? "") as ProviderStatus;
   const revalidate = String(formData.get("revalidate") ?? "/providers");
-  const allowed: ProviderStatus[] = [
-    "pending",
-    "approved",
-    "paused",
-    "suspended",
-  ];
 
-  if (!userId || !allowed.includes(status)) {
+  if (!userId || !PROVIDER_STATUSES.includes(status)) {
     throw new Error("Parámetros inválidos");
   }
 
-  const admin = createSupabaseServiceRoleClient();
-  const { data: existing, error: lookupError } =
-    await admin.auth.admin.getUserById(userId);
-  if (lookupError) throw new Error(lookupError.message);
-  if (!existing.user) throw new Error("Usuario no encontrado");
+  try {
+    await setProviderStatusApi(userId, status, caller);
+  } catch (error) {
+    throw new Error(
+      adminApiErrorMessage(error, "No se pudo cambiar el estado del comercio"),
+    );
+  }
 
-  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
-  const previousStatus =
-    typeof meta.providerStatus === "string" ? meta.providerStatus : null;
-
-  const merged = {
-    ...meta,
-    providerStatus: status,
-    providerStatusUpdatedBy: caller.userId,
-    providerStatusUpdatedAt: new Date().toISOString(),
-  };
-  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: merged,
-    ban_duration: status === "suspended" ? BAN_FOREVER : "none",
-  });
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: "provider.status_change",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: updateError ? "failure" : "success",
-    state_before: previousStatus ? { providerStatus: previousStatus } : {},
-    state_after: { providerStatus: status },
-    error_message: updateError?.message ?? null,
-  });
-
-  if (updateError) throw new Error(updateError.message);
-
-  revalidateTag("admin-users", "max");
-  revalidatePath(revalidate);
+  afterMutation(revalidate);
 }
-
-const PLAN_VALUES = ["pendiente", "single_event", "basico", "pro"] as const;
-type PlanValue = (typeof PLAN_VALUES)[number];
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Sets a comercio's subscription plan. A real plan activates the account for a
- * one-year term; "pendiente" clears `subscription_status`/`subscription_period_end`
- * so the API derives trialing/expired from `free_trial_end`. Canonical state lives in the owner's user_metadata
- * (read by allons-api and allons-mobile).
+ * one-year term; "pendiente" leaves the API to derive trialing/expired from
+ * `free_trial_end`.
  */
 export async function setProviderPlanAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
-  const plan = String(formData.get("plan") ?? "") as PlanValue;
+  const plan = String(formData.get("plan") ?? "") as ProviderPlanValue;
   const revalidate = String(formData.get("revalidate") ?? "/providers");
 
   if (!userId || !PLAN_VALUES.includes(plan)) {
     throw new Error("Parámetros inválidos");
   }
 
-  const admin = createSupabaseServiceRoleClient();
-  const { data: existing, error: lookupError } =
-    await admin.auth.admin.getUserById(userId);
-  if (lookupError) throw new Error(lookupError.message);
-  if (!existing.user) throw new Error("Usuario no encontrado");
-
-  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
-  const previousPlan =
-    typeof meta.subscription_plan === "string" ? meta.subscription_plan : null;
-
-  const merged: Record<string, unknown> = {
-    ...meta,
-    subscription_plan: plan,
-    subscriptionUpdatedBy: caller.userId,
-    subscriptionUpdatedAt: new Date().toISOString(),
-  };
-  if (plan === "pendiente") {
-    // No active plan - let the API derive trialing/expired from free_trial_end.
-    delete merged.subscription_status;
-    delete merged.subscription_period_end;
-  } else {
-    merged.subscription_status = "active";
-    merged.subscription_period_end = new Date(
-      Date.now() + ONE_YEAR_MS,
-    ).toISOString();
+  try {
+    await setProviderPlanApi(userId, plan, caller);
+  } catch (error) {
+    throw new Error(adminApiErrorMessage(error, "No se pudo cambiar el plan"));
   }
 
-  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: merged,
-  });
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: "provider.plan_change",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: updateError ? "failure" : "success",
-    state_before: { subscription_plan: previousPlan },
-    state_after: { subscription_plan: plan },
-    error_message: updateError?.message ?? null,
-  });
-
-  if (updateError) throw new Error(updateError.message);
-
-  revalidateTag("admin-users", "max");
-  revalidatePath(revalidate);
+  afterMutation(revalidate);
 }
 
 /**
- * Immediate cut: cancels a comercio's subscription right now (not at period end).
- * Sets `subscription_status='canceled'` and ends the term immediately so allons-api
- * and allons-mobile lock the account and show the paywall. Use for fraud, chargebacks
- * or ToS violations - the ordinary self-serve "cancelar al final del período" lives in
- * the mobile app and keeps access until the term ends.
+ * Immediate cut: cancels a comercio's subscription right now (not at period
+ * end), so allons-api and allons-mobile lock the account and show the paywall.
+ * Use for fraud, chargebacks or ToS violations - the ordinary self-serve
+ * "cancelar al final del período" lives in the mobile app.
  */
 export async function cancelProviderSubscriptionAction(formData: FormData) {
   const caller = await requireRootActor();
@@ -197,121 +120,50 @@ export async function cancelProviderSubscriptionAction(formData: FormData) {
 
   if (!userId) throw new Error("userId requerido");
 
-  const admin = createSupabaseServiceRoleClient();
-  const { data: existing, error: lookupError } =
-    await admin.auth.admin.getUserById(userId);
-  if (lookupError) throw new Error(lookupError.message);
-  if (!existing.user) throw new Error("Usuario no encontrado");
+  try {
+    await cancelProviderSubscriptionApi(userId, caller);
+  } catch (error) {
+    throw new Error(
+      adminApiErrorMessage(error, "No se pudo cancelar la suscripción"),
+    );
+  }
 
-  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
-  const previousStatus =
-    typeof meta.subscription_status === "string"
-      ? meta.subscription_status
-      : null;
-  const now = new Date().toISOString();
-
-  const merged: Record<string, unknown> = {
-    ...meta,
-    subscription_status: "canceled",
-    // End the term now so the derived state is locked, not "cancel at period end".
-    subscription_period_end: now,
-    subscription_cancel_at_period_end: false,
-    subscription_canceled_at: now,
-    subscriptionUpdatedBy: caller.userId,
-    subscriptionUpdatedAt: now,
-  };
-
-  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: merged,
-  });
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: "provider.subscription_cancel",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: updateError ? "failure" : "success",
-    state_before: { subscription_status: previousStatus },
-    state_after: { subscription_status: "canceled" },
-    error_message: updateError?.message ?? null,
-  });
-
-  if (updateError) throw new Error(updateError.message);
-
-  revalidateTag("admin-users", "max");
-  revalidatePath(revalidate);
+  afterMutation(revalidate);
 }
 
 /**
  * Sets a comercio's per-ticket fees: pasarela (bank / Clinpays offer) and
- * Allons (relationship %). Stored on the owner's metadata and read by
- * allons-api at sale / refund time.
+ * Allons (relationship %). Read by allons-api at sale / refund time.
  */
 export async function setProviderCommissionFeesAction(formData: FormData) {
   const caller = await requireRootActor();
   const userId = String(formData.get("userId") ?? "");
   const revalidate = String(formData.get("revalidate") ?? "/providers");
-  const pasarelaPct = clampFeePct(
-    formData.get("pasarelaFeePct") as string | null,
-    DEFAULT_PASARELA_FEE,
-  );
-  const allonsPct = clampFeePct(
-    formData.get("allonsFeePct") as string | null,
-    DEFAULT_ALLONS_FEE,
-  );
 
-  if (!userId) {
-    throw new Error("Parámetros inválidos");
+  if (!userId) throw new Error("Parámetros inválidos");
+
+  try {
+    await setProviderFeesApi(
+      userId,
+      {
+        pasarelaFeePct: clampFeePct(
+          formData.get("pasarelaFeePct") as string | null,
+          DEFAULT_PASARELA_FEE,
+        ),
+        allonsFeePct: clampFeePct(
+          formData.get("allonsFeePct") as string | null,
+          DEFAULT_ALLONS_FEE,
+        ),
+      },
+      caller,
+    );
+  } catch (error) {
+    throw new Error(
+      adminApiErrorMessage(error, "No se pudieron guardar las comisiones"),
+    );
   }
 
-  const admin = createSupabaseServiceRoleClient();
-  const { data: existing, error: lookupError } =
-    await admin.auth.admin.getUserById(userId);
-  if (lookupError) throw new Error(lookupError.message);
-  if (!existing.user) throw new Error("Usuario no encontrado");
-
-  const meta = (existing.user.user_metadata ?? {}) as Record<string, unknown>;
-  const previousPasarela =
-    typeof meta.paygate_fee_pct === "number" ? meta.paygate_fee_pct : null;
-  const previousAllons =
-    typeof meta.allons_fee_pct === "number" ? meta.allons_fee_pct : null;
-
-  const merged = {
-    ...meta,
-    paygate_fee_pct: pasarelaPct,
-    allons_fee_pct: allonsPct,
-    pasarelaFeeUpdatedBy: caller.userId,
-    pasarelaFeeUpdatedAt: new Date().toISOString(),
-  };
-  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: merged,
-  });
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: "provider.commission_fees_change",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: updateError ? "failure" : "success",
-    state_before: {
-      paygate_fee_pct: previousPasarela,
-      allons_fee_pct: previousAllons,
-    },
-    state_after: {
-      paygate_fee_pct: pasarelaPct,
-      allons_fee_pct: allonsPct,
-    },
-    error_message: updateError?.message ?? null,
-  });
-
-  if (updateError) throw new Error(updateError.message);
-
-  revalidateTag("admin-users", "max");
-  revalidatePath(revalidate);
+  afterMutation(revalidate);
 }
 
 export async function resendInviteAction(formData: FormData) {
@@ -319,55 +171,20 @@ export async function resendInviteAction(formData: FormData) {
   const userId = String(formData.get("userId") ?? "");
   if (!userId) throw new Error("userId requerido");
 
-  const admin = createSupabaseServiceRoleClient();
-  const { data: existing, error: lookupError } =
-    await admin.auth.admin.getUserById(userId);
-  if (lookupError) throw new Error(lookupError.message);
-  const target = existing.user;
-  if (!target?.email) {
+  const result = await resendProviderInviteApi(userId, caller);
+
+  if (result.outcome === "missing_email") {
     redirect("/providers?resent=missing_email");
   }
-
-  if (target.email_confirmed_at) {
-    await logAdminAudit({
-      actor_user_id: caller.userId,
-      actor_email: caller.email,
-      source: "server_action",
-      action: "provider.invite_resend",
-      resource_type: "provider_user",
-      resource_id: userId,
-      outcome: "success",
-      state_after: { skipped: true, reason: "already_confirmed" },
-    });
+  if (result.outcome === "already_confirmed") {
     redirect("/providers?resent=already_confirmed");
   }
-
-  const invited = await sendComercioInviteEmail({
-    email: target.email,
-    metadata: (target.user_metadata ?? {}) as Record<string, unknown>,
-  });
-
-  const inviteError =
-    invited.error ?? (!invited.emailSent ? "No se envió el correo" : null);
-
-  await logAdminAudit({
-    actor_user_id: caller.userId,
-    actor_email: caller.email,
-    source: "server_action",
-    action: "provider.invite_resend",
-    resource_type: "provider_user",
-    resource_id: userId,
-    outcome: inviteError ? "failure" : "success",
-    state_after: { email: target.email },
-    error_message: inviteError,
-  });
-
-  if (inviteError) {
+  if (result.outcome === "failed") {
     redirect(
-      `/providers?resent=failed&reason=${encodeURIComponent(inviteError.slice(0, 120))}`,
+      `/providers?resent=failed&reason=${encodeURIComponent(result.error.slice(0, 120))}`,
     );
   }
 
   revalidatePath("/providers");
-  redirect(`/providers?resent=ok&email=${encodeURIComponent(target.email)}`);
+  redirect(`/providers?resent=ok&email=${encodeURIComponent(result.email)}`);
 }
