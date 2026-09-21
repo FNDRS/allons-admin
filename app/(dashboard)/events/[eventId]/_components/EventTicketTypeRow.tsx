@@ -29,6 +29,7 @@ export function EventTicketTypeEditableRow({
   revalidatePath: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [sessionId, setSessionId] = useState(0);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastHandledSuccessId, setLastHandledSuccessId] = useState<string | null>(
     null,
@@ -36,6 +37,7 @@ export function EventTicketTypeEditableRow({
   const inputId = (field: string) => `tt-${ticketType.id}-${field}`;
   const openEditor = useCallback(() => {
     setWarnings([]);
+    setSessionId((value) => value + 1);
     setOpen(true);
   }, []);
   const closeEditor = useCallback(() => setOpen(false), []);
@@ -105,6 +107,7 @@ export function EventTicketTypeEditableRow({
           revalidatePath={revalidatePath}
           inputId={inputId}
           onCancel={closeEditor}
+          submitSessionId={String(sessionId)}
           lastHandledSuccessId={lastHandledSuccessId}
           onSaved={handleSaved}
         />
@@ -119,6 +122,7 @@ function EditableTicketTypeForm({
   revalidatePath,
   inputId,
   onCancel,
+  submitSessionId,
   lastHandledSuccessId,
   onSaved,
 }: {
@@ -127,6 +131,7 @@ function EditableTicketTypeForm({
   revalidatePath: string;
   inputId: (field: string) => string;
   onCancel: () => void;
+  submitSessionId: string;
   lastHandledSuccessId: string | null;
   onSaved: (warnings: string[], resultId: string) => void;
 }) {
@@ -136,16 +141,21 @@ function EditableTicketTypeForm({
   );
 
   useEffect(() => {
-    if (state?.ok && state.resultId !== lastHandledSuccessId) {
+    if (
+      state?.ok &&
+      state.sessionId === submitSessionId &&
+      state.resultId !== lastHandledSuccessId
+    ) {
       onSaved(state.warnings, state.resultId);
     }
-  }, [lastHandledSuccessId, onSaved, state]);
+  }, [lastHandledSuccessId, onSaved, state, submitSessionId]);
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="ticketTypeId" value={ticketType.id} />
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="revalidate" value={revalidatePath} />
+      <input type="hidden" name="sessionId" value={submitSessionId} />
 
       {!state?.ok && state?.errors.length ? (
         <div

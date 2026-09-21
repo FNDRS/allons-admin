@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export type UpdateEventTicketTypeState =
   | { ok: false; errors: string[]; warnings: string[] }
-  | { ok: true; warnings: string[]; resultId: string }
+  | { ok: true; warnings: string[]; resultId: string; sessionId: string }
   | null;
 
 export async function setEventStatus(formData: FormData) {
@@ -127,6 +127,7 @@ export async function updateEventTicketType(
   const id = String(formData.get("ticketTypeId") ?? "");
   const eventId = String(formData.get("eventId") ?? "");
   const revalidate = String(formData.get("revalidate") ?? "/events");
+  const sessionId = String(formData.get("sessionId") ?? "");
 
   if (!id) return failTicketTypeUpdate("ticketTypeId requerido");
   if (!eventId) return failTicketTypeUpdate("eventId requerido");
@@ -295,6 +296,7 @@ export async function updateEventTicketType(
     ok: true,
     warnings: check.warnings,
     resultId: `${Date.now()}-${id}`,
+    sessionId,
   };
 }
 
