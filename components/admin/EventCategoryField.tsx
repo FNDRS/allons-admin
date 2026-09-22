@@ -19,7 +19,7 @@ function categoryState(initial: string | null | undefined) {
   if (initial === undefined) {
     return { selected: INTEREST_OPTIONS[0] as string, custom: "" };
   }
-  const name = initial.trim();
+  const name = (initial ?? "").trim();
   if (!name) return { selected: "", custom: "" };
   if (isCatalogEventCategory(name)) return { selected: name, custom: "" };
   return { selected: EVENT_OTHER_CATEGORY, custom: name };

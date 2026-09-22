@@ -4,8 +4,10 @@ import { useActionState, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimePicker } from "@/components/ui/time-picker";
 import { updateEventTicketType } from "@/lib/admin/eventActions";
 import { TICKET_TYPE_SAVE_IDLE } from "@/lib/admin/ticketTypeSaveState";
 import type { EventTicketTypeRow as TicketType } from "@/lib/admin/eventDetail";
@@ -131,22 +133,18 @@ export function EventTicketTypeEditableRow({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={inputId("saleStartsAt")}>Venta abre</Label>
-              <Input
-                id={inputId("saleStartsAt")}
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Venta abre</Label>
+              <SaleDateTime
                 name="saleStartsAt"
-                type="datetime-local"
                 defaultValue={toLocalInput(ticketType.saleStartsAt)}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={inputId("saleEndsAt")}>Venta cierra</Label>
-              <Input
-                id={inputId("saleEndsAt")}
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Venta cierra</Label>
+              <SaleDateTime
                 name="saleEndsAt"
-                type="datetime-local"
                 defaultValue={toLocalInput(ticketType.saleEndsAt)}
               />
             </div>
@@ -191,7 +189,48 @@ export function EventTicketTypeEditableRow({
   );
 }
 
-/** `datetime-local` quiere `YYYY-MM-DDTHH:mm` en hora local, sin zona. */
+/**
+ * Fecha y hora en un solo valor `YYYY-MM-DDTHH:mm`, hora local, sin zona.
+ * El guardado lo convierte a ISO.
+ */
+function SaleDateTime({
+  name,
+  defaultValue,
+}: {
+  name: string;
+  defaultValue: string;
+}) {
+  const initial = splitLocal(defaultValue);
+  const [date, setDate] = useState(initial.date);
+  const [time, setTime] = useState(initial.time);
+  const value = date && time ? `${date}T${time}` : "";
+
+  return (
+    <div className="flex gap-2">
+      <input type="hidden" name={name} value={value} />
+      <DatePicker
+        value={date}
+        onChange={setDate}
+        placeholder="Fecha"
+        className="min-w-0 flex-1"
+      />
+      <TimePicker
+        value={time}
+        onChange={setTime}
+        placeholder="Hora"
+        className="w-28 shrink-0"
+      />
+    </div>
+  );
+}
+
+function splitLocal(value: string): { date: string; time: string } {
+  const [date, time] = value.split("T");
+  if (!date || !time) return { date: "", time: "" };
+  return { date, time };
+}
+
+/** `YYYY-MM-DDTHH:mm` en hora local, sin zona. */
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
   const date = new Date(iso);

@@ -407,7 +407,22 @@ export default async function ProviderDetailPage({
               <tbody>
                 {events.map((ev) => (
                   <tr key={ev.id} className="border-b border-white/8 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium">{ev.title}</td>
+                    <td className="py-2.5 pr-4 font-medium">
+                      <Link
+                        href={`/events/${ev.id}` as never}
+                        className="hover:underline"
+                      >
+                        {ev.title}
+                      </Link>
+                      <div>
+                        <Link
+                          href={`/events/${ev.id}/edit` as never}
+                          className="text-[10px] font-bold uppercase tracking-wide text-[#F67010] hover:underline"
+                        >
+                          Editar
+                        </Link>
+                      </div>
+                    </td>
                     <td className="py-2.5 pr-4">
                       <StatusPill
                         label={EVENT_STATUS_LABEL[ev.status] ?? ev.status}

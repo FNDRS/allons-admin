@@ -199,8 +199,8 @@ export async function updateEventTicketType(
 }
 
 /**
- * El `datetime-local` manda hora local sin zona. Se convierte a ISO acá para
- * que la API no tenga que adivinar en qué huso estaba quien lo escribió.
+ * El panel manda `YYYY-MM-DDTHH:mm` en hora local, sin zona. Se convierte a
+ * ISO acá para que la API no tenga que adivinar el huso.
  */
 function localInputToIso(value: FormDataEntryValue | null): string | null {
   const raw = String(value ?? "").trim();

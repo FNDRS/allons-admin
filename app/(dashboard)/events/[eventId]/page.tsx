@@ -154,6 +154,9 @@ export default async function EventDetailPage({
         }
         action={
           <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="brand">
+              <Link href={`/events/${eventId}/edit` as never}>Editar</Link>
+            </Button>
             <Button asChild size="sm">
               <Link href={`/events/${eventId}/formulario` as never}>
                 Formulario
