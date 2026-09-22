@@ -11,6 +11,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { updateEventTicketType } from "@/lib/admin/eventActions";
 import { TICKET_TYPE_SAVE_IDLE } from "@/lib/admin/ticketTypeSaveState";
 import type { EventTicketTypeRow as TicketType } from "@/lib/admin/ticketTypeSaveState";
+import { isoToHondurasDateTime } from "@/lib/hondurasDateTime";
 
 /**
  * Una fila de la tabla de tipos de entrada que se abre para editarse.
@@ -230,16 +231,11 @@ function splitLocal(value: string): { date: string; time: string } {
   return { date, time };
 }
 
-/** `YYYY-MM-DDTHH:mm` en hora local, sin zona. */
+/** `YYYY-MM-DDTHH:mm` en hora de Honduras, sin zona. */
 function toLocalInput(iso: string | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
+  const { date, time } = isoToHondurasDateTime(iso);
+  if (!date || !time) return "";
+  return `${date}T${time}`;
 }
 
 function money(cents: number): string {

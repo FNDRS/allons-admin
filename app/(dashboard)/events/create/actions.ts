@@ -13,6 +13,7 @@ import {
   type EventTicketDraft,
 } from "@/lib/eventTickets";
 import { parseUploadedFiles, type UploadedFile } from "@/lib/admin/uploads";
+import { hondurasDateTimeToIso } from "@/lib/hondurasDateTime";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { revalidatePath } from "next/cache";
 
@@ -42,9 +43,7 @@ function formOptionalNumber(formData: FormData, key: string) {
 }
 
 function parseLocalDateTime(date: string, time: string) {
-  if (!date || !time) return null;
-  const parsed = new Date(`${date}T${time}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  return hondurasDateTimeToIso(date, time);
 }
 
 function fail(message: string): CreateAdminEventState {

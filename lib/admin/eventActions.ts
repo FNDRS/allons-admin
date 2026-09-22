@@ -11,6 +11,7 @@ import {
   setAdminEventKitPickup,
   updateAdminEventStatus,
 } from "./eventsApi";
+import { hondurasInputToIso } from "@/lib/hondurasDateTime";
 import { revalidatePath } from "next/cache";
 
 export async function setEventStatus(formData: FormData) {
@@ -145,12 +146,8 @@ export async function updateEventTicketType(
 }
 
 /**
- * El panel manda `YYYY-MM-DDTHH:mm` en hora local, sin zona. Se convierte a
- * ISO acá para que la API no tenga que adivinar el huso.
+ * El panel manda `YYYY-MM-DDTHH:mm` en hora de Honduras, sin zona.
  */
 function localInputToIso(value: FormDataEntryValue | null): string | null {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  return hondurasInputToIso(String(value ?? ""));
 }

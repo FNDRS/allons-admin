@@ -13,6 +13,11 @@ import { deleteUpload } from "@/lib/admin/uploadsApi";
 import { parseUploadedFiles, type UploadedFile } from "@/lib/admin/uploads";
 import { saveDemoEventForm } from "@/lib/demoEventForms";
 import { normalizeDemoFormFields } from "@/lib/eventFormFields";
+import {
+  addHoursIso,
+  hondurasDateTimeToIso,
+  hondurasInputToIso,
+} from "@/lib/hondurasDateTime";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -36,9 +41,7 @@ function formOptionalNumber(formData: FormData, key: string) {
 }
 
 function parseLocalDateTime(date: string, time: string) {
-  if (!date || !time) return null;
-  const parsed = new Date(`${date}T${time}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  return hondurasDateTimeToIso(date, time);
 }
 
 /**
@@ -51,18 +54,9 @@ function parseEndsAt(date: string, endTime: string, startsAt: string) {
   const endsAt = parseLocalDateTime(date, endTime);
   if (!endsAt) return null;
   if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
-    const nextDay = new Date(endsAt);
-    nextDay.setDate(nextDay.getDate() + 1);
-    return nextDay.toISOString();
+    return addHoursIso(endsAt, 24);
   }
   return endsAt;
-}
-
-function localInputToIso(value: FormDataEntryValue | null): string | null {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 function parseSaleEnds(formData: FormData) {
@@ -72,7 +66,9 @@ function parseSaleEnds(formData: FormData) {
     .filter(Boolean);
   const windows: Array<{ ticketTypeId: string; saleEndsAt: string }> = [];
   for (const ticketTypeId of ids) {
-    const saleEndsAt = localInputToIso(formData.get(`saleEndsAt_${ticketTypeId}`));
+    const saleEndsAt = hondurasInputToIso(
+      String(formData.get(`saleEndsAt_${ticketTypeId}`) ?? ""),
+    );
     if (!saleEndsAt) {
       return {
         windows: null,

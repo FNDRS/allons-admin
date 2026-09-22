@@ -1,3 +1,8 @@
+import {
+  endOfHondurasEventDay,
+  hondurasDateTimeToIso,
+} from "@/lib/hondurasDateTime";
+
 /**
  * Tipos de entrada y ventana de venta, con las mismas reglas que el formulario
  * de la app mobile (`lib/events.ts` → `deriveSaleWindowInput` y
@@ -38,21 +43,24 @@ export function deriveSaleWindowInput(input: {
     return { saleStartsAt: null, saleEndsAt: null, error: null };
   }
 
-  const saleStartsAt = new Date(
-    `${input.saleStartDate}T${input.saleStartTime}:00`,
+  const saleStartsAtIso = hondurasDateTimeToIso(
+    input.saleStartDate,
+    input.saleStartTime,
   );
-  const saleEndsAt = new Date(`${input.saleEndDate}T${input.saleEndTime}:00`);
+  const saleEndsAtIso = hondurasDateTimeToIso(
+    input.saleEndDate,
+    input.saleEndTime,
+  );
 
-  if (
-    Number.isNaN(saleStartsAt.getTime()) ||
-    Number.isNaN(saleEndsAt.getTime())
-  ) {
+  if (!saleStartsAtIso || !saleEndsAtIso) {
     return {
       saleStartsAt: null,
       saleEndsAt: null,
       error: "Configura fechas válidas de venta.",
     };
   }
+  const saleStartsAt = new Date(saleStartsAtIso);
+  const saleEndsAt = new Date(saleEndsAtIso);
   if (saleStartsAt.getTime() >= saleEndsAt.getTime()) {
     return {
       saleStartsAt: null,
@@ -61,18 +69,9 @@ export function deriveSaleWindowInput(input: {
     };
   }
 
-  const eventStart = input.eventStartsAt ? new Date(input.eventStartsAt) : null;
-  if (eventStart && !Number.isNaN(eventStart.getTime())) {
-    const eventDayEnd = new Date(
-      eventStart.getFullYear(),
-      eventStart.getMonth(),
-      eventStart.getDate(),
-      23,
-      59,
-      59,
-      999,
-    );
-    if (saleEndsAt.getTime() > eventDayEnd.getTime()) {
+  if (input.eventStartsAt) {
+    const eventDayEnd = endOfHondurasEventDay(input.eventStartsAt);
+    if (eventDayEnd && saleEndsAt.getTime() >= eventDayEnd.getTime()) {
       return {
         saleStartsAt: null,
         saleEndsAt: null,
@@ -82,8 +81,8 @@ export function deriveSaleWindowInput(input: {
   }
 
   return {
-    saleStartsAt: saleStartsAt.toISOString(),
-    saleEndsAt: saleEndsAt.toISOString(),
+    saleStartsAt: saleStartsAtIso,
+    saleEndsAt: saleEndsAtIso,
     error: null,
   };
 }

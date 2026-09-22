@@ -6,6 +6,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
+import { hondurasDateTimeToIso } from "@/lib/hondurasDateTime";
 import { deriveSaleWindowInput, type EventTicketDraft } from "@/lib/eventTickets";
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -62,10 +63,10 @@ export function EventTicketsField({
   const parsedPrice = Number(price);
   const isPaidDraft = Number.isFinite(parsedPrice) && parsedPrice > 0;
 
-  const eventStartsAt = useMemo(() => {
-    const parsed = new Date(`${eventDate}T${eventTime}:00`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
-  }, [eventDate, eventTime]);
+  const eventStartsAt = useMemo(
+    () => hondurasDateTimeToIso(eventDate, eventTime),
+    [eventDate, eventTime],
+  );
 
   const saleWindow = useMemo(
     () =>

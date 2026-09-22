@@ -4,20 +4,11 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import type { AdminEventTicketTypeRow } from "@/lib/admin/eventsApi";
+import { isoToHondurasDateTime } from "@/lib/hondurasDateTime";
 import { useState } from "react";
 
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
 function splitLocal(iso: string | null) {
-  if (!iso) return { date: "", time: "" };
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return { date: "", time: "" };
-  return {
-    date: `${parsed.getFullYear()}-${pad2(parsed.getMonth() + 1)}-${pad2(parsed.getDate())}`,
-    time: `${pad2(parsed.getHours())}:${pad2(parsed.getMinutes())}`,
-  };
+  return isoToHondurasDateTime(iso);
 }
 
 function money(price: number) {
