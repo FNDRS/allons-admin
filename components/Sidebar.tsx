@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Calendar,
   FileText,
+  Activity,
   Gauge,
   Loader2,
   LogOut,
@@ -22,6 +23,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/overview", label: "Resumen", icon: Gauge },
+  { href: "/live", label: "En vivo", icon: Activity },
   { href: "/providers", label: "Proveedores", icon: Store },
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/events", label: "Eventos", icon: Calendar },
