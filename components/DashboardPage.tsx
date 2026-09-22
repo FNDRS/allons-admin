@@ -12,8 +12,8 @@ export function DashboardScroll({
   className?: string;
 }) {
   return (
-    <div className={`min-h-0 flex-1 overflow-y-auto ${className}`.trim()}>
-      {children}
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className={`pr-4 md:pr-8 ${className}`.trim()}>{children}</div>
     </div>
   );
 }
@@ -26,7 +26,7 @@ export function DashboardList({
   children: React.ReactNode;
 }) {
   return (
-    <div className="futuristic-panel flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="futuristic-panel mr-4 flex min-h-0 flex-1 flex-col overflow-hidden md:mr-8">
       {header}
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
     </div>
