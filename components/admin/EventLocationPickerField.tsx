@@ -10,6 +10,7 @@ import {
   isShortGoogleMapsLink,
   parseGoogleMapsLink,
 } from "@/lib/googleMapsLink";
+import { findPlusCode, resolvePlusCode } from "@/lib/plusCode";
 import { Input } from "@/components/ui/input";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -280,22 +281,34 @@ export function EventLocationPickerField({
 
     setLinkError(null);
     let next = parseGoogleMapsLink(raw);
+    const needsLookup =
+      !next && (isShortGoogleMapsLink(raw) || Boolean(findPlusCode(raw)));
 
-    // Los links de "Compartir" son cortos y hay que seguir el redirect; eso
-    // sólo se puede hacer desde el servidor porque Google no manda CORS.
-    if (!next && isShortGoogleMapsLink(raw)) {
+    if (needsLookup) {
       setIsResolvingLink(true);
       try {
-        const response = await fetch("/api/maps/resolve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: raw }),
-        });
-        if (response.ok) {
-          next = (await response.json()) as Coords;
+        // Los links de "Compartir" son cortos y hay que seguir el redirect; eso
+        // sólo se puede hacer desde el servidor porque Google no manda CORS.
+        if (isShortGoogleMapsLink(raw)) {
+          const response = await fetch("/api/maps/resolve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: raw }),
+          });
+          if (response.ok) {
+            next = (await response.json()) as Coords;
+          }
+        }
+        if (!next && findPlusCode(raw)) {
+          const plus = await resolvePlusCode(raw);
+          if (plus && "error" in plus) {
+            setLinkError(plus.error);
+            return;
+          }
+          if (plus && "latitude" in plus) next = plus;
         }
       } catch {
-        // Se reporta abajo como link no legible.
+        // Se reporta abajo como texto no legible.
       } finally {
         setIsResolvingLink(false);
       }
@@ -303,7 +316,7 @@ export function EventLocationPickerField({
 
     if (!next) {
       setLinkError(
-        "No encontramos coordenadas en ese link. Pega el link de Google Maps o las coordenadas «14.0723, -87.1921».",
+        "No encontramos coordenadas. Pega el link de Google Maps, un Plus Code con la ciudad, o las coordenadas «14.0723, -87.1921».",
       );
       return;
     }
@@ -341,8 +354,8 @@ export function EventLocationPickerField({
       <h2 className="mt-1 text-xl font-semibold">Pin en el mapa</h2>
       <p className="mt-2 text-sm leading-6 text-white/50">
         Arrastra el pin (o haz clic en el mapa) hasta el lugar exacto del evento
-        en Honduras. También puedes pegar un link de Google Maps. La ciudad se
-        detecta sola para búsqueda.
+        en Honduras. También puedes pegar un link de Google Maps, un Plus Code
+        o las coordenadas. La ciudad se detecta sola para búsqueda.
       </p>
 
       <div className="mt-4">
@@ -350,7 +363,7 @@ export function EventLocationPickerField({
           htmlFor="event-maps-link"
           className="mb-1.5 block text-xs font-medium text-white/60"
         >
-          Link de Google Maps
+          Link, Plus Code o coordenadas
         </label>
         <div className="flex flex-wrap gap-2">
           <Input
@@ -366,7 +379,7 @@ export function EventLocationPickerField({
               event.preventDefault();
               void applyGoogleMapsLink();
             }}
-            placeholder="https://maps.app.goo.gl/… o 14.0723, -87.1921"
+            placeholder="CXXG+GMF, Chamelecon o 14.0723, -87.1921"
             className="min-w-56 flex-1"
           />
           <Button
