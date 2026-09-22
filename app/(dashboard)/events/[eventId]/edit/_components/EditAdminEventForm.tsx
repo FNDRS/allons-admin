@@ -188,7 +188,10 @@ export function EditAdminEventForm({
         </section>
       </div>
 
-      <EventCategoryField initial={initial.category} />
+      <EventCategoryField
+        key={initial.category ?? ""}
+        initial={initial.category}
+      />
 
       <EventKitPickupField defaultValue={initial.kitPickupInfo} />
 

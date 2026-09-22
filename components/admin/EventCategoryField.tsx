@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Chips de categoría, iguales a `EventCategoryChips` del mobile: una sola
@@ -34,12 +34,18 @@ export function EventCategoryField({
   const [selected, setSelected] = useState(() => categoryState(initial).selected);
   const [custom, setCustom] = useState(() => categoryState(initial).custom);
 
+  useEffect(() => {
+    const next = categoryState(initial);
+    setSelected(next.selected);
+    setCustom(next.custom);
+  }, [initial]);
+
   const isCustom = selected === EVENT_OTHER_CATEGORY;
   const value = isCustom ? custom.trim() : selected;
 
   return (
     <div className="futuristic-panel p-5">
-      <input type="hidden" name="category" value={value} />
+      <input key={value} type="hidden" name="category" defaultValue={value} />
 
       <div className="eyebrow">Categoría</div>
       <h2 className="mt-1 text-xl font-semibold">Cómo se descubre el evento</h2>
