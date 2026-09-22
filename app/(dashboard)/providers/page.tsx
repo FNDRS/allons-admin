@@ -38,6 +38,7 @@ const STATUS_VARIANT: Record<ProviderStatus, "success" | "warning" | "muted" | "
   suspended: "danger",
 };
 
+const PROVIDER_COLUMNS = "minmax(0, 1.2fr) 7.5rem 10.5rem minmax(22rem, 1.6fr)";
 
 function formatDate(iso: string | null) {
   if (!iso) return "-";
@@ -165,8 +166,8 @@ export default async function ProvidersPage({
       <DashboardList
         header={
           <div
-            className="grid border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
-            style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
+            className="grid items-center gap-x-4 border-b border-white/12 bg-white/2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-muted"
+            style={{ gridTemplateColumns: PROVIDER_COLUMNS }}
           >
             <div>Proveedor</div>
             <div>Estado</div>
@@ -187,8 +188,8 @@ export default async function ProvidersPage({
             return (
               <div
                 key={p.id}
-                className="grid items-center border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
-                style={{ gridTemplateColumns: "1.8fr 1fr 0.9fr 1.4fr" }}
+                className="grid items-center gap-x-4 border-b border-white/8 px-4 py-3 text-sm last:border-b-0 hover:bg-white/2"
+                style={{ gridTemplateColumns: PROVIDER_COLUMNS }}
               >
                 <div className="min-w-0">
                   <div className="truncate font-semibold">
@@ -204,10 +205,10 @@ export default async function ProvidersPage({
                     variant={STATUS_VARIANT[status]}
                   />
                 </div>
-                <div className="text-xs text-muted">
+                <div className="whitespace-nowrap text-xs text-muted">
                   {formatDate(p.createdAt)}
                 </div>
-                <div className="flex flex-wrap justify-end gap-1.5">
+                <div className="flex items-center justify-end gap-1.5">
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/providers/${p.id}` as never}>Ver</Link>
                   </Button>

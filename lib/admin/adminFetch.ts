@@ -107,7 +107,7 @@ export async function adminFetch<T>(
 
   if (!contentType.includes("application/json")) {
     const hint =
-      baseUrl.includes("localhost:3001") || baseUrl.includes("localhost:3000")
+      baseUrl.includes("localhost:3002") || baseUrl.includes("localhost:3000")
         ? " ADMIN_API_BASE_URL must point at allons-api (default :3000), not allons-admin."
         : "";
     throw new Error(

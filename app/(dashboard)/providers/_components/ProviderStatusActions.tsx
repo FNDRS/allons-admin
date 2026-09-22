@@ -23,7 +23,7 @@ export function ProviderStatusActions({
   revalidatePath: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex items-center gap-1.5">
       {emailConfirmedAt === null ? (
         <form action={resendInviteAction}>
           <input type="hidden" name="userId" value={userId} />
