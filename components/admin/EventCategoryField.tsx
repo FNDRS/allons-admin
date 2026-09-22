@@ -67,6 +67,10 @@ export function EventCategoryField({
         })}
       </div>
 
+      {!value && !isCustom ? (
+        <p className="mt-3 text-xs text-amber-300">Selecciona una categoría.</p>
+      ) : null}
+
       {isCustom ? (
         <div className="mt-4">
           <Label>Nombre de la categoría *</Label>
