@@ -45,6 +45,8 @@ export function isUploadKind(value: unknown): value is UploadKind {
 export type UploadedFile = {
   url: string;
   path: string;
+  /** Ya está en el evento. Quitarla del formulario no borra el archivo. */
+  persisted?: boolean;
 };
 
 /**
@@ -64,7 +66,11 @@ export function parseUploadedFiles(
     const url = typeof item.url === "string" ? item.url.trim() : "";
     const path = typeof item.path === "string" ? item.path.trim() : "";
     if (!url || !path) return null;
-    files.push({ url, path });
+    files.push({
+      url,
+      path,
+      ...(item.persisted === true ? { persisted: true } : {}),
+    });
   }
 
   return files;

@@ -104,6 +104,11 @@ export function describeEventAuditRow(row: EventAuditLogRow): string {
 
   if (row.action === "event.create") return "Evento creado";
 
+  if (row.action === "event.update") {
+    const title = row.stateAfter.title;
+    return title ? `Evento actualizado: ${String(title)}` : "Evento actualizado";
+  }
+
   if (row.stateAfter.status) return `Estado: ${String(row.stateAfter.status)}`;
   if (row.stateAfter.status_attempted) {
     return `Intento: ${String(row.stateAfter.status_attempted)}`;

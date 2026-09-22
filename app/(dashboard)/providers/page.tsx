@@ -38,7 +38,7 @@ const STATUS_VARIANT: Record<ProviderStatus, "success" | "warning" | "muted" | "
   suspended: "danger",
 };
 
-const PROVIDER_COLUMNS = "minmax(0, 1.2fr) 7.5rem 10.5rem minmax(22rem, 1.6fr)";
+const PROVIDER_COLUMNS = "minmax(0, 1.3fr) 6.5rem 7.5rem minmax(0, 1.8fr)";
 
 function formatDate(iso: string | null) {
   if (!iso) return "-";
@@ -208,9 +208,14 @@ export default async function ProvidersPage({
                 <div className="whitespace-nowrap text-xs text-muted">
                   {formatDate(p.createdAt)}
                 </div>
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/providers/${p.id}` as never}>Ver</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="brand">
+                    <Link href={`/providers/${p.id}/edit` as never}>
+                      Editar proveedor
+                    </Link>
                   </Button>
                   <ProviderStatusActions
                     userId={p.id}

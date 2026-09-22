@@ -84,14 +84,33 @@ async function reverseGeocode(coords: Coords): Promise<{ address: string; city: 
   }
 }
 
-export function EventLocationPickerField() {
+export function EventLocationPickerField({
+  initial,
+}: {
+  initial?: {
+    latitude: number;
+    longitude: number;
+    address?: string | null;
+    city?: string | null;
+  };
+} = {}) {
   const mapElRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markerRef = useRef<import("leaflet").Marker | null>(null);
+  const startRef = useRef<Coords>(
+    initial
+      ? { latitude: initial.latitude, longitude: initial.longitude }
+      : DEFAULT_CENTER,
+  );
+  const keepSavedAddress = useRef(
+    Boolean(initial && (initial.address || initial.city)),
+  );
 
-  const [coords, setCoords] = useState<Coords>(DEFAULT_CENTER);
-  const [addressPreview, setAddressPreview] = useState("");
-  const [detectedCity, setDetectedCity] = useState<string | null>(null);
+  const [coords, setCoords] = useState<Coords>(startRef.current);
+  const [addressPreview, setAddressPreview] = useState(initial?.address ?? "");
+  const [detectedCity, setDetectedCity] = useState<string | null>(
+    initial?.city ?? null,
+  );
   const [isResolving, setIsResolving] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
@@ -138,7 +157,9 @@ export function EventLocationPickerField() {
 
   // initial reverse geocode
   useEffect(() => {
-    scheduleReverseGeocode(DEFAULT_CENTER, 0);
+    if (!keepSavedAddress.current) {
+      scheduleReverseGeocode(startRef.current, 0);
+    }
     return () => {
       if (pendingTimer.current) clearTimeout(pendingTimer.current);
       requestIdRef.current++;
@@ -154,7 +175,7 @@ export function EventLocationPickerField() {
       if (cancelled || !mapElRef.current || mapRef.current) return;
 
       const map = L.map(mapElRef.current, {
-        center: [DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude],
+        center: [startRef.current.latitude, startRef.current.longitude],
         zoom: 13,
         zoomControl: true,
         // keep inside Honduras
@@ -185,7 +206,7 @@ export function EventLocationPickerField() {
       // El pin es un marcador propio y arrastrable: mover el mapa ya no cambia
       // la ubicación, sólo el encuadre. Se arrastra el pin, o se hace clic.
       const marker = L.marker(
-        [DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude],
+        [startRef.current.latitude, startRef.current.longitude],
         {
           draggable: true,
           autoPan: true,

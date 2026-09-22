@@ -1,6 +1,11 @@
 "use client";
 
-import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY, INTEREST_OPTIONS } from "@/lib/eventCategories";
+import {
+  EVENT_CATEGORIES,
+  EVENT_OTHER_CATEGORY,
+  INTEREST_OPTIONS,
+  isCatalogEventCategory,
+} from "@/lib/eventCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +15,24 @@ import { useState } from "react";
  * Chips de categoría, iguales a `EventCategoryChips` del mobile: una sola
  * categoría por evento y «Otro» abre un campo libre.
  */
-export function EventCategoryField() {
-  const [selected, setSelected] = useState<string>(INTEREST_OPTIONS[0]);
-  const [custom, setCustom] = useState("");
+function categoryState(initial: string | null | undefined) {
+  if (initial === undefined) {
+    return { selected: INTEREST_OPTIONS[0] as string, custom: "" };
+  }
+  const name = initial.trim();
+  if (!name) return { selected: "", custom: "" };
+  if (isCatalogEventCategory(name)) return { selected: name, custom: "" };
+  return { selected: EVENT_OTHER_CATEGORY, custom: name };
+}
+
+export function EventCategoryField({
+  initial,
+}: {
+  /** Sin prop, el alta arranca en la primera categoría. Null: el evento no tiene. */
+  initial?: string | null;
+} = {}) {
+  const [selected, setSelected] = useState(() => categoryState(initial).selected);
+  const [custom, setCustom] = useState(() => categoryState(initial).custom);
 
   const isCustom = selected === EVENT_OTHER_CATEGORY;
   const value = isCustom ? custom.trim() : selected;

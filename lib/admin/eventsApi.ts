@@ -50,6 +50,10 @@ export interface AdminEventDetailItem extends AdminEventListItem {
   minAge: number | null;
   /** Dónde se recoge el kit; vacío si el evento no entrega nada. */
   kitPickupInfo: string | null;
+  /** Interés con el que se descubre el evento. Null si todavía no tiene. */
+  category: string | null;
+  /** Galería, en orden. La portada va aparte, en `coverImageUrl`. */
+  galleryUrls: string[];
 }
 
 export interface AdminEventListResponse {
@@ -292,6 +296,33 @@ export interface CreateAdminEventPayload {
   /** Already uploaded; the first becomes the cover, the rest the gallery. */
   imageUrls: string[];
   formFields: AdminEventFormField[];
+}
+
+export interface UpdateAdminEventPayload {
+  title: string;
+  description: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  city: string | null;
+  venue: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  capacity: number;
+  themeColor: string;
+  category: string;
+  imageUrls: string[];
+}
+
+export function updateAdminEvent(
+  eventId: string,
+  payload: UpdateAdminEventPayload,
+  actor: AdminApiActor,
+) {
+  return adminFetch<{ ok: true; eventId: string; title: string }>(
+    `/admin/events/${encodeURIComponent(eventId)}`,
+    { method: "PATCH", body: payload, actor, source: "server_action" },
+  );
 }
 
 export function createAdminEvent(

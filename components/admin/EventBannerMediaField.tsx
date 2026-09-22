@@ -22,6 +22,15 @@ const EVENT_THEME_COLORS = [
 
 type GalleryImage = UploadedFile & { name: string };
 
+function initialGallery(images: { url: string }[]): GalleryImage[] {
+  return images.map((image, index) => ({
+    url: image.url,
+    path: image.url,
+    name: index === 0 ? "Portada actual" : `Imagen ${index + 1}`,
+    persisted: true,
+  }));
+}
+
 /**
  * Banner del evento: la portada es la primera imagen, y el color sólido sólo
  * se ve mientras no haya imágenes.
@@ -30,10 +39,24 @@ type GalleryImage = UploadedFile & { name: string };
  * al formulario sólo viajan sus URLs. Mandar los archivos por el Server Action
  * rompía con "Body exceeded 1 MB limit".
  */
-export function EventBannerMediaField({ title }: { title: string }) {
+export function EventBannerMediaField({
+  title,
+  initialImages = [],
+  initialColor,
+}: {
+  title: string;
+  initialImages?: { url: string }[];
+  initialColor?: string | null;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [images, setImages] = useState<GalleryImage[]>([]);
-  const [color, setColor] = useState(EVENT_THEME_COLORS[0]);
+  const [images, setImages] = useState<GalleryImage[]>(() =>
+    initialGallery(initialImages),
+  );
+  const [color, setColor] = useState(() =>
+    initialColor && /^#[0-9A-Fa-f]{6}$/.test(initialColor)
+      ? initialColor
+      : EVENT_THEME_COLORS[0],
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -79,6 +102,10 @@ export function EventBannerMediaField({ title }: { title: string }) {
 
   const removeImage = async (image: GalleryImage) => {
     setImages((current) => current.filter((item) => item.path !== image.path));
+    // Una imagen que el evento ya usa se queda en storage hasta que el guardado
+    // la reemplace. Borrarla aquí dejaría la ficha publicada sin portada si
+    // quien edita cancela.
+    if (image.persisted) return;
     // El evento todavía no existe: si no se borra, el archivo queda huérfano.
     try {
       await fetch("/api/admin/uploads", {
@@ -100,7 +127,11 @@ export function EventBannerMediaField({ title }: { title: string }) {
         type="hidden"
         name="eventImages"
         value={JSON.stringify(
-          images.map(({ url, path }) => ({ url, path })),
+          images.map(({ url, path, persisted }) => ({
+            url,
+            path,
+            ...(persisted ? { persisted: true } : {}),
+          })),
         )}
       />
 
