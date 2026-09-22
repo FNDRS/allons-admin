@@ -17,8 +17,7 @@ import { isoToHondurasDateTime } from "@/lib/hondurasDateTime";
  * Una fila de la tabla de tipos de entrada que se abre para editarse.
  *
  * Cerrada muestra lo mismo que antes. Abierta deja cambiar nombre, precio,
- * cupo, ventana de venta y si sigue a la venta, que es lo que cambia después
- * de publicar un evento.
+ * cupo, ventana de venta, aportes y si sigue a la venta.
  */
 export function EventTicketTypeEditableRow({
   ticketType,
@@ -130,6 +129,20 @@ export function EventTicketTypeEditableRow({
                 />
                 <span className="text-sm text-white/60">
                   Visible para comprar
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor={inputId("donation")}>Aportes</Label>
+              <div className="flex min-h-10 items-center gap-2">
+                <Checkbox
+                  id={inputId("donation")}
+                  name="donationEnabled"
+                  defaultChecked={ticketType.donationEnabled === true}
+                />
+                <span className="text-sm text-white/60">
+                  El comprador puede pagar más que el precio
                 </span>
               </div>
             </div>

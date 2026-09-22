@@ -129,11 +129,14 @@ export async function updateEventTicketType(
         active: String(formData.get("active") ?? "") === "on",
         saleStartsAt: localInputToIso(formData.get("saleStartsAt")),
         saleEndsAt: localInputToIso(formData.get("saleEndsAt")),
+        donationEnabled: String(formData.get("donationEnabled") ?? "") === "on",
       },
       caller,
     );
 
     revalidatePath(revalidate);
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/events/${eventId}/edit`);
     revalidatePath("/events");
     return { ok: true, error: null, warnings: result.warnings ?? [] };
   } catch (error) {

@@ -6,18 +6,13 @@ import { readEventFeeOverrides } from "@/lib/admin/eventFeeForm";
 import {
   setAdminEventFees,
   setAdminEventKitPickup,
-  setAdminEventTicketSaleEnd,
   updateAdminEvent,
 } from "@/lib/admin/eventsApi";
 import { deleteUpload } from "@/lib/admin/uploadsApi";
 import { parseUploadedFiles, type UploadedFile } from "@/lib/admin/uploads";
 import { saveDemoEventForm } from "@/lib/demoEventForms";
 import { normalizeDemoFormFields } from "@/lib/eventFormFields";
-import {
-  addHoursIso,
-  hondurasDateTimeToIso,
-  hondurasInputToIso,
-} from "@/lib/hondurasDateTime";
+import { addHoursIso, hondurasDateTimeToIso } from "@/lib/hondurasDateTime";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -57,27 +52,6 @@ function parseEndsAt(date: string, endTime: string, startsAt: string) {
     return addHoursIso(endsAt, 24);
   }
   return endsAt;
-}
-
-function parseSaleEnds(formData: FormData) {
-  const ids = formData
-    .getAll("ticketSaleId")
-    .map((value) => String(value).trim())
-    .filter(Boolean);
-  const windows: Array<{ ticketTypeId: string; saleEndsAt: string }> = [];
-  for (const ticketTypeId of ids) {
-    const saleEndsAt = hondurasInputToIso(
-      String(formData.get(`saleEndsAt_${ticketTypeId}`) ?? ""),
-    );
-    if (!saleEndsAt) {
-      return {
-        windows: null,
-        error: "Indica fecha y hora de cierre para cada entrada de pago.",
-      };
-    }
-    windows.push({ ticketTypeId, saleEndsAt });
-  }
-  return { windows, error: null };
 }
 
 function fail(message: string): UpdateAdminEventState {
@@ -153,11 +127,6 @@ export async function updateAdminEventAction(
     return fail("Las imágenes del evento no tienen un formato válido.");
   }
 
-  const saleEnds = parseSaleEnds(formData);
-  if (saleEnds.error || !saleEnds.windows) {
-    return fail(saleEnds.error ?? "Indica cuándo cierra la venta.");
-  }
-
   const rawFields = formData.get("fields");
   let formFields: ReturnType<typeof normalizeDemoFormFields> | null = null;
   if (typeof rawFields === "string") {
@@ -208,14 +177,6 @@ export async function updateAdminEventAction(
     );
     if (formFields) {
       await saveDemoEventForm(eventId, formFields);
-    }
-    for (const sale of saleEnds.windows) {
-      await setAdminEventTicketSaleEnd(
-        eventId,
-        sale.ticketTypeId,
-        sale.saleEndsAt,
-        caller,
-      );
     }
     if (feeOverrides) {
       await setAdminEventFees(eventId, feeOverrides, caller);

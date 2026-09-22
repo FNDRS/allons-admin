@@ -5,8 +5,8 @@ import { EventCategoryField } from "@/components/admin/EventCategoryField";
 import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
 import { EventKitPickupField } from "@/components/admin/EventKitPickupField";
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
-import { EventTicketSaleEndField } from "@/components/admin/EventTicketSaleEndField";
 import { EventFeesCard } from "@/app/(dashboard)/events/[eventId]/_components/EventFeesCard";
+import { EventTicketTypesEditor } from "./EventTicketTypesEditor";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -70,8 +70,11 @@ export function EditAdminEventForm({
   const [time, setTime] = useState(initial.time);
   const [endTime, setEndTime] = useState(initial.endTime);
 
+  const formId = `edit-admin-event-${eventId}`;
+
   return (
-    <form action={action} className="space-y-6">
+    <div className="space-y-6">
+    <form id={formId} action={action} className="space-y-6">
       <input type="hidden" name="eventId" value={eventId} />
 
       {state && !state.ok ? (
@@ -187,10 +190,6 @@ export function EditAdminEventForm({
 
       <EventCategoryField initial={initial.category} />
 
-      {initial.ticketTypes ? (
-        <EventTicketSaleEndField tickets={initial.ticketTypes} />
-      ) : null}
-
       <EventKitPickupField defaultValue={initial.kitPickupInfo} />
 
       {initial.formFields ? (
@@ -212,9 +211,19 @@ export function EditAdminEventForm({
         />
       ) : null}
 
+    </form>
+
+      {initial.ticketTypes ? (
+        <EventTicketTypesEditor
+          eventId={eventId}
+          tickets={initial.ticketTypes}
+        />
+      ) : null}
+
       <section className="futuristic-panel p-5">
         <Button
           type="submit"
+          form={formId}
           variant="default"
           disabled={isPending}
           className="w-full"
@@ -223,6 +232,6 @@ export function EditAdminEventForm({
           {isPending ? "Guardando..." : "Guardar cambios"}
         </Button>
       </section>
-    </form>
+    </div>
   );
 }

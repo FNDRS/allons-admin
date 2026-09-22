@@ -263,6 +263,7 @@ export interface AdminEventTicketTypeRow {
   /** Null en un tier gratis; la API las exige en cuanto el precio es mayor a cero. */
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  donationEnabled: boolean;
 }
 
 export interface AdminEventTicketStats {
@@ -370,6 +371,7 @@ export interface AdminTicketTypePatch {
   active: boolean;
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  donationEnabled: boolean;
 }
 
 export interface AdminTicketTypePatchResult {

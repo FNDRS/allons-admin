@@ -14,6 +14,8 @@ export interface EventTicketTypeRow {
   /** Null en un tier gratis; la API las exige en cuanto el precio es mayor a cero. */
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  /** El comprador puede pagar más que el precio. En un tier gratis queda en false. */
+  donationEnabled: boolean;
 }
 
 /**
