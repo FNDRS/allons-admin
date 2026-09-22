@@ -2,9 +2,15 @@
 
 import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
-import { updateAdminEvent } from "@/lib/admin/eventsApi";
+import {
+  setAdminEventKitPickup,
+  setAdminEventTicketSaleEnd,
+  updateAdminEvent,
+} from "@/lib/admin/eventsApi";
 import { deleteUpload } from "@/lib/admin/uploadsApi";
 import { parseUploadedFiles, type UploadedFile } from "@/lib/admin/uploads";
+import { saveDemoEventForm } from "@/lib/demoEventForms";
+import { normalizeDemoFormFields } from "@/lib/eventFormFields";
 import { isInsideHonduras, resolveKnownCity } from "@/lib/hondurasLocations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -48,6 +54,32 @@ function parseEndsAt(date: string, endTime: string, startsAt: string) {
     return nextDay.toISOString();
   }
   return endsAt;
+}
+
+function localInputToIso(value: FormDataEntryValue | null): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function parseSaleEnds(formData: FormData) {
+  const ids = formData
+    .getAll("ticketSaleId")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+  const windows: Array<{ ticketTypeId: string; saleEndsAt: string }> = [];
+  for (const ticketTypeId of ids) {
+    const saleEndsAt = localInputToIso(formData.get(`saleEndsAt_${ticketTypeId}`));
+    if (!saleEndsAt) {
+      return {
+        windows: null,
+        error: "Indica fecha y hora de cierre para cada entrada de pago.",
+      };
+    }
+    windows.push({ ticketTypeId, saleEndsAt });
+  }
+  return { windows, error: null };
 }
 
 function fail(message: string): UpdateAdminEventState {
@@ -123,6 +155,21 @@ export async function updateAdminEventAction(
     return fail("Las imágenes del evento no tienen un formato válido.");
   }
 
+  const saleEnds = parseSaleEnds(formData);
+  if (saleEnds.error || !saleEnds.windows) {
+    return fail(saleEnds.error ?? "Indica cuándo cierra la venta.");
+  }
+
+  const rawFields = formData.get("fields");
+  let formFields: ReturnType<typeof normalizeDemoFormFields> | null = null;
+  if (typeof rawFields === "string") {
+    try {
+      formFields = normalizeDemoFormFields(JSON.parse(rawFields));
+    } catch {
+      return fail("El formulario del evento no tiene un formato válido.");
+    }
+  }
+
   try {
     await updateAdminEvent(
       eventId,
@@ -143,6 +190,22 @@ export async function updateAdminEventAction(
       },
       caller,
     );
+    await setAdminEventKitPickup(
+      eventId,
+      formString(formData, "kitPickupInfo"),
+      caller,
+    );
+    if (formFields) {
+      await saveDemoEventForm(eventId, formFields);
+    }
+    for (const sale of saleEnds.windows) {
+      await setAdminEventTicketSaleEnd(
+        eventId,
+        sale.ticketTypeId,
+        sale.saleEndsAt,
+        caller,
+      );
+    }
   } catch (error) {
     await deleteNewUploadedImages(uploadedImages);
     return fail(adminApiErrorMessage(error, "No se pudo actualizar el evento."));
@@ -150,6 +213,7 @@ export async function updateAdminEventAction(
 
   revalidatePath("/events");
   revalidatePath(`/events/${eventId}`);
+  revalidatePath(`/events/${eventId}/formulario`);
   revalidatePath("/providers");
   redirect(`/events/${eventId}`);
 }

@@ -378,6 +378,23 @@ export interface AdminTicketTypePatchResult {
   warnings: string[];
 }
 
+export function setAdminEventTicketSaleEnd(
+  eventId: string,
+  ticketTypeId: string,
+  saleEndsAt: string,
+  actor: AdminApiActor,
+) {
+  return adminFetch<{ ok: true }>(
+    `/admin/events/${encodeURIComponent(eventId)}/ticket-types/${encodeURIComponent(ticketTypeId)}/sale-end`,
+    {
+      method: "PATCH",
+      body: { saleEndsAt },
+      actor,
+      source: "server_action",
+    },
+  );
+}
+
 export function patchAdminEventTicketType(
   eventId: string,
   ticketTypeId: string,

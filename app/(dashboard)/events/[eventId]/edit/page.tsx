@@ -2,7 +2,8 @@ import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { EditAdminEventForm } from "@/app/(dashboard)/events/[eventId]/edit/_components/EditAdminEventForm";
-import { getAdminEvent } from "@/lib/admin/eventsApi";
+import { getAdminEvent, getAdminEventForm, listAdminEventTicketTypes } from "@/lib/admin/eventsApi";
+import { normalizeDemoFormFields } from "@/lib/eventFormFields";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -59,6 +60,11 @@ export default async function EditAdminEventPage({
         }
       : null;
 
+  const [form, ticketTypes] = await Promise.all([
+    getAdminEventForm(eventId).catch(() => null),
+    listAdminEventTicketTypes(eventId).catch(() => null),
+  ]);
+
   return (
     <DashboardPage>
       <PageHeader
@@ -89,6 +95,9 @@ export default async function EditAdminEventPage({
             themeColor: event.themeColor,
             images,
             location,
+            kitPickupInfo: event.kitPickupInfo ?? "",
+            formFields: form ? normalizeDemoFormFields(form.fields) : null,
+            ticketTypes: ticketTypes?.items ?? null,
           }}
         />
       </DashboardScroll>

@@ -2,13 +2,18 @@
 
 import { EventBannerMediaField } from "@/components/admin/EventBannerMediaField";
 import { EventCategoryField } from "@/components/admin/EventCategoryField";
+import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
+import { EventKitPickupField } from "@/components/admin/EventKitPickupField";
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
+import { EventTicketSaleEndField } from "@/components/admin/EventTicketSaleEndField";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
+import type { AdminEventTicketTypeRow } from "@/lib/admin/eventsApi";
+import type { DemoEventFormField } from "@/lib/eventFormFields";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateAdminEventAction } from "../actions";
@@ -30,6 +35,9 @@ export type EditAdminEventInitial = {
     address: string | null;
     city: string | null;
   } | null;
+  kitPickupInfo: string;
+  formFields: DemoEventFormField[] | null;
+  ticketTypes: AdminEventTicketTypeRow[] | null;
 };
 
 export function EditAdminEventForm({
@@ -73,8 +81,7 @@ export function EditAdminEventForm({
           <div className="eyebrow">Evento</div>
           <h2 className="mt-1 text-xl font-semibold">Datos públicos</h2>
           <p className="mt-2 text-sm leading-6 text-white/50">
-            Comercio: {providerName}. Los tickets, el formulario y las comisiones
-            se editan en el detalle.
+            Comercio: {providerName}. Las comisiones se editan en el detalle.
           </p>
 
           <div className="mt-5 space-y-4">
@@ -175,6 +182,22 @@ export function EditAdminEventForm({
       </div>
 
       <EventCategoryField initial={initial.category} />
+
+      {initial.ticketTypes ? (
+        <EventTicketSaleEndField tickets={initial.ticketTypes} />
+      ) : null}
+
+      <EventKitPickupField defaultValue={initial.kitPickupInfo} />
+
+      {initial.formFields ? (
+        <EventFormFieldsEditor
+          initialFields={initial.formFields}
+          eyebrow="Formulario"
+          title="Formulario del evento"
+          description="Opcional. Agrega las preguntas del registro web. Nombre y correo siempre se piden."
+          emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
+        />
+      ) : null}
 
       <section className="futuristic-panel p-5">
         <Button
