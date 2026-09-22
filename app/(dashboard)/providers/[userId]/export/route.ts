@@ -5,7 +5,6 @@ import {
   listEventPaymentsForProvider,
   listProviderAuditLogs,
   loadProviderEvents,
-  loadProviderSubscriptionOrders,
   resolveProviderForUser,
 } from "@/lib/admin/providerDetail";
 import { getUserById } from "@/lib/admin/users";
@@ -14,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Data export for a comercio (offboarding / portability). Returns one JSON file
- * with the account, comercio, team, events, payments, subscription orders and
+ * with the account, comercio, team, events, payments and
  * audit trail. Root-actor only; the export itself is audited.
  */
 export async function GET(
@@ -32,12 +31,11 @@ export async function GET(
   const { provider, members } = await resolveProviderForUser(userId);
   const providerId = provider?.id ?? null;
 
-  const [events, subscriptionOrders, eventPayments, ticketStats, auditLogs] =
+  const [events, eventPayments, ticketStats, auditLogs] =
     await Promise.all([
       providerId
         ? loadProviderEvents(providerId)
         : Promise.resolve({ total: 0, items: [] }),
-      loadProviderSubscriptionOrders(userId),
       providerId
         ? listEventPaymentsForProvider(providerId)
         : Promise.resolve([]),
@@ -55,10 +53,6 @@ export async function GET(
       email: providerUser.email,
       fullName: providerUser.fullName,
       providerStatus: providerUser.providerStatus ?? null,
-      subscriptionPlan: providerUser.subscriptionPlan ?? null,
-      subscriptionStatus: providerUser.subscriptionStatus ?? null,
-      freeTrialEnd: providerUser.freeTrialEnd ?? null,
-      subscriptionPeriodEnd: providerUser.subscriptionPeriodEnd ?? null,
       createdAt: providerUser.createdAt,
       lastSignInAt: providerUser.lastSignInAt,
     },
@@ -67,7 +61,6 @@ export async function GET(
     ticketStats,
     events: events.items,
     eventPayments,
-    subscriptionOrders,
     auditLogs,
   };
 
@@ -80,7 +73,6 @@ export async function GET(
       resourceId: userId,
       stateAfter: {
         events: events.items.length,
-        subscriptionOrders: subscriptionOrders.length,
         members: members.length,
       },
     },

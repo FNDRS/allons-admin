@@ -27,7 +27,6 @@ const NAV_ITEMS = [
   { href: "/events", label: "Eventos", icon: Calendar },
   { href: "/notifications", label: "Notificaciones", icon: Bell },
   { href: "/finance", label: "Finanzas", icon: Wallet },
-  { href: "/payments", label: "Pagos", icon: FileText },
   { href: "/refunds", label: "Reembolsos", icon: Receipt },
   { href: "/waitlist-qr", label: "Waitlist QR", icon: QrCode },
 ] as const;

@@ -38,30 +38,6 @@ const STATUS_VARIANT: Record<ProviderStatus, "success" | "warning" | "muted" | "
   suspended: "danger",
 };
 
-const PLAN_LABEL: Record<string, string> = {
-  pendiente: "Prueba (sin plan)",
-  single_event: "Evento Único",
-  basico: "Básico",
-  pro: "Pro",
-};
-
-function subscriptionSummary(p: AdminUserRecord): string {
-  const planLabel = PLAN_LABEL[p.subscriptionPlan ?? "pendiente"] ?? "Prueba";
-  const isPlan =
-    p.subscriptionPlan === "single_event" ||
-    p.subscriptionPlan === "basico" ||
-    p.subscriptionPlan === "pro";
-  if (isPlan && p.subscriptionPeriodEnd) {
-    return `${planLabel} · renueva ${formatDate(p.subscriptionPeriodEnd)}`;
-  }
-  if (p.freeTrialEnd) {
-    const ended = new Date(p.freeTrialEnd).getTime() < Date.now();
-    return ended
-      ? `${planLabel} · prueba vencida (${formatDate(p.freeTrialEnd)})`
-      : `${planLabel} · prueba hasta ${formatDate(p.freeTrialEnd)}`;
-  }
-  return planLabel;
-}
 
 function formatDate(iso: string | null) {
   if (!iso) return "-";
@@ -220,9 +196,6 @@ export default async function ProvidersPage({
                   </div>
                   <div className="truncate text-xs text-muted">
                     {p.brandHandle ? `${p.brandHandle} · ` : ""}{p.email}
-                  </div>
-                  <div className="truncate text-[11px] text-white/45">
-                    {subscriptionSummary(p)}
                   </div>
                 </div>
                 <div>

@@ -21,10 +21,6 @@ export interface AdminUserRecord {
   providerStatus: ProviderStatus | null;
   brandName: string | null;
   brandHandle: string | null;
-  subscriptionPlan: string | null;
-  subscriptionStatus: string | null;
-  freeTrialEnd: string | null;
-  subscriptionPeriodEnd: string | null;
   /** Business type (drives the suggested pasarela rate). */
   businessType: string | null;
   /** Per-comercio pasarela (Clinpays + bank) fee %, added to the Allons fee. */

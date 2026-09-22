@@ -118,17 +118,6 @@ export function setProviderStatusApi(
   );
 }
 
-export function setProviderPlanApi(
-  userId: string,
-  plan: ProviderPlanValue,
-  actor: AdminApiActor,
-) {
-  return adminFetch<{ ok: true; plan: ProviderPlanValue }>(
-    `/admin/providers/by-user/${encodeURIComponent(userId)}/plan`,
-    { method: "PATCH", body: { plan }, actor, source: "server_action" },
-  );
-}
-
 export function setProviderFeesApi(
   userId: string,
   fees: { pasarelaFeePct: string | number; allonsFeePct: string | number },
@@ -144,16 +133,6 @@ export function setProviderFeesApi(
     actor,
     source: "server_action",
   });
-}
-
-export function cancelProviderSubscriptionApi(
-  userId: string,
-  actor: AdminApiActor,
-) {
-  return adminFetch<{ ok: true }>(
-    `/admin/providers/by-user/${encodeURIComponent(userId)}/subscription/cancel`,
-    { method: "POST", actor, source: "server_action" },
-  );
 }
 
 export function resendProviderInviteApi(
