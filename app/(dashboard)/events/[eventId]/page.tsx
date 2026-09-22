@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
 import { EventFeesCard } from "@/app/(dashboard)/events/[eventId]/_components/EventFeesCard";
+import { EventTicketTypeEditableRow } from "./_components/EventTicketTypeRow";
 import { EventKitPickupCard } from "@/app/(dashboard)/events/[eventId]/_components/EventKitPickupCard";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
 import {
@@ -303,33 +304,18 @@ export default async function EventDetailPage({
                     <th className="py-2 pr-4">Nombre</th>
                     <th className="py-2 pr-4 text-right">Precio</th>
                     <th className="py-2 pr-4 text-right">Vendidos</th>
-                    <th className="py-2 text-right">Total</th>
+                    <th className="py-2 pr-4 text-right">Total</th>
+                    <th className="py-2 text-right" />
                   </tr>
                 </thead>
                 <tbody>
                   {ticketTypes.map((t) => (
-                    <tr
+                    <EventTicketTypeEditableRow
                       key={t.id}
-                      className="border-b border-white/8 last:border-0"
-                    >
-                      <td className="py-2.5 pr-4 font-medium">
-                        {t.name}
-                        {!t.active ? (
-                          <span className="ml-2 text-xs text-muted">
-                            (inactivo)
-                          </span>
-                        ) : null}
-                      </td>
-                      <td className="py-2.5 pr-4 text-right tabular-nums">
-                        {money(Math.round(t.price * 100))}
-                      </td>
-                      <td className="py-2.5 pr-4 text-right tabular-nums">
-                        {t.soldCount}
-                      </td>
-                      <td className="py-2.5 text-right tabular-nums">
-                        {t.total}
-                      </td>
-                    </tr>
+                      ticketType={t}
+                      eventId={eventId}
+                      revalidatePath={`/events/${eventId}`}
+                    />
                   ))}
                 </tbody>
               </table>

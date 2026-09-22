@@ -2,10 +2,12 @@
 
 import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
+import type { TicketTypeSaveState } from "@/lib/admin/ticketTypeSaveState";
 import {
   ADMIN_FEE_MODES,
   isValidAdminEventStatus,
   setAdminEventFees,
+  patchAdminEventTicketType,
   setAdminEventKitPickup,
   updateAdminEventStatus,
   type AdminEventFeeOverrides,
@@ -139,4 +141,70 @@ export async function setEventFees(formData: FormData) {
 
   revalidatePath(`/events/${id}`);
   revalidatePath("/events");
+}
+
+/**
+ * Edita un tipo de entrada. Las reglas viven en allons-api, que también deja
+ * la fila de auditoría; acá sólo se arma el cuerpo y se muestra lo que
+ * responde. Duplicar las validaciones en el panel garantizaba que un día
+ * dijeran cosas distintas.
+ *
+ * Devuelve el resultado en vez de lanzar: el rechazo y los avisos tienen que
+ * poder leerse en la fila, no terminar en la pantalla de error de Next.
+ */
+export async function updateEventTicketType(
+  _prev: TicketTypeSaveState,
+  formData: FormData,
+): Promise<TicketTypeSaveState> {
+  const caller = await requireRootActor();
+  const eventId = String(formData.get("eventId") ?? "");
+  const ticketTypeId = String(formData.get("ticketTypeId") ?? "");
+  const revalidate = String(formData.get("revalidate") ?? "/events");
+
+  if (!eventId || !ticketTypeId) {
+    return { ok: false, error: "Falta el evento o el tipo de entrada.", warnings: [] };
+  }
+
+  const price = Number(formData.get("price"));
+  const total = Number(formData.get("total"));
+  if (!Number.isFinite(price) || !Number.isFinite(total)) {
+    return { ok: false, error: "El precio y el cupo tienen que ser números.", warnings: [] };
+  }
+
+  try {
+    const result = await patchAdminEventTicketType(
+      eventId,
+      ticketTypeId,
+      {
+        name: String(formData.get("name") ?? "").trim(),
+        priceCents: Math.round(price * 100),
+        total: Math.round(total),
+        active: String(formData.get("active") ?? "") === "on",
+        saleStartsAt: localInputToIso(formData.get("saleStartsAt")),
+        saleEndsAt: localInputToIso(formData.get("saleEndsAt")),
+      },
+      caller,
+    );
+
+    revalidatePath(revalidate);
+    revalidatePath("/events");
+    return { ok: true, error: null, warnings: result.warnings ?? [] };
+  } catch (error) {
+    return {
+      ok: false,
+      error: adminApiErrorMessage(error, "Error guardando el tipo de entrada"),
+      warnings: [],
+    };
+  }
+}
+
+/**
+ * El `datetime-local` manda hora local sin zona. Se convierte a ISO acá para
+ * que la API no tenga que adivinar en qué huso estaba quien lo escribió.
+ */
+function localInputToIso(value: FormDataEntryValue | null): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }

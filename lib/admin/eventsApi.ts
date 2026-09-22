@@ -251,6 +251,9 @@ export interface AdminEventTicketTypeRow {
   total: number;
   soldCount: number;
   active: boolean;
+  /** Null en un tier gratis; la API las exige en cuanto el precio es mayor a cero. */
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
 }
 
 export interface AdminEventTicketStats {
@@ -321,6 +324,33 @@ export function setAdminEventKitPickup(
       actor,
       source: "server_action",
     },
+  );
+}
+
+export interface AdminTicketTypePatch {
+  name: string;
+  priceCents: number;
+  total: number;
+  active: boolean;
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
+}
+
+export interface AdminTicketTypePatchResult {
+  row: AdminEventTicketTypeRow;
+  /** Se aplico igual, pero hay que decirlo: precio movido con ventas, por ejemplo. */
+  warnings: string[];
+}
+
+export function patchAdminEventTicketType(
+  eventId: string,
+  ticketTypeId: string,
+  body: AdminTicketTypePatch,
+  actor: AdminApiActor,
+) {
+  return adminFetch<AdminTicketTypePatchResult>(
+    `/admin/events/${encodeURIComponent(eventId)}/ticket-types/${encodeURIComponent(ticketTypeId)}`,
+    { method: "PATCH", body, actor, source: "server_action" },
   );
 }
 

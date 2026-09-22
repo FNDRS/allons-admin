@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 function Checkbox({
+  id,
   className,
   checked,
   defaultChecked,
@@ -15,6 +16,8 @@ function Checkbox({
   required,
   disabled,
 }: {
+  /** Para que un `<Label htmlFor>` apunte al control y no al input oculto. */
+  id?: string;
   className?: string;
   checked?: boolean;
   defaultChecked?: boolean;
@@ -39,6 +42,7 @@ function Checkbox({
         />
       ) : null}
       <CheckboxPrimitive.Root
+        id={id}
         data-slot="checkbox"
         checked={current}
         disabled={disabled}
