@@ -86,6 +86,7 @@ export function EditProviderForm({
     profile.brandDescription ?? "",
   );
   const [websiteUrl, setWebsiteUrl] = useState(profile.websiteUrl ?? "");
+  const [instagramUrl, setInstagramUrl] = useState(profile.instagramUrl ?? "");
   const [businessType, setBusinessType] = useState<BusinessType>(
     asBusinessType(profile.businessType),
   );
@@ -119,6 +120,7 @@ export function EditProviderForm({
     setBrandHandle(state.values.brandHandle);
     setBrandDescription(state.values.brandDescription);
     setWebsiteUrl(state.values.websiteUrl);
+    setInstagramUrl(state.values.instagramUrl);
     setBusinessType(asBusinessType(state.values.businessType));
     setBrandColor(state.values.brandColor);
     setPasarelaFeePct(state.values.pasarelaFeePct);
@@ -403,6 +405,15 @@ export function EditProviderForm({
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             placeholder="https://tucomercio.com"
+          />
+        </div>
+        <div>
+          <Label>Instagram</Label>
+          <Input
+            name="instagramUrl"
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            placeholder="@tucomercio"
           />
         </div>
       </section>

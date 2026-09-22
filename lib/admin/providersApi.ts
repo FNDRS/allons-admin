@@ -60,6 +60,7 @@ export interface CreateComercioPayload {
   brandHandle: string;
   brandDescription: string | null;
   websiteUrl: string | null;
+  instagramUrl: string | null;
   businessType: string;
   brandColor: string;
   pasarelaFeePct: string;

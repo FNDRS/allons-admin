@@ -59,6 +59,7 @@ function applyFormValues(
     setBrandHandle: (v: string) => void;
     setBrandDescription: (v: string) => void;
     setWebsiteUrl: (v: string) => void;
+    setInstagramUrl: (v: string) => void;
     setHandleEdited: (v: boolean) => void;
     setBusinessType: (v: BusinessType) => void;
     setBrandColor: (v: string) => void;
@@ -73,6 +74,7 @@ function applyFormValues(
   setters.setBrandHandle(values.brandHandle);
   setters.setBrandDescription(values.brandDescription);
   setters.setWebsiteUrl(values.websiteUrl);
+  setters.setInstagramUrl(values.instagramUrl);
   setters.setHandleEdited(Boolean(values.brandHandle));
   setters.setBusinessType(values.businessType as BusinessType);
   setters.setBrandColor(values.brandColor);
@@ -140,6 +142,7 @@ export function CreateComercioForm() {
   const [brandHandle, setBrandHandle] = useState("");
   const [brandDescription, setBrandDescription] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
   const [handleEdited, setHandleEdited] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType>("empresa");
   const [brandColor, setBrandColor] = useState(COLOR_OPTIONS[0].value);
@@ -167,6 +170,7 @@ export function CreateComercioForm() {
       setBrandHandle,
       setBrandDescription,
       setWebsiteUrl,
+      setInstagramUrl,
       setHandleEdited,
       setBusinessType,
       setBrandColor,
@@ -510,6 +514,15 @@ export function CreateComercioForm() {
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             placeholder="https://tucomercio.com"
+          />
+        </div>
+        <div>
+          <Label>Instagram</Label>
+          <Input
+            name="instagramUrl"
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            placeholder="@tucomercio"
           />
         </div>
       </section>

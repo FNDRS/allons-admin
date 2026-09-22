@@ -3,7 +3,6 @@ import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
-import { EventFeesCard } from "@/app/(dashboard)/events/[eventId]/_components/EventFeesCard";
 import { EventTicketTypeEditableRow } from "./_components/EventTicketTypeRow";
 import { EventKitPickupCard } from "@/app/(dashboard)/events/[eventId]/_components/EventKitPickupCard";
 import { EventStatusActions } from "@/app/(dashboard)/events/_components/EventStatusActions";
@@ -15,7 +14,7 @@ import {
   loadEventPaymentOrders,
   resolveProviderOwnerUserId,
 } from "@/lib/admin/eventDetail";
-import { getAdminEvent, getAdminEventFees } from "@/lib/admin/eventsApi";
+import { getAdminEvent, getAdminEventForm } from "@/lib/admin/eventsApi";
 import {
   ArrowLeft,
   ArrowRight,
@@ -119,23 +118,15 @@ export default async function EventDetailPage({
     notFound();
   }
 
-  const [ticketStats, ticketTypes, paymentOrders, auditLogs, providerOwnerId] =
+  const [ticketStats, ticketTypes, paymentOrders, auditLogs, providerOwnerId, form] =
     await Promise.all([
       countEventTickets(eventId),
       listEventTicketTypes(eventId),
       loadEventPaymentOrders(eventId),
       listEventAuditLogs(eventId),
       resolveProviderOwnerUserId(event.providerId),
+      getAdminEventForm(eventId).catch(() => null),
     ]);
-
-  // El desglose se calcula sobre un boleto real del evento, no sobre un monto
-  // inventado: el cargo por servicio no es un porcentaje fijo, así que sólo es
-  // informativo si se ve al precio que este evento realmente cobra.
-  const previewCents = ticketTypes.find((t) => t.price > 0)?.price;
-  const feeConfig = await getAdminEventFees(
-    eventId,
-    previewCents ? Math.round(previewCents * 100) : undefined,
-  ).catch(() => null);
 
   const status = event.status ?? "draft";
   const paidGmv = paymentOrders
@@ -143,6 +134,8 @@ export default async function EventDetailPage({
     .reduce((sum, o) => sum + o.amountCents, 0);
   const ticketsSold = ticketTypes.reduce((sum, t) => sum + t.soldCount, 0);
   const revalidatePath = `/events/${eventId}`;
+  const hasForm = (form?.fields.length ?? 0) > 0;
+  const hasKit = Boolean(event.kitPickupInfo?.trim());
 
   return (
     <DashboardPage>
@@ -157,11 +150,13 @@ export default async function EventDetailPage({
             <Button asChild size="sm" variant="brand">
               <Link href={`/events/${eventId}/edit` as never}>Editar</Link>
             </Button>
-            <Button asChild size="sm">
-              <Link href={`/events/${eventId}/formulario` as never}>
-                Formulario
-              </Link>
-            </Button>
+            {hasForm ? (
+              <Button asChild size="sm">
+                <Link href={`/events/${eventId}/formulario` as never}>
+                  Formulario
+                </Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm" variant="outline">
               <Link href="/events">
                 <ArrowLeft size={14} />
@@ -280,23 +275,15 @@ export default async function EventDetailPage({
           ) : null}
         </Section>
 
-        {feeConfig ? (
+        {hasKit ? (
           <div className="mb-6">
-            <EventFeesCard
+            <EventKitPickupCard
               eventId={eventId}
-              config={feeConfig}
-              hasPricedTicket={previewCents !== undefined}
+              kitPickupInfo={event.kitPickupInfo ?? null}
+              revalidatePath={`/events/${eventId}`}
             />
           </div>
         ) : null}
-
-        <div className="mb-6">
-          <EventKitPickupCard
-            eventId={eventId}
-            kitPickupInfo={event.kitPickupInfo ?? null}
-            revalidatePath={`/events/${eventId}`}
-          />
-        </div>
 
         {ticketTypes.length > 0 ? (
           <Section title="Tipos de entrada">

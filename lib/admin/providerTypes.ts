@@ -8,6 +8,7 @@ export interface ProviderProfile {
   brandHandle: string | null;
   brandDescription: string | null;
   websiteUrl: string | null;
+  instagramUrl: string | null;
   businessType: string | null;
   brandColor: string;
   logoUrl: string | null;

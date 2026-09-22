@@ -2,7 +2,7 @@ import { DashboardPage, DashboardScroll } from "@/components/DashboardPage";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { EditAdminEventForm } from "@/app/(dashboard)/events/[eventId]/edit/_components/EditAdminEventForm";
-import { getAdminEvent, getAdminEventForm, listAdminEventTicketTypes } from "@/lib/admin/eventsApi";
+import { getAdminEvent, getAdminEventFees, getAdminEventForm, listAdminEventTicketTypes } from "@/lib/admin/eventsApi";
 import { normalizeDemoFormFields } from "@/lib/eventFormFields";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -64,6 +64,11 @@ export default async function EditAdminEventPage({
     getAdminEventForm(eventId).catch(() => null),
     listAdminEventTicketTypes(eventId).catch(() => null),
   ]);
+  const pricedTicket = ticketTypes?.items.find((ticket) => ticket.price > 0);
+  const fees = await getAdminEventFees(
+    eventId,
+    pricedTicket ? Math.round(pricedTicket.price * 100) : undefined,
+  ).catch(() => null);
 
   return (
     <DashboardPage>
@@ -98,6 +103,8 @@ export default async function EditAdminEventPage({
             kitPickupInfo: event.kitPickupInfo ?? "",
             formFields: form ? normalizeDemoFormFields(form.fields) : null,
             ticketTypes: ticketTypes?.items ?? null,
+            fees,
+            hasPricedTicket: pricedTicket !== undefined,
           }}
         />
       </DashboardScroll>

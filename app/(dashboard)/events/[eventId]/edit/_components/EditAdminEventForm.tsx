@@ -6,6 +6,7 @@ import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor"
 import { EventKitPickupField } from "@/components/admin/EventKitPickupField";
 import { EventLocationPickerField } from "@/components/admin/EventLocationPickerField";
 import { EventTicketSaleEndField } from "@/components/admin/EventTicketSaleEndField";
+import { EventFeesCard } from "@/app/(dashboard)/events/[eventId]/_components/EventFeesCard";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
 import type { AdminEventTicketTypeRow } from "@/lib/admin/eventsApi";
+import type { AdminEventFeeConfig } from "@/lib/admin/eventFeeConfig";
 import type { DemoEventFormField } from "@/lib/eventFormFields";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -38,6 +40,8 @@ export type EditAdminEventInitial = {
   kitPickupInfo: string;
   formFields: DemoEventFormField[] | null;
   ticketTypes: AdminEventTicketTypeRow[] | null;
+  fees: AdminEventFeeConfig | null;
+  hasPricedTicket: boolean;
 };
 
 export function EditAdminEventForm({
@@ -81,7 +85,7 @@ export function EditAdminEventForm({
           <div className="eyebrow">Evento</div>
           <h2 className="mt-1 text-xl font-semibold">Datos públicos</h2>
           <p className="mt-2 text-sm leading-6 text-white/50">
-            Comercio: {providerName}. Las comisiones se editan en el detalle.
+            Comercio: {providerName}.
           </p>
 
           <div className="mt-5 space-y-4">
@@ -196,6 +200,15 @@ export function EditAdminEventForm({
           title="Formulario del evento"
           description="Opcional. Agrega las preguntas del registro web. Nombre y correo siempre se piden."
           emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
+        />
+      ) : null}
+
+      {initial.fees ? (
+        <EventFeesCard
+          embedded
+          eventId={eventId}
+          config={initial.fees}
+          hasPricedTicket={initial.hasPricedTicket}
         />
       ) : null}
 

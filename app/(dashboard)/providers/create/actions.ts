@@ -14,6 +14,7 @@ export type CreateComercioFormValues = {
   brandHandle: string;
   brandDescription: string;
   websiteUrl: string;
+  instagramUrl: string;
   businessType: string;
   brandColor: string;
   pasarelaFeePct: string;
@@ -38,6 +39,7 @@ function readFormValues(formData: FormData): CreateComercioFormValues {
     brandDescription:
       (formData.get("brandDescription") as string | null)?.trim() ?? "",
     websiteUrl: (formData.get("websiteUrl") as string | null)?.trim() ?? "",
+    instagramUrl: (formData.get("instagramUrl") as string | null)?.trim() ?? "",
     businessType: (formData.get("businessType") as string | null) ?? "empresa",
     brandColor:
       (formData.get("brandColor") as string | null)?.trim() || "#F67010",
@@ -92,6 +94,7 @@ export async function createComercioAction(
         brandHandle: values.brandHandle,
         brandDescription: values.brandDescription || null,
         websiteUrl: values.websiteUrl || null,
+        instagramUrl: values.instagramUrl || null,
         businessType: values.businessType,
         brandColor: values.brandColor,
         pasarelaFeePct: values.pasarelaFeePct,

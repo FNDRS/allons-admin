@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,8 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
   const [endTime, setEndTime] = useState(() =>
     addMinutesToTimeString(DEFAULT_TIME, 60),
   );
+  const [configureKit, setConfigureKit] = useState(false);
+  const [configureForm, setConfigureForm] = useState(false);
 
   return (
     <form action={action} className="space-y-6">
@@ -195,15 +198,42 @@ export function CreateAdminEventForm({ providers }: { providers: ProviderOption[
 
       <EventTicketsField eventDate={date} eventTime={time} capacity={capacity} />
 
-      <EventKitPickupField />
+      <section className="futuristic-panel p-5">
+        <div className="eyebrow">Opcional</div>
+        <h2 className="mt-1 text-xl font-semibold">Kit y formulario</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
+          Márcalos solo si este evento los usa. Si no, no aparecen en el
+          detalle. Los puedes agregar después, al editar el evento.
+        </p>
+        <div className="mt-5 space-y-3">
+          <label className="flex items-start gap-3 text-sm">
+            <Checkbox
+              checked={configureKit}
+              onCheckedChange={setConfigureKit}
+            />
+            <span>Configurar retiro de kit</span>
+          </label>
+          <label className="flex items-start gap-3 text-sm">
+            <Checkbox
+              checked={configureForm}
+              onCheckedChange={setConfigureForm}
+            />
+            <span>Configurar formulario de registro</span>
+          </label>
+        </div>
+      </section>
 
-      <EventFormFieldsEditor
-        initialFields={[]}
-        eyebrow="Formulario"
-        title="Formulario del evento"
-        description="Opcional. Agrega aquí las preguntas que se pedirán en el registro web antes de publicar el evento. Nombre y correo siempre se solicitan."
-        emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
-      />
+      {configureKit ? <EventKitPickupField /> : null}
+
+      {configureForm ? (
+        <EventFormFieldsEditor
+          initialFields={[]}
+          eyebrow="Formulario"
+          title="Formulario del evento"
+          description="Opcional. Agrega aquí las preguntas que se pedirán en el registro web antes de publicar el evento. Nombre y correo siempre se solicitan."
+          emptyMessage="Si no agregas campos, el registro web solo pedirá nombre y correo."
+        />
+      ) : null}
 
       <section className="futuristic-panel p-5">
         <div className="eyebrow">Publicación</div>

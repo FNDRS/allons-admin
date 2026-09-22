@@ -42,11 +42,14 @@ export function EventFeesCard({
   eventId,
   config,
   hasPricedTicket,
+  embedded = false,
 }: {
   eventId: string;
   config: AdminEventFeeConfig;
   /** False when the event sells nothing, so the preview is a sample amount. */
   hasPricedTicket: boolean;
+  /** Dentro del formulario de editar. Guardar cambios persiste estas comisiones. */
+  embedded?: boolean;
 }) {
   const { overrides, providerDefaults, preview } = config;
   const [feeMode, setFeeMode] = useState(overrides.feeMode ?? "");
@@ -90,26 +93,8 @@ export function EventFeesCard({
     providerDefaults.pasarelaFee,
   ]);
 
-  return (
-    <section className="futuristic-panel p-5">
-      <div className="eyebrow">Comisiones</div>
-      <h2 className="mt-1 text-xl font-semibold">Cobros de este evento</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
-        Deja un campo vacío para usar el valor del comercio. El desglose usa la
-        misma fórmula del checkout y cambia con la opción que elijas.
-      </p>
-
-      {config.appliesToCheckout === false && (
-        <p className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm leading-6 text-amber-200/90">
-          Todavía no está conectado al cobro. Guardar aquí deja la configuración
-          lista y cambia este desglose, pero el comprador sigue pagando como
-          hasta ahora hasta que se libere el cambio en la app.
-        </p>
-      )}
-
-      <form action={setEventFees} className="mt-5 space-y-5">
-        <input type="hidden" name="eventId" value={eventId} />
-
+  const fields = (
+    <>
         <fieldset className="space-y-2">
           <legend className="mb-2 text-sm font-medium">
             Quién paga cada comisión
@@ -246,11 +231,40 @@ export function EventFeesCard({
             />
           </dl>
         </div>
+    </>
+  );
 
-        <Button type="submit" size="sm" variant="brand">
-          Guardar comisiones
-        </Button>
-      </form>
+  return (
+    <section className="futuristic-panel p-5">
+      <div className="eyebrow">Comisiones</div>
+      <h2 className="mt-1 text-xl font-semibold">Cobros de este evento</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
+        Deja un campo vacío para usar el valor del comercio. El desglose usa la
+        misma fórmula del checkout y cambia con la opción que elijas.
+      </p>
+
+      {config.appliesToCheckout === false && (
+        <p className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm leading-6 text-amber-200/90">
+          Todavía no está conectado al cobro. Guardar aquí deja la configuración
+          lista y cambia este desglose, pero el comprador sigue pagando como
+          hasta ahora hasta que se libere el cambio en la app.
+        </p>
+      )}
+
+      {embedded ? (
+        <div className="mt-5 space-y-5">
+          <input type="hidden" name="includeFees" value="1" />
+          {fields}
+        </div>
+      ) : (
+        <form action={setEventFees} className="mt-5 space-y-5">
+          <input type="hidden" name="eventId" value={eventId} />
+          {fields}
+          <Button type="submit" size="sm" variant="brand">
+            Guardar comisiones
+          </Button>
+        </form>
+      )}
     </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  EVENT_IMAGE_MAX_COUNT,
+  EVENT_GALLERY_MAX_COUNT,
   UPLOAD_CONFIGS,
   type UploadedFile,
 } from "@/lib/admin/uploads";
@@ -111,8 +111,7 @@ export function EventBannerMediaField({
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const isUploading = uploadTarget !== null;
-  const galleryRoom =
-    EVENT_IMAGE_MAX_COUNT - (cover ? 1 : 0) - gallery.length;
+  const galleryRoom = EVENT_GALLERY_MAX_COUNT - gallery.length;
   const ordered = cover ? [cover, ...gallery] : [];
 
   const forgetUnpersisted = async (image: GalleryImage | null) => {
@@ -183,7 +182,9 @@ export function EventBannerMediaField({
       return;
     }
     if (galleryRoom <= 0) {
-      setUploadError(`Máximo ${EVENT_IMAGE_MAX_COUNT} imágenes, contando la portada.`);
+      setUploadError(
+        `Máximo ${EVENT_GALLERY_MAX_COUNT} imágenes en la galería, sin contar la portada.`,
+      );
       return;
     }
     setUploadError(null);
@@ -196,7 +197,7 @@ export function EventBannerMediaField({
     }
     if (images.length > galleryRoom) {
       setUploadError(
-        `Máximo ${EVENT_IMAGE_MAX_COUNT} imágenes, contando la portada.`,
+        `Máximo ${EVENT_GALLERY_MAX_COUNT} imágenes en la galería, sin contar la portada.`,
       );
     }
     setUploadTarget(null);
@@ -333,7 +334,7 @@ export function EventBannerMediaField({
         <div className="text-sm font-medium">Galería</div>
         <p className="mt-1 text-xs leading-5 text-white/45">
           {cover
-            ? `${gallery.length} de ${EVENT_IMAGE_MAX_COUNT - 1}. Arrastra varias fotos.`
+            ? `${gallery.length} de ${EVENT_GALLERY_MAX_COUNT}. Arrastra varias fotos.`
             : "Disponible después de la portada."}
         </p>
 

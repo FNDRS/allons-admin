@@ -10,14 +10,6 @@ import { deriveSaleWindowInput, type EventTicketDraft } from "@/lib/eventTickets
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-type RefundPolicy = "none" | "partial" | "full";
-
-const REFUND_OPTIONS: { key: RefundPolicy; label: string }[] = [
-  { key: "none", label: "Sin reembolso" },
-  { key: "partial", label: "Parcial" },
-  { key: "full", label: "Completo" },
-];
-
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -66,9 +58,6 @@ export function EventTicketsField({
   const [saleEndDate, setSaleEndDate] = useState(eventDate);
   const [saleEndTime, setSaleEndTime] = useState(eventTime);
 
-  const [refundPolicy, setRefundPolicy] = useState<RefundPolicy>("none");
-  const [refundPartialPct, setRefundPartialPct] = useState("50");
-  const [refundDeadlineDays, setRefundDeadlineDays] = useState("2");
 
   const parsedPrice = Number(price);
   const isPaidDraft = Number.isFinite(parsedPrice) && parsedPrice > 0;
@@ -163,20 +152,20 @@ export function EventTicketsField({
       <input
         type="hidden"
         name="refundPolicy"
-        value={hasAnyPaidTicket ? refundPolicy : "none"}
+        value="none"
       />
       <input
         type="hidden"
         name="refundPartialPct"
         value={
-          hasAnyPaidTicket && refundPolicy === "partial" ? refundPartialPct : ""
+          ""
         }
       />
       <input
         type="hidden"
         name="refundDeadlineDays"
         value={
-          hasAnyPaidTicket && refundPolicy !== "none" ? refundDeadlineDays : ""
+          ""
         }
       />
 
@@ -361,74 +350,10 @@ export function EventTicketsField({
           ) : null}
 
           {hasAnyPaidTicket ? (
-            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-              <Label>Política de reembolso</Label>
-              <div className="flex flex-wrap gap-2">
-                {REFUND_OPTIONS.map((option) => {
-                  const active = option.key === refundPolicy;
-                  return (
-                    <Button
-                      key={option.key}
-                      type="button"
-                      size="sm"
-                      variant={active ? "brand" : "secondary"}
-                      aria-pressed={active}
-                      onClick={() => setRefundPolicy(option.key)}
-                      className="normal-case tracking-normal"
-                    >
-                      {option.label}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              {refundPolicy === "full" ? (
-                <p className="mt-3 text-xs leading-5 text-white/55">
-                  Al seleccionar «Completo», el cliente recibirá un reembolso
-                  parcial: Allons retiene su comisión (8% + ISV) y el cargo de
-                  Paygate. Solo se devuelve el monto que corresponde al
-                  organizador.
-                </p>
-              ) : null}
-
-              {refundPolicy !== "none" ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {refundPolicy === "partial" ? (
-                    <div>
-                      <Label>Porcentaje a devolver (%)</Label>
-                      <Input
-                        value={refundPartialPct}
-                        inputMode="numeric"
-                        maxLength={3}
-                        onChange={(event) =>
-                          setRefundPartialPct(onlyDigits(event.target.value))
-                        }
-                        placeholder="50"
-                      />
-                    </div>
-                  ) : null}
-                  <div>
-                    <Label>Plazo (días antes del evento)</Label>
-                    <Input
-                      value={refundDeadlineDays}
-                      inputMode="numeric"
-                      maxLength={3}
-                      onChange={(event) =>
-                        setRefundDeadlineDays(onlyDigits(event.target.value))
-                      }
-                      placeholder="2"
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              {refundPolicy !== "none" ? (
-                <p className="mt-2 text-xs text-white/40">
-                  El cliente puede solicitar el reembolso hasta{" "}
-                  {refundDeadlineDays || "—"} día(s) antes del inicio del evento.
-                </p>
-              ) : null}
-            </div>
+            <p className="text-xs leading-5 text-white/45">
+              Los reembolsos se piden desde la app y los revisa Allons, así que
+              este evento no configura una política propia.
+            </p>
           ) : null}
         </div>
       </div>

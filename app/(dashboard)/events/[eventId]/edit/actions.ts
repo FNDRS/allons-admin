@@ -2,7 +2,9 @@
 
 import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
+import { readEventFeeOverrides } from "@/lib/admin/eventFeeForm";
 import {
+  setAdminEventFees,
   setAdminEventKitPickup,
   setAdminEventTicketSaleEnd,
   updateAdminEvent,
@@ -170,6 +172,19 @@ export async function updateAdminEventAction(
     }
   }
 
+  let feeOverrides: ReturnType<typeof readEventFeeOverrides> | null = null;
+  if (formData.get("includeFees") === "1") {
+    try {
+      feeOverrides = readEventFeeOverrides(formData);
+    } catch (error) {
+      return fail(
+        error instanceof Error
+          ? error.message
+          : "Las comisiones no tienen un formato válido.",
+      );
+    }
+  }
+
   try {
     await updateAdminEvent(
       eventId,
@@ -205,6 +220,9 @@ export async function updateAdminEventAction(
         sale.saleEndsAt,
         caller,
       );
+    }
+    if (feeOverrides) {
+      await setAdminEventFees(eventId, feeOverrides, caller);
     }
   } catch (error) {
     await deleteNewUploadedImages(uploadedImages);

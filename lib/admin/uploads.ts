@@ -30,7 +30,11 @@ export const UPLOAD_CONFIGS: Record<UploadKind, UploadPickerConfig> = {
   },
 };
 
-export const EVENT_IMAGE_MAX_COUNT = 10;
+/** Fotos de la galería. La portada no entra en este tope. */
+export const EVENT_GALLERY_MAX_COUNT = 10;
+
+/** Lo que se guarda: la portada y, detrás, la galería. */
+export const EVENT_IMAGE_MAX_COUNT = EVENT_GALLERY_MAX_COUNT + 1;
 
 const UPLOAD_KINDS = new Set(Object.keys(UPLOAD_CONFIGS));
 
