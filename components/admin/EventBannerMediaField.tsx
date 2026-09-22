@@ -165,10 +165,8 @@ export function EventBannerMediaField({
     setUploadTarget("cover");
     const uploaded = await uploadOne(images[0]);
     if (uploaded) {
-      setCover((previous) => {
-        void forgetUnpersisted(previous);
-        return uploaded;
-      });
+      void forgetUnpersisted(cover);
+      setCover(uploaded);
     }
     setUploadTarget(null);
     if (coverInputRef.current) coverInputRef.current.value = "";
