@@ -3,9 +3,7 @@ import { KpiCard } from "@/components/KpiCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
-import { PaymentDetailButton } from "@/app/(dashboard)/payments/_components/PaymentDetailButton";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
-import { ProviderSubscriptionActions } from "@/app/(dashboard)/providers/_components/ProviderSubscriptionActions";
 import { ProviderPasarelaFeeActions } from "@/app/(dashboard)/providers/_components/ProviderPasarelaFeeActions";
 import {
   DEFAULT_ALLONS_FEE,
@@ -16,7 +14,6 @@ import {
   listEventPaymentsForProvider,
   listProviderAuditLogs,
   loadProviderEvents,
-  loadProviderSubscriptionOrders,
   resolveProviderForUser,
 } from "@/lib/admin/providerDetail";
 import {
@@ -30,6 +27,7 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+/** Solo para el historial de auditoría: los planes ya no existen. */
 const PLAN_LABEL: Record<string, string> = {
   pendiente: "Prueba (sin plan)",
   single_event: "Evento Único",
@@ -139,23 +137,6 @@ function money(cents: number, currency = "HNL"): string {
   })}`;
 }
 
-function subscriptionSummary(p: AdminUserRecord): string {
-  const planLabel = PLAN_LABEL[p.subscriptionPlan ?? "pendiente"] ?? "Prueba";
-  const isPlan =
-    p.subscriptionPlan === "single_event" ||
-    p.subscriptionPlan === "basico" ||
-    p.subscriptionPlan === "pro";
-  if (isPlan && p.subscriptionPeriodEnd) {
-    return `${planLabel} · renueva ${formatDate(p.subscriptionPeriodEnd)}`;
-  }
-  if (p.freeTrialEnd) {
-    const ended = new Date(p.freeTrialEnd).getTime() < Date.now();
-    return ended
-      ? `${planLabel} · prueba vencida (${formatDate(p.freeTrialEnd)})`
-      : `${planLabel} · prueba hasta ${formatDate(p.freeTrialEnd)}`;
-  }
-  return planLabel;
-}
 
 function auditSummary(row: {
   action: string;
@@ -205,10 +186,9 @@ export default async function ProviderDetailPage({
   const { provider, members } = await resolveProviderForUser(userId);
   const providerId = provider?.id ?? null;
 
-  const [eventsData, subscriptionOrders, eventPayments, ticketStats, auditLogs] =
+  const [eventsData, eventPayments, ticketStats, auditLogs] =
     await Promise.all([
       providerId ? loadProviderEvents(providerId) : Promise.resolve({ total: 0, items: [] }),
-      loadProviderSubscriptionOrders(userId),
       providerId
         ? listEventPaymentsForProvider(providerId)
         : Promise.resolve([]),
@@ -227,9 +207,6 @@ export default async function ProviderDetailPage({
     providerUser.email.split("@")[0];
 
   const paidEventGmv = eventPayments
-    .filter((o) => o.status === "paid")
-    .reduce((sum, o) => sum + o.amountCents, 0);
-  const paidSubCents = subscriptionOrders
     .filter((o) => o.status === "paid")
     .reduce((sum, o) => sum + o.amountCents, 0);
   const revalidatePath = `/providers/${userId}`;
@@ -256,18 +233,12 @@ export default async function ProviderDetailPage({
             label={STATUS_LABEL[status]}
             variant={STATUS_VARIANT[status]}
           />
-          <span className="text-sm text-muted">{subscriptionSummary(providerUser)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ProviderStatusActions
             userId={userId}
             status={status}
             emailConfirmedAt={providerUser.emailConfirmedAt}
-            revalidatePath={revalidatePath}
-          />
-          <ProviderSubscriptionActions
-            userId={userId}
-            subscriptionStatus={providerUser.subscriptionStatus ?? null}
             revalidatePath={revalidatePath}
           />
         </div>
@@ -292,12 +263,6 @@ export default async function ProviderDetailPage({
           hint={`${eventPayments.filter((o) => o.status === "paid").length} órdenes pagadas`}
           icon={Wallet}
         />
-        <KpiCard
-          label="Suscripción"
-          value={money(paidSubCents)}
-          hint={`${subscriptionOrders.filter((o) => o.status === "paid").length} pagos Paygate`}
-          icon={Receipt}
-        />
       </section>
 
       <Section title="Información">
@@ -308,19 +273,6 @@ export default async function ProviderDetailPage({
             value={providerUser.brandHandle ?? provider?.handle ?? "-"}
           />
           <InfoItem label="Estado comercio" value={STATUS_LABEL[status]} />
-          <InfoItem label="Plan" value={PLAN_LABEL[providerUser.subscriptionPlan ?? "pendiente"] ?? "Prueba"} />
-          <InfoItem
-            label="Estado suscripción"
-            value={providerUser.subscriptionStatus ?? "-"}
-          />
-          <InfoItem
-            label="Fin de prueba"
-            value={formatDate(providerUser.freeTrialEnd ?? null)}
-          />
-          <InfoItem
-            label="Renovación plan"
-            value={formatDate(providerUser.subscriptionPeriodEnd ?? null)}
-          />
           <InfoItem label="Alta cuenta" value={formatDate(providerUser.createdAt)} />
           <InfoItem
             label="Último acceso"
@@ -517,49 +469,6 @@ export default async function ProviderDetailPage({
         )}
       </Section>
 
-      <Section title="Facturación · suscripción">
-        {subscriptionOrders.length === 0 ? (
-          <EmptyState text="Sin pagos de suscripción vía Paygate." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-[10px] font-bold uppercase tracking-wide text-muted">
-                  <th className="py-2 pr-4">Fecha</th>
-                  <th className="py-2 pr-4">Plan</th>
-                  <th className="py-2 pr-4">Estado</th>
-                  <th className="py-2 pr-4 text-right">Monto</th>
-                  <th className="py-2 text-right">Detalle</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptionOrders.map((o) => (
-                  <tr key={o.id} className="border-b border-white/8 last:border-0">
-                    <td className="py-2.5 pr-4 text-xs text-muted">
-                      {formatDate(o.createdAt)}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      {PLAN_LABEL[o.planId] ?? o.planId}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      <StatusPill
-                        label={ORDER_STATUS_LABEL[o.status] ?? o.status}
-                        variant={ORDER_STATUS_VARIANT[o.status] ?? "muted"}
-                      />
-                    </td>
-                    <td className="py-2.5 pr-4 text-right tabular-nums">
-                      {money(o.amountCents, o.currency)}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <PaymentDetailButton order={o} comercio={displayName} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Section>
 
       <Section title="Historial de auditoría">
         {auditLogs.length === 0 ? (

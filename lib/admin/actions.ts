@@ -3,12 +3,9 @@
 import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import {
-  cancelProviderSubscriptionApi,
   resendProviderInviteApi,
   setProviderFeesApi,
-  setProviderPlanApi,
   setProviderStatusApi,
-  type ProviderPlanValue,
 } from "@/lib/admin/providersApi";
 import { setAdminUserSuspended } from "@/lib/admin/usersApi";
 import type { ProviderStatus } from "@/lib/admin/users";
@@ -25,13 +22,6 @@ const PROVIDER_STATUSES: ProviderStatus[] = [
   "approved",
   "paused",
   "suspended",
-];
-
-const PLAN_VALUES: ProviderPlanValue[] = [
-  "pendiente",
-  "single_event",
-  "basico",
-  "pro",
 ];
 
 /**
@@ -77,54 +67,6 @@ export async function setProviderStatusAction(formData: FormData) {
   } catch (error) {
     throw new Error(
       adminApiErrorMessage(error, "No se pudo cambiar el estado del comercio"),
-    );
-  }
-
-  afterMutation(revalidate);
-}
-
-/**
- * Sets a comercio's subscription plan. A real plan activates the account for a
- * one-year term; "pendiente" leaves the API to derive trialing/expired from
- * `free_trial_end`.
- */
-export async function setProviderPlanAction(formData: FormData) {
-  const caller = await requireRootActor();
-  const userId = String(formData.get("userId") ?? "");
-  const plan = String(formData.get("plan") ?? "") as ProviderPlanValue;
-  const revalidate = String(formData.get("revalidate") ?? "/providers");
-
-  if (!userId || !PLAN_VALUES.includes(plan)) {
-    throw new Error("Parámetros inválidos");
-  }
-
-  try {
-    await setProviderPlanApi(userId, plan, caller);
-  } catch (error) {
-    throw new Error(adminApiErrorMessage(error, "No se pudo cambiar el plan"));
-  }
-
-  afterMutation(revalidate);
-}
-
-/**
- * Immediate cut: cancels a comercio's subscription right now (not at period
- * end), so allons-api and allons-mobile lock the account and show the paywall.
- * Use for fraud, chargebacks or ToS violations - the ordinary self-serve
- * "cancelar al final del período" lives in the mobile app.
- */
-export async function cancelProviderSubscriptionAction(formData: FormData) {
-  const caller = await requireRootActor();
-  const userId = String(formData.get("userId") ?? "");
-  const revalidate = String(formData.get("revalidate") ?? "/providers");
-
-  if (!userId) throw new Error("userId requerido");
-
-  try {
-    await cancelProviderSubscriptionApi(userId, caller);
-  } catch (error) {
-    throw new Error(
-      adminApiErrorMessage(error, "No se pudo cancelar la suscripción"),
     );
   }
 

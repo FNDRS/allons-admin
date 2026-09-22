@@ -7,7 +7,6 @@ import {
   getProviderTicketStats,
   listProviderEventPayments,
 } from "@/lib/admin/providersApi";
-import { listSubscriptionOrders } from "@/lib/admin/subscriptionOrdersApi";
 
 export type {
   ProviderDbRow,
@@ -84,15 +83,6 @@ export async function loadProviderEvents(providerId: string) {
   }
 }
 
-export async function loadProviderSubscriptionOrders(userId: string) {
-  try {
-    const data = await listSubscriptionOrders();
-    return data.items.filter((o) => o.userId === userId);
-  } catch (error) {
-    console.error("[providerDetail] subscription orders failed", error);
-    return [];
-  }
-}
 
 export async function listEventPaymentsForProvider(
   providerId: string,

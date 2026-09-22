@@ -628,8 +628,7 @@ export function CreateComercioForm() {
               <span className="text-sm text-white/50">%</span>
             </div>
             <p className="mt-1.5 text-xs text-white/35">
-              Lo seteamos nosotros según la relación con el comercio. No
-              depende de un plan.
+              Lo seteamos nosotros según la relación con el comercio.
             </p>
           </div>
 
