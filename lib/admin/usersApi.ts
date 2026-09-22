@@ -1,9 +1,10 @@
 import "server-only";
 
 import { adminFetch, type AdminApiActor } from "@/lib/admin/adminFetch";
+import type { ProviderStatus } from "@/lib/admin/providerTypes";
 
+export type { ProviderStatus };
 export type AppRole = "client" | "provider" | "staff";
-export type ProviderStatus = "pending" | "approved" | "paused" | "suspended";
 export type UserStatus = "active" | "suspended";
 
 export interface AdminUserRecord {

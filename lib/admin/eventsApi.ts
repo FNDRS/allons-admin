@@ -9,6 +9,11 @@ import {
   adminFetch,
   type AdminApiActor,
 } from "@/lib/admin/adminFetch";
+import { FEE_QUOTE_MODES } from "@/lib/admin/feeQuote";
+import type {
+  AdminEventFeeConfig,
+  AdminEventFeeOverrides,
+} from "@/lib/admin/eventFeeConfig";
 
 export { type AdminApiActor };
 
@@ -385,68 +390,13 @@ export function patchAdminEventTicketType(
   );
 }
 
-export type AdminFeeMode =
-  "provider_absorbs" | "buyer_pays_gateway" | "buyer_pays_all";
-
-export const ADMIN_FEE_MODES: ReadonlyArray<{
-  value: AdminFeeMode;
-  label: string;
-  hint: string;
-}> = [
-  {
-    value: "provider_absorbs",
-    label: "El comercio absorbe todo",
-    hint: "El comprador paga el precio publicado. Al comercio se le descuentan la comisión y la pasarela.",
-  },
-  {
-    value: "buyer_pays_gateway",
-    label: "El comprador paga la pasarela",
-    hint: "Se suma un cargo por servicio al precio. Al comercio solo se le descuenta la comisión de Allons.",
-  },
-  {
-    value: "buyer_pays_all",
-    label: "El comprador paga todo",
-    hint: "El comercio recibe el precio del boleto íntegro. El comprador cubre la pasarela y la comisión.",
-  },
-];
-
-/** Overrides del evento. Null en cualquiera significa «usar el del comercio». */
-export interface AdminEventFeeOverrides {
-  feeMode: AdminFeeMode | null;
-  allonsFeePct: number | null;
-  gatewayFeePct: number | null;
-  gatewayFixedCents: number | null;
-  isvPct: number | null;
-}
-
-/** Desglose de un boleto de muestra, calculado por la API. */
-export interface AdminEventFeeQuote {
-  feeMode: AdminFeeMode;
-  subtotalCents: number;
-  serviceChargeCents: number;
-  totalCents: number;
-  gatewayCostCents: number;
-  allonsFeeCents: number;
-  isvCents: number;
-  providerNetCents: number;
-  roundingCents: number;
-}
-
-export interface AdminEventFeeConfig {
-  eventId: string;
-  /** False mientras el cobro real no lea esta configuración. */
-  appliesToCheckout?: boolean;
-  overrides: AdminEventFeeOverrides;
-  providerDefaults: { allonsFee: number; pasarelaFee: number };
-  effective: {
-    feeMode: AdminFeeMode;
-    allonsFeePct: number;
-    gatewayRatePct: number;
-    gatewayFixedCents: number;
-    isvPct: number;
-  };
-  preview: AdminEventFeeQuote;
-}
+export type { FeeQuoteMode as AdminFeeMode } from "@/lib/admin/feeQuote";
+export type {
+  AdminEventFeeConfig,
+  AdminEventFeeOverrides,
+  AdminEventFeeQuote,
+} from "@/lib/admin/eventFeeConfig";
+export const ADMIN_FEE_MODES = FEE_QUOTE_MODES;
 
 export function getAdminEventFees(eventId: string, previewCents?: number) {
   const query =

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { updateEventTicketType } from "@/lib/admin/eventActions";
 import { TICKET_TYPE_SAVE_IDLE } from "@/lib/admin/ticketTypeSaveState";
-import type { EventTicketTypeRow as TicketType } from "@/lib/admin/eventDetail";
+import type { EventTicketTypeRow as TicketType } from "@/lib/admin/ticketTypeSaveState";
 
 /**
  * Una fila de la tabla de tipos de entrada que se abre para editarse.

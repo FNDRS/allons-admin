@@ -7,22 +7,13 @@ import {
 } from "@/lib/admin/eventsApi";
 import { listPaymentOrders } from "@/lib/admin/paymentsApi";
 import { getProviderOwnerUserId } from "@/lib/admin/providersApi";
+import type { EventTicketTypeRow } from "@/lib/admin/ticketTypeSaveState";
+
+export type { EventTicketTypeRow };
 
 export interface EventTicketStats {
   total: number;
   active: number;
-}
-
-export interface EventTicketTypeRow {
-  id: string;
-  name: string;
-  price: number;
-  total: number;
-  soldCount: number;
-  active: boolean;
-  /** Null en un tier gratis; la API las exige en cuanto el precio es mayor a cero. */
-  saleStartsAt: string | null;
-  saleEndsAt: string | null;
 }
 
 export interface EventAuditLogRow {

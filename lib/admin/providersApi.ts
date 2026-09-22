@@ -1,23 +1,10 @@
 import "server-only";
 
 import { adminFetch, type AdminApiActor } from "@/lib/admin/adminFetch";
+import type { ProviderProfile, ProviderOption } from "@/lib/admin/providerTypes";
 import type { ProviderStatus } from "@/lib/admin/usersApi";
 
-export interface ProviderProfile {
-  fullName: string | null;
-  email: string;
-  phone: string | null;
-  brandName: string;
-  brandHandle: string | null;
-  brandDescription: string | null;
-  websiteUrl: string | null;
-  businessType: string | null;
-  brandColor: string;
-  logoUrl: string | null;
-  contractUrl: string | null;
-  pasarelaFeePct: number | null;
-  allonsFeePct: number | null;
-}
+export type { ProviderProfile, ProviderOption };
 
 export interface ProviderDbRow {
   id: string;
@@ -51,12 +38,6 @@ export interface ProviderEventPaymentRow {
 export interface ProviderTicketStats {
   total: number;
   active: number;
-}
-
-export interface ProviderOption {
-  id: string;
-  name: string;
-  handle: string | null;
 }
 
 export type ProviderPlanValue =

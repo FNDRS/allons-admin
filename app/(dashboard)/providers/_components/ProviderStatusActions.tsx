@@ -4,7 +4,7 @@ import {
   resendInviteAction,
   setProviderStatusAction,
 } from "@/lib/admin/actions";
-import type { ProviderStatus } from "@/lib/admin/users";
+import type { ProviderStatus } from "@/lib/admin/providerTypes";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";

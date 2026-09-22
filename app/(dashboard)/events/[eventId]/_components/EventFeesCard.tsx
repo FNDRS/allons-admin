@@ -1,11 +1,19 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioItem } from "@/components/ui/radio-group";
 import { setEventFees } from "@/lib/admin/eventActions";
 import {
-  ADMIN_FEE_MODES,
-  type AdminEventFeeConfig,
-} from "@/lib/admin/eventsApi";
+  FEE_QUOTE_MODES,
+  quoteTicketFees,
+  type FeeQuoteMode,
+} from "@/lib/admin/feeQuote";
+import type { AdminEventFeeConfig } from "@/lib/admin/eventFeeConfig";
+
+const DEFAULT_GATEWAY_FIXED_CENTS = 390;
 
 const lps = (cents: number) =>
   `L ${(cents / 100).toLocaleString("es-HN", {
@@ -13,13 +21,22 @@ const lps = (cents: number) =>
     maximumFractionDigits: 2,
   })}`;
 
+function parseAmount(raw: string, fallback: number): number {
+  const trimmed = raw.trim();
+  if (!trimmed) return fallback;
+  const n = Number.parseFloat(trimmed.replace(",", "."));
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function isFeeMode(value: string): value is FeeQuoteMode {
+  return FEE_QUOTE_MODES.some((mode) => mode.value === value);
+}
+
 /**
  * Configura las comisiones de un evento.
  *
- * Vive por evento y no sólo por comercio porque un mismo comercio corre
- * eventos con acuerdos distintos: en uno absorbe la comisión y en otro la
- * traslada entera al comprador. Cualquier campo vacío usa el valor del
- * comercio, así que un evento sin configurar se comporta como siempre.
+ * El desglose se recalcula con cada opción y cada número, con la misma
+ * fórmula del checkout. Guardar es lo que persiste; la vista no espera a eso.
  */
 export function EventFeesCard({
   eventId,
@@ -32,15 +49,54 @@ export function EventFeesCard({
   hasPricedTicket: boolean;
 }) {
   const { overrides, providerDefaults, preview } = config;
+  const [feeMode, setFeeMode] = useState(overrides.feeMode ?? "");
+  const [allonsFee, setAllonsFee] = useState(
+    overrides.allonsFeePct === null ? "" : String(overrides.allonsFeePct),
+  );
+  const [gatewayFee, setGatewayFee] = useState(
+    overrides.gatewayFeePct === null ? "" : String(overrides.gatewayFeePct),
+  );
+  const [gatewayFixed, setGatewayFixed] = useState(
+    overrides.gatewayFixedCents === null
+      ? ""
+      : (overrides.gatewayFixedCents / 100).toFixed(2),
+  );
+  const [isv, setIsv] = useState(
+    overrides.isvPct === null ? "" : String(overrides.isvPct),
+  );
+
+  const quote = useMemo(() => {
+    const mode: FeeQuoteMode = isFeeMode(feeMode)
+      ? feeMode
+      : "provider_absorbs";
+    return quoteTicketFees({
+      feeMode: mode,
+      subtotalCents: preview.subtotalCents,
+      allonsFeePct: parseAmount(allonsFee, providerDefaults.allonsFee),
+      gatewayRatePct: parseAmount(gatewayFee, providerDefaults.pasarelaFee),
+      gatewayFixedCents: Math.round(
+        parseAmount(gatewayFixed, DEFAULT_GATEWAY_FIXED_CENTS / 100) * 100,
+      ),
+      isvPct: parseAmount(isv, 0),
+    });
+  }, [
+    feeMode,
+    allonsFee,
+    gatewayFee,
+    gatewayFixed,
+    isv,
+    preview.subtotalCents,
+    providerDefaults.allonsFee,
+    providerDefaults.pasarelaFee,
+  ]);
 
   return (
     <section className="futuristic-panel p-5">
       <div className="eyebrow">Comisiones</div>
       <h2 className="mt-1 text-xl font-semibold">Cobros de este evento</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
-        Deja un campo vacío para usar el valor del comercio. El desglose de
-        abajo lo calcula la API con la misma fórmula del checkout, así que es lo
-        que realmente se va a cobrar.
+        Deja un campo vacío para usar el valor del comercio. El desglose usa la
+        misma fórmula del checkout y cambia con la opción que elijas.
       </p>
 
       {config.appliesToCheckout === false && (
@@ -58,38 +114,32 @@ export function EventFeesCard({
           <legend className="mb-2 text-sm font-medium">
             Quién paga cada comisión
           </legend>
-          {ADMIN_FEE_MODES.map((mode) => (
-            <label
-              key={mode.value}
-              className="flex cursor-pointer gap-3 rounded-lg border border-white/10 p-3 hover:border-white/20"
-            >
-              <input
-                type="radio"
-                name="feeMode"
+          <RadioGroup
+            name="feeMode"
+            value={feeMode}
+            onValueChange={setFeeMode}
+          >
+            {FEE_QUOTE_MODES.map((mode) => (
+              <RadioItem
+                key={mode.value}
                 value={mode.value}
-                defaultChecked={overrides.feeMode === mode.value}
-                className="mt-1"
-              />
-              <span>
-                <span className="block text-sm font-medium">{mode.label}</span>
-                <span className="block text-xs leading-5 text-white/50">
-                  {mode.hint}
+                className="h-auto items-start rounded-lg border-white/10 py-3 normal-case tracking-normal aria-checked:border-white/40 aria-checked:bg-white/[0.06]"
+              >
+                <span>
+                  <span className="block text-sm font-medium">{mode.label}</span>
+                  <span className="block text-xs leading-5 text-white/50">
+                    {mode.hint}
+                  </span>
                 </span>
-              </span>
-            </label>
-          ))}
-          <label className="flex cursor-pointer gap-3 rounded-lg border border-dashed border-white/10 p-3 hover:border-white/20">
-            <input
-              type="radio"
-              name="feeMode"
+              </RadioItem>
+            ))}
+            <RadioItem
               value=""
-              defaultChecked={overrides.feeMode === null}
-              className="mt-1"
-            />
-            <span className="text-sm text-white/50">
+              className="h-auto rounded-lg border-dashed border-white/15 py-3 font-normal normal-case tracking-normal text-white/50 aria-checked:border-white/40 aria-checked:bg-white/[0.06]"
+            >
               Usar el valor del comercio
-            </span>
-          </label>
+            </RadioItem>
+          </RadioGroup>
         </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -102,7 +152,8 @@ export function EventFeesCard({
               step="0.01"
               min="0"
               max="100"
-              defaultValue={overrides.allonsFeePct ?? ""}
+              value={allonsFee}
+              onChange={(event) => setAllonsFee(event.target.value)}
               placeholder={`Comercio: ${providerDefaults.allonsFee}%`}
             />
           </div>
@@ -115,7 +166,8 @@ export function EventFeesCard({
               step="0.01"
               min="0"
               max="99"
-              defaultValue={overrides.gatewayFeePct ?? ""}
+              value={gatewayFee}
+              onChange={(event) => setGatewayFee(event.target.value)}
               placeholder={`Comercio: ${providerDefaults.pasarelaFee}%`}
             />
           </div>
@@ -129,11 +181,8 @@ export function EventFeesCard({
               type="number"
               step="0.01"
               min="0"
-              defaultValue={
-                overrides.gatewayFixedCents === null
-                  ? ""
-                  : (overrides.gatewayFixedCents / 100).toFixed(2)
-              }
+              value={gatewayFixed}
+              onChange={(event) => setGatewayFixed(event.target.value)}
               placeholder="Por defecto: 3.90"
             />
           </div>
@@ -146,17 +195,18 @@ export function EventFeesCard({
               step="0.01"
               min="0"
               max="100"
-              defaultValue={overrides.isvPct ?? ""}
-              placeholder="Por defecto: 15"
+              value={isv}
+              onChange={(event) => setIsv(event.target.value)}
+              placeholder="Por defecto: 0"
             />
           </div>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <div className="rounded-lg border border-white/10 bg-white/3 p-4">
           <div className="text-xs uppercase tracking-wide text-white/40">
             {hasPricedTicket
-              ? `Desglose de un boleto de ${lps(preview.subtotalCents)}`
-              : `Ejemplo sobre ${lps(preview.subtotalCents)}`}
+              ? `Desglose de un boleto de ${lps(quote.subtotalCents)}`
+              : `Ejemplo sobre ${lps(quote.subtotalCents)}`}
           </div>
           {!hasPricedTicket && (
             <p className="mt-2 text-xs leading-5 text-white/40">
@@ -166,32 +216,32 @@ export function EventFeesCard({
             </p>
           )}
           <dl className="mt-3 space-y-1.5 text-sm">
-            <Row label="Precio del boleto" value={lps(preview.subtotalCents)} />
-            {preview.serviceChargeCents > 0 && (
+            <Row label="Precio del boleto" value={lps(quote.subtotalCents)} />
+            {quote.serviceChargeCents > 0 && (
               <Row
                 label="Cargo por servicio"
-                value={`+ ${lps(preview.serviceChargeCents)}`}
+                value={`+ ${lps(quote.serviceChargeCents)}`}
               />
             )}
             <Row
               label="Paga el comprador"
-              value={lps(preview.totalCents)}
+              value={lps(quote.totalCents)}
               strong
             />
             <Row
               label="Se lleva la pasarela"
-              value={`− ${lps(preview.gatewayCostCents)}`}
+              value={`− ${lps(quote.gatewayCostCents)}`}
             />
             <Row
               label="Comisión Allons"
-              value={`− ${lps(preview.allonsFeeCents)}`}
+              value={`− ${lps(quote.allonsFeeCents)}`}
             />
-            {preview.isvCents > 0 && (
-              <Row label="ISV" value={`− ${lps(preview.isvCents)}`} />
+            {quote.isvCents > 0 && (
+              <Row label="ISV" value={`− ${lps(quote.isvCents)}`} />
             )}
             <Row
               label="Recibe el comercio"
-              value={lps(preview.providerNetCents)}
+              value={lps(quote.providerNetCents)}
               strong
             />
           </dl>

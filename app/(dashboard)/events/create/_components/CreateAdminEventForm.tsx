@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
-import type { ProviderOption } from "@/lib/admin/providerOptions";
+import type { ProviderOption } from "@/lib/admin/providerTypes";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createAdminEventAction } from "../actions";

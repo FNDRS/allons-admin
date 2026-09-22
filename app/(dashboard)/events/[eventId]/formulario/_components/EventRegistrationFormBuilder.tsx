@@ -2,7 +2,7 @@
 
 import { EventFormFieldsEditor } from "@/components/admin/EventFormFieldsEditor";
 import { Button } from "@/components/ui/button";
-import type { DemoEventFormField } from "@/lib/demoEventForms";
+import type { DemoEventFormField } from "@/lib/eventFormFields";
 
 type Props = {
   initialFields: DemoEventFormField[];

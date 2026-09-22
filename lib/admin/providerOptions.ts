@@ -1,6 +1,7 @@
 import "server-only";
 
-import { listProviderOptionsApi, type ProviderOption } from "@/lib/admin/providersApi";
+import { listProviderOptionsApi } from "@/lib/admin/providersApi";
+import type { ProviderOption } from "@/lib/admin/providerTypes";
 
 export type { ProviderOption };
 

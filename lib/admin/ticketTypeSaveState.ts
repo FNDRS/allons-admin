@@ -1,4 +1,22 @@
 /**
+ * Forma de un tipo de entrada en el panel.
+ *
+ * Vive aquí y no en `eventDetail.ts`: ese archivo es de servidor, y la fila
+ * editable es un componente de cliente.
+ */
+export interface EventTicketTypeRow {
+  id: string;
+  name: string;
+  price: number;
+  total: number;
+  soldCount: number;
+  active: boolean;
+  /** Null en un tier gratis; la API las exige en cuanto el precio es mayor a cero. */
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
+}
+
+/**
  * Resultado de guardar un tipo de entrada.
  *
  * Vive aparte de `eventActions.ts` porque ese archivo es `"use server"` y sólo
