@@ -345,10 +345,30 @@ export function EventLocationPickerField({
   return (
     <div className="futuristic-panel p-5">
       {/* hidden fields for server action */}
-      <input type="hidden" name="city" value={detectedCity ?? ""} />
-      <input type="hidden" name="latitude" value={formatCoord(coords.latitude)} />
-      <input type="hidden" name="longitude" value={formatCoord(coords.longitude)} />
-      <input type="hidden" name="address" value={addressPreview} />
+      <input
+        key={`city-${detectedCity ?? ""}`}
+        type="hidden"
+        name="city"
+        defaultValue={detectedCity ?? ""}
+      />
+      <input
+        key={`lat-${formatCoord(coords.latitude)}`}
+        type="hidden"
+        name="latitude"
+        defaultValue={formatCoord(coords.latitude)}
+      />
+      <input
+        key={`lng-${formatCoord(coords.longitude)}`}
+        type="hidden"
+        name="longitude"
+        defaultValue={formatCoord(coords.longitude)}
+      />
+      <input
+        key={`address-${addressPreview}`}
+        type="hidden"
+        name="address"
+        defaultValue={addressPreview}
+      />
 
       <div className="eyebrow">Ubicación</div>
       <h2 className="mt-1 text-xl font-semibold">Pin en el mapa</h2>

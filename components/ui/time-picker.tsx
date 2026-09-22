@@ -58,7 +58,13 @@ function TimePicker({
   return (
     <div className={cn("w-full", className)}>
       {name ? (
-        <input type="hidden" name={name} value={current} required={required} />
+        <input
+          key={current}
+          type="hidden"
+          name={name}
+          defaultValue={current}
+          required={required}
+        />
       ) : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
