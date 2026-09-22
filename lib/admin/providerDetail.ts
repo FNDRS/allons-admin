@@ -12,6 +12,7 @@ export type {
   ProviderDbRow,
   ProviderMemberRow,
   ProviderEventPaymentRow,
+  ProviderProfile,
   ProviderTicketStats,
 } from "@/lib/admin/providersApi";
 
@@ -19,6 +20,7 @@ import type {
   ProviderDbRow,
   ProviderMemberRow,
   ProviderEventPaymentRow,
+  ProviderProfile,
   ProviderTicketStats,
 } from "@/lib/admin/providersApi";
 
@@ -36,12 +38,18 @@ export interface ProviderAuditLogRow {
 export async function resolveProviderForUser(userId: string): Promise<{
   provider: ProviderDbRow | null;
   members: ProviderMemberRow[];
+  profile: ProviderProfile | null;
 }> {
   try {
-    return await getProviderDetail(userId);
+    const detail = await getProviderDetail(userId);
+    return {
+      provider: detail.provider,
+      members: detail.members,
+      profile: detail.profile ?? null,
+    };
   } catch (error) {
     console.error("[providerDetail] provider failed", error);
-    return { provider: null, members: [] };
+    return { provider: null, members: [], profile: null };
   }
 }
 

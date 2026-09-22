@@ -4,16 +4,10 @@ import { adminApiErrorMessage } from "@/lib/admin/adminFetch";
 import { requireRootActor } from "@/lib/admin/getRootActor";
 import {
   resendProviderInviteApi,
-  setProviderFeesApi,
   setProviderStatusApi,
 } from "@/lib/admin/providersApi";
 import { setAdminUserSuspended } from "@/lib/admin/usersApi";
 import type { ProviderStatus } from "@/lib/admin/users";
-import {
-  clampFeePct,
-  DEFAULT_ALLONS_FEE,
-  DEFAULT_PASARELA_FEE,
-} from "@/lib/commissionTiers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -67,41 +61,6 @@ export async function setProviderStatusAction(formData: FormData) {
   } catch (error) {
     throw new Error(
       adminApiErrorMessage(error, "No se pudo cambiar el estado del comercio"),
-    );
-  }
-
-  afterMutation(revalidate);
-}
-
-/**
- * Sets a comercio's per-ticket fees: pasarela (bank / Clinpays offer) and
- * Allons (relationship %). Read by allons-api at sale / refund time.
- */
-export async function setProviderCommissionFeesAction(formData: FormData) {
-  const caller = await requireRootActor();
-  const userId = String(formData.get("userId") ?? "");
-  const revalidate = String(formData.get("revalidate") ?? "/providers");
-
-  if (!userId) throw new Error("Parámetros inválidos");
-
-  try {
-    await setProviderFeesApi(
-      userId,
-      {
-        pasarelaFeePct: clampFeePct(
-          formData.get("pasarelaFeePct") as string | null,
-          DEFAULT_PASARELA_FEE,
-        ),
-        allonsFeePct: clampFeePct(
-          formData.get("allonsFeePct") as string | null,
-          DEFAULT_ALLONS_FEE,
-        ),
-      },
-      caller,
-    );
-  } catch (error) {
-    throw new Error(
-      adminApiErrorMessage(error, "No se pudieron guardar las comisiones"),
     );
   }
 

@@ -3,6 +3,22 @@ import "server-only";
 import { adminFetch, type AdminApiActor } from "@/lib/admin/adminFetch";
 import type { ProviderStatus } from "@/lib/admin/usersApi";
 
+export interface ProviderProfile {
+  fullName: string | null;
+  email: string;
+  phone: string | null;
+  brandName: string;
+  brandHandle: string | null;
+  brandDescription: string | null;
+  websiteUrl: string | null;
+  businessType: string | null;
+  brandColor: string;
+  logoUrl: string | null;
+  contractUrl: string | null;
+  pasarelaFeePct: number | null;
+  allonsFeePct: number | null;
+}
+
 export interface ProviderDbRow {
   id: string;
   name: string;
@@ -75,9 +91,21 @@ export function getProviderDetail(userId: string) {
   return adminFetch<{
     provider: ProviderDbRow | null;
     members: ProviderMemberRow[];
+    profile: ProviderProfile;
   }>(`/admin/providers/by-user/${encodeURIComponent(userId)}`, {
     method: "GET",
   });
+}
+
+export function updateProviderApi(
+  userId: string,
+  payload: CreateComercioPayload,
+  actor: AdminApiActor,
+) {
+  return adminFetch<{ ok: true }>(
+    `/admin/providers/by-user/${encodeURIComponent(userId)}`,
+    { method: "PATCH", body: payload, actor, source: "server_action" },
+  );
 }
 
 export function getProviderOwnerUserId(providerId: string) {
@@ -116,23 +144,6 @@ export function setProviderStatusApi(
     `/admin/providers/by-user/${encodeURIComponent(userId)}/status`,
     { method: "PATCH", body: { status }, actor, source: "server_action" },
   );
-}
-
-export function setProviderFeesApi(
-  userId: string,
-  fees: { pasarelaFeePct: string | number; allonsFeePct: string | number },
-  actor: AdminApiActor,
-) {
-  return adminFetch<{
-    ok: true;
-    pasarelaFeePct: number;
-    allonsFeePct: number;
-  }>(`/admin/providers/by-user/${encodeURIComponent(userId)}/fees`, {
-    method: "PATCH",
-    body: fees,
-    actor,
-    source: "server_action",
-  });
 }
 
 export function resendProviderInviteApi(

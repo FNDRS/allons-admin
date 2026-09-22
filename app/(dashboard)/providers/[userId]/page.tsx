@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
 import { ProviderStatusActions } from "@/app/(dashboard)/providers/_components/ProviderStatusActions";
-import { ProviderPasarelaFeeActions } from "@/app/(dashboard)/providers/_components/ProviderPasarelaFeeActions";
 import {
   DEFAULT_ALLONS_FEE,
   totalFee,
@@ -104,6 +103,7 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   "provider.invite_resend": "Reenvío de invitación",
   "provider.subscription_cancel": "Corte de suscripción",
   "provider.data_export": "Exportación de datos",
+  "provider.profile_update": "Edición del proveedor",
 };
 
 function formatDate(iso: string | null) {
@@ -183,7 +183,7 @@ export default async function ProviderDetailPage({
     notFound();
   }
 
-  const { provider, members } = await resolveProviderForUser(userId);
+  const { provider, members, profile } = await resolveProviderForUser(userId);
   const providerId = provider?.id ?? null;
 
   const [eventsData, eventPayments, ticketStats, auditLogs] =
@@ -217,12 +217,17 @@ export default async function ProviderDetailPage({
         title={displayName}
         description={`${providerUser.email}${providerUser.brandHandle ? ` · ${providerUser.brandHandle}` : ""}`}
         action={
-          <Button asChild size="sm" variant="outline">
-            <Link href="/providers">
-              <ArrowLeft size={14} />
-              Volver
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="brand">
+              <Link href={`/providers/${userId}/edit`}>Editar proveedor</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/providers">
+                <ArrowLeft size={14} />
+                Volver
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -267,7 +272,12 @@ export default async function ProviderDetailPage({
 
       <Section title="Información">
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InfoItem label="Correo" value={providerUser.email} />
+          <InfoItem
+            label="Responsable"
+            value={profile?.fullName ?? providerUser.fullName ?? "-"}
+          />
+          <InfoItem label="Correo" value={profile?.email ?? providerUser.email} />
+          <InfoItem label="Teléfono" value={profile?.phone ?? "-"} />
           <InfoItem
             label="Handle"
             value={providerUser.brandHandle ?? provider?.handle ?? "-"}
@@ -329,12 +339,6 @@ export default async function ProviderDetailPage({
           )}
           %.
         </p>
-        <ProviderPasarelaFeeActions
-          userId={userId}
-          pasarelaFeePct={providerUser.pasarelaFeePct ?? null}
-          allonsFeePct={providerUser.allonsFeePct ?? null}
-          revalidatePath={revalidatePath}
-        />
       </Section>
 
       {members.length > 0 ? (
