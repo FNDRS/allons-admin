@@ -297,7 +297,11 @@ export default async function ProviderDetailPage({
               />
               <InfoItem
                 label="Sitio web"
-                value={provider.websiteUrl ?? "-"}
+                value={provider.websiteUrl ?? profile?.websiteUrl ?? "-"}
+              />
+              <InfoItem
+                label="Instagram"
+                value={profile?.instagramUrl ?? "-"}
               />
             </>
           ) : null}

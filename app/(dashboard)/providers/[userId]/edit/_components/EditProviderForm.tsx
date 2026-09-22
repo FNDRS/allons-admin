@@ -315,6 +315,31 @@ export function EditProviderForm({
           </div>
         </div>
 
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <Label>Sitio web</Label>
+            <Input
+              name="websiteUrl"
+              type="url"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://tucomercio.com"
+            />
+          </div>
+          <div>
+            <Label>Instagram</Label>
+            <Input
+              name="instagramUrl"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="@tucomercio"
+            />
+            <p className="mt-1.5 text-xs text-white/40">
+              Se muestra en el perfil del comercio y en sus eventos.
+            </p>
+          </div>
+        </div>
+
         <div>
           <Label className="mb-3">
             Tipo de negocio <span className="text-orange-400">*</span>
@@ -395,25 +420,6 @@ export function EditProviderForm({
             value={brandDescription}
             onChange={(e) => setBrandDescription(e.target.value.slice(0, 500))}
             className="min-h-28 resize-none"
-          />
-        </div>
-        <div>
-          <Label>Sitio web</Label>
-          <Input
-            name="websiteUrl"
-            type="url"
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-            placeholder="https://tucomercio.com"
-          />
-        </div>
-        <div>
-          <Label>Instagram</Label>
-          <Input
-            name="instagramUrl"
-            value={instagramUrl}
-            onChange={(e) => setInstagramUrl(e.target.value)}
-            placeholder="@tucomercio"
           />
         </div>
       </section>
