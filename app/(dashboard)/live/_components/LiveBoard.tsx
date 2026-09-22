@@ -38,10 +38,19 @@ const STATUS: Record<
 };
 
 const ORIGIN: Record<string, string> = {
-  ios: "iOS",
-  android: "Android",
+  ios: "App",
+  android: "App",
   web: "Web",
 };
+
+function sourceSummary(bySource: Record<string, number>) {
+  const totals = new Map<string, number>();
+  for (const [key, n] of Object.entries(bySource)) {
+    const label = ORIGIN[key] ?? key;
+    totals.set(label, (totals.get(label) ?? 0) + n);
+  }
+  return [...totals.entries()].map(([label, n]) => `${label}: ${n}`).join(" · ");
+}
 
 export function LiveBoard({ eventId }: { eventId?: string }) {
   const [data, setData] = useState<LiveSnapshot | null>(null);
@@ -215,9 +224,7 @@ export function LiveBoard({ eventId }: { eventId?: string }) {
         <div className="mb-3 flex items-center justify-between">
           <span className="eyebrow">Compras</span>
           <span className="text-[11px] text-muted">
-            {Object.entries(bySource)
-              .map(([key, n]) => `${ORIGIN[key] ?? key}: ${n}`)
-              .join(" · ") || "sin origen aún"}
+            {sourceSummary(bySource) || "sin origen aún"}
           </span>
         </div>
         {recent.length === 0 ? (
