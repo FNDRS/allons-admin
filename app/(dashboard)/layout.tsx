@@ -20,9 +20,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="futuristic-shell h-screen overflow-hidden bg-background md:flex">
+    <div className="futuristic-shell flex h-screen flex-col overflow-hidden bg-background md:flex-row">
       <Sidebar adminEmail={root.email} />
-      <main className="relative z-10 flex h-full min-h-0 flex-1 flex-col overflow-hidden py-4 pl-4 md:py-8 md:pl-8">
+      <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden py-4 pl-4 md:py-8 md:pl-8">
         {children}
       </main>
     </div>
