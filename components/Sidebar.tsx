@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,13 +76,25 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
   const pathname = usePathname();
   const { replace, refresh } = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setMobileOpen(false);
+    };
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
     if (!mobileOpen) return;
+    closeButtonRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileOpen(false);
     };
@@ -92,6 +104,7 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
+      menuTriggerRef.current?.focus();
     };
   }, [mobileOpen]);
 
@@ -160,17 +173,22 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
 
   return (
     <>
-      <header className="futuristic-panel fixed inset-x-0 top-0 z-30 border-b md:hidden">
+      <header className="futuristic-panel shrink-0 border-b md:hidden">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button
+          <Button
+            ref={menuTriggerRef}
             type="button"
+            variant="outline"
+            size="icon"
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menú"
             aria-haspopup="dialog"
-            className="flex size-9 items-center justify-center rounded-full border border-white/15 text-muted transition hover:bg-white/5 hover:text-white"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-drawer"
+            className="rounded-full"
           >
             <Menu size={18} aria-hidden />
-          </button>
+          </Button>
           <Image
             src="/apple-touch-icon.png"
             alt="Allons icon"
@@ -198,19 +216,23 @@ export function Sidebar({ adminEmail }: { adminEmail: string }) {
             aria-hidden
           />
           <aside
+            id="mobile-nav-drawer"
             role="dialog"
             aria-modal="true"
             aria-label="Menú"
             className="futuristic-panel relative z-10 flex h-full w-72 max-w-[80vw] flex-col overflow-hidden border-r"
           >
-            <button
+            <Button
+              ref={closeButtonRef}
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => setMobileOpen(false)}
               aria-label="Cerrar menú"
-              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full border border-white/15 text-muted transition hover:bg-white/5 hover:text-white"
+              className="absolute right-3 top-3 rounded-full"
             >
               <X size={16} aria-hidden />
-            </button>
+            </Button>
             {brand}
             {links(() => setMobileOpen(false))}
             {account}
